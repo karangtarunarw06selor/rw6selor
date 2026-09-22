@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <script src="auth-guard.js"></script>
+    
+    <title>Input Kas Muda Mudi Sedahromo Lor 05</title>
+    
+    <link rel="icon" href="images/fix.avif" type="image/avif">
+    <link rel="icon" type="image/avif" sizes="192x192" href="images/fix.avif">
+    <link rel="apple-touch-icon" sizes="192x192" href="images/fix.avif">
+    <link rel="apple-touch-icon" sizes="512x512" href="images/fix.avif">
+    
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="manifest" href="manifest.json">
+    <style>
+        .cashflow-form {
+            margin-top: 22px;
+        }
+        .cashflow-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+        .cashflow-field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            text-align: left;
+        }
+        .cashflow-field-wide {
+            grid-column: 1 / -1;
+        }
+        .cashflow-field span,
+        .cashflow-upload-label {
+            font-weight: 700;
+            color: #333;
+            font-size: 14px;
+        }
+        .cashflow-field input,
+        .cashflow-field select,
+        .cashflow-field textarea {
+            width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 12px 14px;
+            font: inherit;
+            background: #fff;
+        }
+        .cashflow-alert {
+            display: none;
+            margin-bottom: 16px;
+            padding: 12px 14px;
+            border-radius: 8px;
+            text-align: left;
+            font-weight: 700;
+        }
+        .cashflow-alert.ok,
+        .cashflow-alert.err {
+            display: block;
+        }
+        .cashflow-alert.ok {
+            color: #1b5e20;
+            background: #e8f5e9;
+            border: 1px solid #a5d6a7;
+        }
+        .cashflow-alert.err {
+            color: #b71c1c;
+            background: #ffebee;
+            border: 1px solid #ffcdd2;
+        }
+        .cashflow-upload {
+            grid-column: 1 / -1;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #fafafa;
+        }
+        .cashflow-upload-toggle,
+        .cashflow-accordion-toggle {
+            width: 100%;
+            border: 0;
+            background: #fff;
+            color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 14px 16px;
+            cursor: pointer;
+            font-weight: 800;
+            text-align: left;
+        }
+        .cashflow-upload-body,
+        .cashflow-accordion-body {
+            display: none;
+            padding: 16px;
+            border-top: 1px solid #eee;
+        }
+        .cashflow-upload.open .cashflow-upload-body,
+        .cashflow-accordion.open .cashflow-accordion-body {
+            display: block;
+        }
+        .cashflow-note {
+            margin: 8px 0 0;
+            color: #666;
+            font-size: 13px;
+        }
+        .cashflow-actions {
+            margin-top: 18px;
+            text-align: right;
+        }
+        .cashflow-submit-btn,
+        .cashflow-delete-btn {
+            border: 0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 800;
+        }
+        .cashflow-submit-btn {
+            background: #2c3e50;
+            color: #fff;
+            padding: 12px 18px;
+        }
+        .cashflow-delete-btn {
+            background: #ffebee;
+            color: #b71c1c;
+            padding: 8px 10px;
+        }
+        .cashflow-accordion {
+            margin-top: 24px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .cashflow-preview-summary {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .cashflow-preview-card {
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 12px;
+            background: #fff;
+        }
+        .cashflow-preview-card span {
+            display: block;
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 6px;
+        }
+        .cashflow-preview-card strong {
+            font-size: 18px;
+        }
+        .cashflow-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border-radius: 999px;
+            padding: 5px 9px;
+            font-size: 12px;
+            font-weight: 800;
+        }
+        .cashflow-badge.pemasukan {
+            color: #1b5e20;
+            background: #e8f5e9;
+        }
+        .cashflow-badge.pengeluaran {
+            color: #b71c1c;
+            background: #ffebee;
+        }
+        @media (max-width: 720px) {
+            .cashflow-grid,
+            .cashflow-preview-summary {
+                grid-template-columns: 1fr;
+            }
+            .cashflow-actions {
+                text-align: stretch;
+            }
+            .cashflow-submit-btn {
+                width: 100%;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="mobile-global-overrides.css?v=7">
+</head>
+<body> 
+    
+    <header class="site-header">
+        <div class="top-header">
+            <div class="header-logo-area">
+                <a href="https://mudamudiselor.biz.id/admin.html" class="logo-wrapper">
+                    <img src="images/fix.avif" alt="Logo MMS" class="mini-logo">
+                    <div class="header-text">
+                        <span class="brand-title">BPH MMS 05</span>
+                        <span class="brand-subtitle">Sedahromo Lor 05</span>
+                    </div>
+                </a>
+            </div>
+            <div class="header-right-stuff">
+                <div class="header-socials">
+                    <a href="#" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" title="YouTube"><i class="fa-brands fa-youtube"></i></a>
+                    <a href="#" title="Facebook"><i class="fa-brands fa-facebook"></i></a>
+                    <a href="https://www.tiktok.com/@mudamudisedahromolor05?is_from_webapp=1&sender_device=pc" title="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+                </div>
+            </div>
+            <button class="menu-toggle" id="mobile-menu-btn">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+        </div> 
+
+    <nav class="main-navbar">
+        
+            <ul class="nav-list">
+                <li class="nav-item"><a href="https://mudamudiselor.biz.id/admin.html">BERANDA</a></li>
+                
+                <li class="nav-item">
+                    <a href="#">BENDAHARA</a>
+                    <ul class="submenu">
+                        <li class="submenu-item"><a href="https://mudamudiselor.biz.id/catat-cashflow.html">  - INPUT CASHFLOW</a></li>
+                        <li class="submenu-item"><a href="https://mudamudiselor.biz.id/input-kas.html">  - INPUT KAS BULANAN</a></li>
+                    </ul>
+                </li>
+                
+                <li class="nav-item">
+                    <a href="#">SEKRETARIS</a>
+                    <ul class="submenu">
+                        <li class="submenu-item"><a href="https://mudamudiselor.biz.id/form-hasilrapat.html">  - INPUT NOTULEN</a></li>
+                        <li class="submenu-item"><a href="https://mudamudiselor.biz.id/editor-anggota.html">  - INPUT BIODATA</a></li>
+                        <li class="submenu-item"><a href="https://mudamudiselor.biz.id/input-arsip-surat.html">  - INPUT ARSIP SURAT</a></li>
+                        <li class="submenu-item"><a href="https://mudamudiselor.biz.id/input-arsip-lpj.html">  - INPUT ARSIP LPJ </a></li>
+                        <li class="submenu-item"><a href="https://mudamudiselor.biz.id/input-arsip-proposal.html">  - INPUT ARSIP PROPOSAL </a></li>
+                        <li class="submenu-item"><a href="https://mudamudiselor.biz.id/input-arsip-lomba.html">  - INPUT ARSIP LOMBA </a></li>
+                    </ul>
+                </li>
+                
+                <li class="nav-item">
+                    <a href="#">MEDIA & HUMAS</a>
+                    <ul class="submenu">
+                        <li class="submenu-item"><a href="https://mudamudiselor.biz.id/upload-dokumentasi.html">  - INPUT DOKUMENTASI</a></li>
+                        <li class="submenu-item"><a href="https://script.google.com/macros/library/d/1I6LEQGlm_weJMhjY4bj_5wdnMQQy_fYCsPOryUzADr4XWc8N5YxzVrtQ/2">  - INPUT UNDANGAN</a></li>
+                    </ul>
+                </li>
+                
+                <li class="nav-item">
+                    <a href="#">TOOLS</a>
+                   <ul class="submenu">
+                        <li class="submenu-item"><a href="https://mudamudiselor.biz.id/generator-lomba-ui-v2.html"> - GENERATOR LOMBA</a></li>
+                        <li class="submenu-item"><a href="https://mudamudiselor.biz.id/input-ebook.html"> - INPUT EBOOK</a></li>
+                        <li class="submenu-item"><a href="https://mudamudiselor.biz.id/english-editor.html"> - ENGLISH EDITOR</a></li>
+                        <li class="submenu-item"><a href="https://mudamudiselor.biz.id/editor-chatwarga.html"> - CHAT WARGA EDITOR</a></li>
+                    </ul>
+                </li>
+
+            <li>
+               <div class="navbar-mobile-only">
+                  <div class="header-socials">
+                            <a href="#" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                            <a href="#" title="YouTube"><i class="fa-brands fa-youtube"></i></a>
+                            <a href="#" title="Facebook"><i class="fa-brands fa-facebook"></i></a>
+                            <a href="https://www.tiktok.com/@mudamudisedahromolor05?is_from_webapp=1&sender_device=pc" title="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+                    </div>
+               </div>
+            </li>
+            </ul> 
+        </nav>
+    </header>
+
+
+    
+    <div class="finance-page-wrapper">
+        <div class="content-box" style="max-width: 1000px; width: 100%;">
+            <h2 class="box-title">INPUT DATA CASHFLOW <br> (PEMASUKAN / PENGELUARAN)</h2>
+            <hr class="box-divider">
+            <p style="text-align: center; margin-bottom: 20px;">Gunakan Form Dibawah Ini Untuk Mencatat Pemasukkan (Selain dari Iuran KAS Bulanan) dan Pengeluaran</p>
+
+            <form id="formCashflow" class="cashflow-form" enctype="multipart/form-data">
+                <div id="cashflowAlert" class="cashflow-alert" role="status" aria-live="polite"></div>
+
+                <div class="cashflow-grid">
+                    <label class="cashflow-field">
+                        <span>Pilih Salah Satu</span>
+                        <select id="jenisCashflow" name="jenis" required>
+                            <option value="pemasukan">Pemasukkan</option>
+                            <option value="pengeluaran">Pengeluaran</option>
+                        </select>
+                    </label>
+
+                    <label class="cashflow-field">
+                        <span>Tanggal</span>
+                        <input type="date" id="tanggalCashflow" name="tanggal" required>
+                    </label>
+
+                    <label class="cashflow-field cashflow-field-wide">
+                        <span>Keterangan Transaksi</span>
+                        <textarea id="keteranganCashflow" name="keterangan" rows="3" required></textarea>
+                    </label>
+
+                    <label class="cashflow-field">
+                        <span>Jumlah</span>
+                        <input type="number" id="jumlahCashflow" name="jumlah" min="1" step="1" required>
+                    </label>
+
+                    <div class="cashflow-upload" id="buktiNotaWrap">
+                        <button type="button" class="cashflow-upload-toggle" id="buktiNotaToggle" aria-expanded="false" aria-controls="buktiNotaBody">
+                            <span><i class="fa-solid fa-receipt"></i> Bukti Transaksi / Nota (Khusus Pengeluaran)</span>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </button>
+                        <div class="cashflow-upload-body" id="buktiNotaBody">
+                            <label class="cashflow-field">
+                                <span class="cashflow-upload-label">Upload Bukti</span>
+                                <input type="file" id="buktiFileCashflow" name="bukti_file" accept="image/*,.pdf">
+                            </label>
+                            <p class="cashflow-note">Opsional. Khusus pengeluaran. Format JPG, PNG, WEBP, atau PDF. Maksimal 100 MB.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cashflow-actions">
+                    <button type="submit" class="cashflow-submit-btn">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        Simpan Transaksi
+                    </button>
+                </div>
+            </form>
+
+            <section class="cashflow-accordion" id="cashflowAccordion">
+                <button type="button" class="cashflow-accordion-toggle" id="cashflowAccordionToggle" aria-expanded="false" aria-controls="cashflowAccordionBody">
+                    <span><i class="fa-solid fa-table-list"></i> Data Cashflow Terbaru</span>
+                    <i class="fa-solid fa-chevron-down"></i>
+                </button>
+                <div class="cashflow-accordion-body" id="cashflowAccordionBody">
+                    <div class="cashflow-preview-summary">
+                        <div class="cashflow-preview-card">
+                            <span>Total Pemasukan</span>
+                            <strong id="cashflowPreviewMasuk">Rp 0</strong>
+                        </div>
+                        <div class="cashflow-preview-card">
+                            <span>Total Pengeluaran</span>
+                            <strong id="cashflowPreviewKeluar">Rp 0</strong>
+                        </div>
+                        <div class="cashflow-preview-card">
+                            <span>Saldo</span>
+                            <strong id="cashflowPreviewSaldo">Rp 0</strong>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="finance-table">
+                            <thead>
+                                <tr>
+                                    <th>Tanggal</th>
+                                    <th>Jenis</th>
+                                    <th>Keterangan</th>
+                                    <th>Jumlah</th>
+                                    <th>Bukti</th>
+                                    <th>Sumber</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cashflowPreviewTable">
+                                <tr><td colspan="7">Memuat data cashflow...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </div> 
+    </div> 
+
+    <footer class="site-footer">
+        <div class="footer-container">
+            <div class="footer-column info-col">
+                <div class="footer-brand">
+                    <img src="images/fix.avif" alt="Logo MMS" class="footer-logo">
+                    <h4>Muda Mudi Sedahromo Lor</h4>
+                </div>
+                <p class="footer-text">
+                    <i class="fa-solid fa-location-dot"></i> Jl. Sedahromo Lor, RT.05 / RW.06, Kel. Kartasura, Kec. Kartasura, Sukoharjo, Jawa Tengah 57167
+                </p>
+                <p class="footer-text">
+                    <i class="fa-solid fa-envelope"></i> <a href="mailto:mudamudisedahromolor@gmail.com">mudamudisedahromolor05@gmail.com</a>
+                </p>
+            </div>
+
+            <div class="footer-column links-col">
+                <h5>Sitemap</h5>
+                <ul class="footer-links">
+                    <li><a href="https://mudamudiselor.web.id/index.html"><i class="fa-solid fa-chevron-right"></i> Beranda</a></li>
+                    <li><a href="https://mudamudiselor.web.id/struktur.html"><i class="fa-solid fa-chevron-right"></i> Struktur Organisasi</a></li>
+                    <li><a href="https://mudamudiselor.web.id/daftar-anggota.html"><i class="fa-solid fa-chevron-right"></i> Daftar Anggota</a></li>
+                    <li><a href="https://mudamudiselor.web.id/laporan-keuangan.html"><i class="fa-solid fa-chevron-right"></i> Transparansi Kas</a></li>
+                    <li><a href="https://mudamudiselor.web.id/dokumentasi-kegiatan.html"><i class="fa-solid fa-chevron-right"></i> Dokumentasi</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-column social-col">
+                <h5>Media Sosial</h5>
+                <p class="footer-text">Ikuti linimasa kegiatan dan perkembangan pemuda kami melalui kanal resmi berikut:</p>
+                <div class="footer-social-icons">
+                    <a href="#" title="Instagram" target="_blank"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" title="YouTube" target="_blank"><i class="fa-brands fa-youtube"></i></a>
+                    <a href="#" title="Facebook" target="_blank"><i class="fa-brands fa-facebook"></i></a>
+                    <a href="https://www.tiktok.com/@mudamudisedahromolor05" title="TikTok" target="_blank"><i class="fa-brands fa-tiktok"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>Copyright &copy; 2026 Organisasi Muda Mudi Sedahromo Lor 05. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+
+    <script src="script.js?v=22"></script>
+    <script src="cashflow-input.js?v=2"></script>
+ 
+</body>
+</html>

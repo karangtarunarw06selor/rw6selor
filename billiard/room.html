@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pocket Clash Room</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      color: white;
+      background:
+        radial-gradient(circle at top, #164b39, #06110e 70%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+    }
+
+    .roomCard {
+      width: min(460px, 94vw);
+      padding: 24px;
+      border-radius: 22px;
+      background: rgba(5, 8, 15, .86);
+      border: 1px solid rgba(255,255,255,.16);
+      box-shadow: 0 18px 48px rgba(0,0,0,.55);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      color: #ffd650;
+      font-size: 30px;
+      text-align: center;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: rgba(255,255,255,.72);
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+
+    .roomCodeBox {
+      padding: 14px;
+      margin-bottom: 18px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.14);
+      text-align: center;
+    }
+
+    .roomCodeLabel {
+      font-size: 12px;
+      opacity: .65;
+      margin-bottom: 4px;
+    }
+
+    .roomCodeValue {
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      color: #ffd650;
+    }
+
+    .playerList {
+      margin: 16px 0;
+    }
+
+    .playerItem {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      padding: 11px 12px;
+      margin-bottom: 8px;
+
+      border-radius: 12px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
+    .playerName {
+      font-weight: 900;
+    }
+
+    .playerBadge {
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.14);
+      color: rgba(255,255,255,.85);
+    }
+
+    .playerBadge.ready {
+      background: rgba(50, 200, 110, .20);
+      color: #7dffad;
+      border: 1px solid rgba(125,255,173,.35);
+    }
+
+    .statusText {
+      margin: 14px 0;
+      padding: 11px;
+      border-radius: 12px;
+      background: rgba(0,0,0,.28);
+      color: rgba(255,255,255,.75);
+      font-size: 13px;
+      line-height: 1.45;
+      text-align: center;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 10px;
+      padding: 13px 14px;
+      border: 0;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #ffd86b, #ff9f2e);
+      color: #251403;
+      font-weight: 900;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: rgba(255,255,255,.12);
+      color: white;
+      border: 1px solid rgba(255,255,255,.2);
+    }
+
+    button:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="roomCard">
+    <h1>Waiting Room</h1>
+    <div class="subtitle">Tunggu pemain lain lalu tekan Ready</div>
+
+    <div class="roomCodeBox">
+      <div class="roomCodeLabel">Room Code</div>
+      <div id="roomCodeText" class="roomCodeValue">-</div>
+    </div>
+
+    <div id="playerList" class="playerList">
+      Memuat player...
+    </div>
+
+    <div id="statusText" class="statusText">
+      Memuat room...
+    </div>
+
+    <button id="readyBtn" onclick="setReady()">
+      Ready
+    </button>
+
+    <button id="startBtn" onclick="startRoom()" disabled>
+      Start Game
+    </button>
+
+    <button class="secondary" onclick="backToLobby()">
+      Back to Lobby
+    </button>
+  </div>
+
+  <script>
+  
+  const DEBUG = false;
+
+function debugLog(...args) {
+  if (DEBUG) console.log(...args);
+}
+  
+    const params = new URLSearchParams(window.location.search);
+
+    const roomCode = params.get("room_code") || "";
+    const playerKeyFromUrl = params.get("player_key") || "";
+
+    let playerKey =
+      playerKeyFromUrl ||
+      localStorage.getItem("pocket_clash_player_key") ||
+      "";
+
+    if (playerKey) {
+      localStorage.setItem("pocket_clash_player_key", playerKey);
+    }
+
+    let roomData = null;
+    let pollTimer = null;
+
+async function sendHeartbeat() {
+  if (!playerKey) return;
+
+  try {
+    await fetch("api/heartbeat.php", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        player_key: playerKey,
+        room_code: roomCode
+      })
+    });
+  } catch (error) {
+    console.error("heartbeat error", error);
+  }
+}
+
+
+    document.getElementById("roomCodeText").textContent = roomCode || "-";
+
+    function setStatus(message) {
+      document.getElementById("statusText").textContent = message;
+    }
+
+    async function backToLobby() {
+
+  try {
+
+    const response = await fetch("api/leave_room.php", {
+
+      method: "POST",
+
+      headers: {
+
+        "Content-Type": "application/json"
+
+      },
+
+      body: JSON.stringify({
+
+        room_code: roomCode,
+
+        player_key: playerKey
+
+      })
+
+    });
+
+    const result = await response.json();
+
+    debugLog("leave room result", result);
+
+  } catch (error) {
+
+    console.error("leave room error", error);
+
+  }
+
+  window.location.href = "lobby.html?v=" + Date.now();
+
+}
+
+    async function loadRoom() {
+      if (!roomCode) {
+        setStatus("Room code kosong.");
+        return;
+      }
+
+      if (!playerKey) {
+        setStatus("Player key kosong. Silakan kembali ke lobby.");
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          "api/room_detail.php?room_code=" +
+            encodeURIComponent(roomCode) +
+            "&player_key=" +
+            encodeURIComponent(playerKey) +
+            "&v=" +
+            Date.now(),
+          {
+            cache: "no-store"
+          }
+        );
+
+        const result = await response.json();
+
+        debugLog("room detail result", result);
+
+        if (!result.success) {
+          setStatus(result.message || "Gagal memuat room.");
+          return;
+        }
+
+        roomData = result;
+
+        renderRoom();
+
+        const matchId =
+          result.match_id ||
+          result.match?.id ||
+          result.room?.match_id ||
+          0;
+
+        const status =
+          result.room?.status ||
+          result.status ||
+          "";
+
+        if (status === "playing" || matchId) {
+         window.location.href =
+  "game.html?room_code=" +
+  encodeURIComponent(roomCode) +
+  "&player_key=" +
+  encodeURIComponent(playerKey) +
+  "&v=" +
+  Date.now();
+        }
+      } catch (error) {
+        console.error("load room error", error);
+        setStatus("Gagal memuat room: " + error.message);
+      }
+    }
+
+    function renderRoom() {
+      const playerList = document.getElementById("playerList");
+      const startBtn = document.getElementById("startBtn");
+
+      const players =
+        roomData.players ||
+        roomData.room_players ||
+        [];
+
+      if (!players.length) {
+        playerList.innerHTML = "Belum ada player.";
+      } else {
+        playerList.innerHTML = players.map(player => {
+          const name =
+            player.username ||
+            player.name ||
+            ("Player #" + (player.player_id || player.id || "-"));
+
+          const ready =
+            Number(player.is_ready || player.ready || 0) === 1;
+
+          const host =
+            Number(player.is_host || 0) === 1;
+
+          return `
+            <div class="playerItem">
+              <div>
+                <div class="playerName">${name}</div>
+                ${host ? '<div class="playerBadge">Host</div>' : ''}
+              </div>
+              <div class="playerBadge ${ready ? 'ready' : ''}">
+                ${ready ? 'Ready' : 'Waiting'}
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
+
+      let me =
+  roomData.me ||
+  roomData.player ||
+  null;
+
+if (!me && players.length) {
+  me = players.find(player => {
+    return String(player.player_key || "") === String(playerKey);
+  }) || null;
+}
+
+const roomHostPlayerId = Number(roomData.room?.host_player_id || 0);
+
+const isHost =
+  me &&
+  (
+    Number(me.is_host || 0) === 1 ||
+    Number(me.player_id || me.id || 0) === roomHostPlayerId
+  );
+
+      const allReady = players.length > 1 && players.every(player => {
+        return Number(player.is_ready || player.ready || 0) === 1;
+      });
+
+      startBtn.disabled = !(isHost && allReady);
+
+      if (isHost) {
+        setStatus(allReady ? "Semua player ready. Kamu bisa start game." : "Tunggu semua player ready.");
+      } else {
+        setStatus("Tekan Ready lalu tunggu host memulai game.");
+      }
+    }
+
+    async function setReady() {
+      if (!roomCode || !playerKey) {
+        alert("room_code atau player_key kosong.");
+        return;
+      }
+
+      try {
+        const response = await fetch("api/ready_room.php", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            room_code: roomCode,
+            player_key: playerKey,
+            ready: 1
+          })
+        });
+
+        const result = await response.json();
+
+        debugLog("ready room result", result);
+
+        if (!result.success) {
+          alert(result.message || "Gagal ready.");
+          return;
+        }
+
+        await loadRoom();
+      } catch (error) {
+        console.error("ready room error", error);
+        alert("Gagal ready: " + error.message);
+      }
+    }
+
+    async function startRoom() {
+      if (!roomCode || !playerKey) {
+        alert("room_code atau player_key kosong.");
+        return;
+      }
+debugLog("start room payload", {
+  roomCode,
+  playerKey,
+  me: roomData?.me,
+  roomHostPlayerId: roomData?.room?.host_player_id
+});
+      try {
+        const response = await fetch("api/start_room.php", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            room_code: roomCode,
+            player_key: playerKey
+          })
+        });
+
+        const result = await response.json();
+
+        debugLog("start room result", result);
+
+        if (!result.success) {
+          alert(result.message || "Gagal start game.");
+          return;
+        }
+
+        window.location.href =
+  "game.html?room_code=" +
+  encodeURIComponent(roomCode) +
+  "&player_key=" +
+  encodeURIComponent(playerKey) +
+  "&v=" +
+  Date.now();
+      } catch (error) {
+        console.error("start room error", error);
+        alert("Gagal start game: " + error.message);
+      }
+    }
+
+   sendHeartbeat();
+loadRoom();
+
+pollTimer = setInterval(() => {
+  sendHeartbeat();
+  loadRoom();
+}, 2000);
+  </script>
+</body>
+</html>

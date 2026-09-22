@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pendaftaran Lomba - BPH MMS 05</title>
+  <link rel="icon" href="images/logo.png" type="image/png">
+  <link rel="stylesheet" href="css/generator-lomba-ui-v2.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="mobile-global-overrides.css?v=7">
+</head>
+<body class="mms-admin-page mms-lomba-v2-page">
+  <main class="mms-admin-main">
+    <section class="mms-hero-card">
+      <div>
+        <span class="mms-badge">Pendaftaran</span>
+        <h1>Pendaftaran Peserta Lomba</h1>
+        <p>Peserta tersimpan ke database dan dapat direfresh dari halaman admin.</p>
+      </div>
+      <div class="mms-hero-actions">
+        <a href="generator-lomba-ui-v2.html" class="mms-btn mms-btn-secondary"><i class="fa-solid fa-arrow-left"></i> Generator Lomba</a>
+      </div>
+    </section>
+
+    <section class="mms-card">
+      <div class="mms-card-header">
+        <div>
+          <h2>Form Peserta</h2>
+          <p>Isi data peserta, lalu simpan.</p>
+        </div>
+        <span class="mms-status-pill" id="registrationCount">0 peserta</span>
+      </div>
+      <form id="registrationForm" class="mms-control-grid">
+        <div class="mms-form-group mms-wide-field">
+          <label for="registrationName">Nama Peserta</label>
+          <input id="registrationName" name="name" type="text" placeholder="Nama lengkap" required>
+        </div>
+        <div class="mms-form-group">
+          <label for="registrationGender">Gender</label>
+          <select id="registrationGender" name="gender">
+            <option value="male">Laki-laki</option>
+            <option value="female">Perempuan</option>
+          </select>
+        </div>
+        <div class="mms-form-group">
+          <label for="registrationCategory">Kategori Usia</label>
+          <select id="registrationCategory" name="category">
+            <option value="tk_2sd">TK - 2 SD</option>
+            <option value="sd_3_5">3 - 5 SD</option>
+            <option value="sd6_smp">6 SD - SMP</option>
+            <option value="tk_3sd">TK - 3 SD</option>
+            <option value="sd4_smp">4 SD - SMP</option>
+            <option value="remaja">Remaja</option>
+            <option value="ibu_ibu">Ibu-Ibu</option>
+            <option value="bapak_bapak">Bapak-Bapak</option>
+          </select>
+        </div>
+        <div class="mms-action-row">
+          <button class="mms-btn mms-btn-primary" type="submit"><i class="fa-solid fa-floppy-disk"></i> Simpan Peserta</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="mms-card">
+      <div class="mms-card-header">
+        <div>
+          <h2>Peserta Terdaftar</h2>
+          <p>Data ini menjadi sumber peserta halaman admin.</p>
+        </div>
+      </div>
+      <div class="mms-filter-row" id="registrationAgeChips">
+        <button type="button" class="mms-filter-chip is-active" data-age-filter="all">Semua Kategori</button>
+        <button type="button" class="mms-filter-chip" data-age-filter="anak_all">Semua Anak</button>
+        <button type="button" class="mms-filter-chip" data-age-filter="umum_dewasa">Umum/Dewasa</button>
+        <button type="button" class="mms-filter-chip" data-age-filter="tk_2sd">TK-2 SD</button>
+        <button type="button" class="mms-filter-chip" data-age-filter="sd_3_5">3-5 SD</button>
+        <button type="button" class="mms-filter-chip" data-age-filter="sd6_smp">6 SD-SMP</button>
+        <button type="button" class="mms-filter-chip" data-age-filter="tk_3sd">TK-3 SD</button>
+        <button type="button" class="mms-filter-chip" data-age-filter="sd4_smp">4 SD-SMP</button>
+        <button type="button" class="mms-filter-chip" data-age-filter="remaja">Remaja</button>
+        <button type="button" class="mms-filter-chip" data-age-filter="ibu_ibu">Ibu-Ibu</button>
+        <button type="button" class="mms-filter-chip" data-age-filter="bapak_bapak">Bapak-Bapak</button>
+      </div>
+      <div class="mms-list-toolbar">
+        <input type="search" id="registrationSearch" placeholder="Cari peserta..." class="mms-search-input">
+      </div>
+      <div id="registrationList"></div>
+      <div class="registration-bottom-actions">
+        <button type="button" class="mms-btn mms-btn-danger" id="btnDeleteAllParticipants">
+          <i class="fa-solid fa-trash-can"></i> Hapus Semua Data Peserta
+        </button>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="js/pendaftaran-lomba.js"></script>
+</body>
+</html>

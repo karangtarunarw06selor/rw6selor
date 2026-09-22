@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Login Portal Admin - BPH MMS 05</title>
+    
+    
+    <link rel="apple-touch-icon" href="images/fix.avif">
+    <link rel="icon" href="images/fix.avif" type="image/avif">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="style.css?=v2"> 
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="mobile-global-overrides.css?v=7">
+</head>
+<body class="login-page-body"> <header class="site-header">
+        <div class="header-logo-area">
+            <div class="logo-wrapper">
+                <img src="images/fix.avif" alt="Logo MMS" class="mini-logo">
+                <div class="header-text">
+                    <span class="brand-title">BADAN PENGURUS HARIAN</span>
+                    <span class="brand-subtitle">MUDA MUDI SEDAHROMO LOR 05</span>
+                </div>
+            </div>
+        </div>
+        <div class="header-secure-badge">
+            <i class="fa-solid fa-shield-halved"></i>
+        </div>
+    </header>
+
+    <div class="login-page-wrapper">
+        <div class="login-content-box">
+            <h3 class="box-title">PORTAL UTAMA ADMIN</h3>
+            <hr class="box-divider">
+            <p class="box-subtitle">Silakan masukkan kode akses khusus pengurus untuk masuk ke sistem administrasi data.</p>
+            
+            <div class="input-wrapper">
+                <i class="fa-solid fa-lock"></i>
+                <input type="password" id="access-code" class="login-input" placeholder="Masukkan Password...">
+            </div>
+            
+            <div id="error-message" class="error-text"></div>
+
+            <button onclick="validasiLogin()" class="btn-login">
+                <i class="fa-solid fa-right-to-bracket"></i> Masuk Sistem
+            </button>
+        </div>
+    </div>
+
+    <footer class="portal-footer">
+        <p>&copy; 2026 Admin Panel Muda Mudi Sedahromo Lor 05.</p>
+    </footer>
+
+    <div id="pwa-install-popup">
+        <div class="pwa-mms-container">
+            <img src="images/fix.png" alt="Logo MMS" class="pwa-mms-logo">
+            <div class="pwa-mms-text-block">
+                <h4 class="pwa-mms-title">Aplikasi BPH MMS 05</h4>
+                <p class="pwa-mms-subtitle">Tambahkan ke layar utama HP agar akses lebih cepat</p>
+            </div>
+        </div>
+        <div class="pwa-mms-buttons">
+            <button onclick="tutupPopupInstal()" class="pwa-mms-btn-later">Nanti Saja</button>
+            <button id="btn-instal-pwa" class="pwa-mms-btn-install">Instal Sekarang</button>
+        </div>
+    </div>
+
+
+    
+    <script src="script.js?v=100"></script> 
+</body>
+</html>

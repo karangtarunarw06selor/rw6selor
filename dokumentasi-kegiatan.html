@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dokumentasi Kegiatan - Muda Mudi Sedahromo Lor</title>
+    
+    <link rel="icon" href="images/mms.avif" type="image/png">
+    <link rel="icon" type="image/png" sizes="192x192" href="images/mms.avif">
+    <link rel="apple-touch-icon" sizes="192x192" href="images/mms.avif">
+    <link rel="apple-touch-icon" sizes="512x512" href="images/mms.avif">
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
+    <link rel="stylesheet" href="style.css?v=103">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="manifest" href="manifest.json">
+
+    <style>
+        /* Standarisasi text adjustment browser agar tidak auto-scale layout */
+        html, body { -webkit-text-size-adjust: 100%; -moz-text-size-adjust: 100%; text-size-adjust: 100%; }
+
+        /* Kunci ukuran font input minimal 16px di mobile untuk mencegah forced-zoom browser */
+        @media (max-width: 768px) {
+            #user-email-auth, #input-cari-dok { font-size: 16px !important; }
+        }
+
+        /* Desain Box Form Login Akses Dokumentasi */
+        .auth-card-mms { background: #fff; padding: 30px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); max-width: 420px; margin: 60px auto; text-align: center; border-top: 5px solid #D32F2F; }
+        .auth-form-group { text-align: left; margin: 20px 0; }
+        .auth-form-group label { display: block; font-weight: bold; font-size: 13px; color: #475569; margin-bottom: 6px; }
+        .auth-input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
+        .auth-register-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; padding: 8px 12px; border-radius: 999px; background: #fff1f1; color: #D32F2F; font-size: 12px; font-weight: 800; text-decoration: none; border: 1px solid #fecaca; transition: 0.2s; }
+        .auth-register-toggle:hover { background: #D32F2F; color: #ffffff; border-color: #D32F2F; }
+        .btn-auth-submit { background-color: #D32F2F; color: #fff; border: none; padding: 12px; border-radius: 6px; font-weight: bold; width: 100%; cursor: pointer; transition: 0.3s; font-size: 14px; }
+        .btn-auth-submit:hover { background-color: #b71c1c; }
+
+        /* Toast Komponen Notifikasi Kustom */
+        .toast-auth { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: #334155; color: #fff; padding: 12px 24px; border-radius: 30px; font-weight: bold; font-size: 14px; z-index: 99999; transition: top 0.4s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 8px; }
+        .toast-auth.show { top: 30px; }
+        #header-dokumentasi { scroll-margin-top: 120px; }
+        @media (max-width: 768px) {
+            #header-dokumentasi { scroll-margin-top: 170px; }
+        }
+    </style>
+</head>
+<body> 
+    
+    <div id="custom-loader" class="loading-overlay" style="display: none;">
+        <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 40px; color:#D32F2F;"></i>
+        <div id="loader-text" style="font-weight:bold; margin-top: 10px;">Memverifikasi Akses...</div>
+    </div>
+
+    <div id="auth-toast" class="toast-auth">
+        <i id="auth-toast-icon" class="fa-solid"></i>
+        <span id="auth-toast-msg"></span>
+    </div>
+
+    <header class="site-header">
+        <div class="top-header">
+            <div class="header-logo-area">
+                <a href="index.html" class="logo-wrapper">
+                    <img src="images/mms.avif" alt="Logo MMS" class="mini-logo">
+                    <div class="header-text">
+                        <span class="brand-title">MUDA MUDI</span>
+                        <span class="brand-subtitle">Sedahromo Lor 05</span>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="header-right-stuff">
+                <div class="header-socials">
+                    <a href="#" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" title="YouTube"><i class="fa-brands fa-youtube"></i></a>
+                    <a href="#" title="Facebook"><i class="fa-brands fa-facebook"></i></a>
+                    <a href="https://www.tiktok.com/@mudamudisedahromolor05?is_from_webapp=1&sender_device=pc" title="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+                </div>
+            </div>
+
+            <button class="menu-toggle" id="mobile-menu-btn">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+        </div> 
+        
+        <nav class="main-navbar">
+            <ul class="nav-list">
+                <li class="nav-item"><a href="index.html">BERANDA</a></li>
+                <li class="nav-item">
+                    <a href="#">PROFIL</a>
+                    <ul class="submenu">
+                        <li class="submenu-item"><a href="struktur.html"> - STRUKTUR KEANGGOTAAN</a></li>
+                        <li class="submenu-item"><a href="visi-misi.html"> - VISI & MISI</a></li>
+                        <li class="submenu-item"><a href="daftar-anggota.html"> - DAFTAR ANGGOTA</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a href="#" id="btn-bulanan">KEGIATAN</a>
+                    <ul class="submenu" id="menu-rapat">
+                        <li class="submenu-item"><a href="rapat-hasilrapat.html"> - RAPAT BULANAN</a></li>
+                        <li class="submenu-item"><a href="dokumentasi-kegiatan.html"> - DOKUMENTASI</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a href="#">LAPORAN</a>
+                    <ul class="submenu">
+                        <li class="submenu-item"><a href="laporan-keuangan.html"> - KEUANGAN</a></li>
+                        <li class="submenu-item"><a href="iuran-bulanan.html"> - KAS BULANAN</a></li>
+                        <li class="submenu-item"><a href="lpj.html"> - PERTANGGUNG JAWABAN</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a href="#" id="btn-tahunan">DATA ARSIP</a>
+                    <ul class="submenu" id="menu-17an">
+                        <li class="submenu-item"><a href="arsip-proposal.html"> - PROPOSAL</a></li>
+                        <li class="submenu-item"><a href="arsip-lomba.html"> - LOMBA</a></li>
+                        <li class="submenu-item"><a href="arsip-surat.html"> - SURAT</a></li>
+                    </ul>
+                </li> 
+                <li class="nav-item">
+                    <a href="#">INFORMASI</a>
+                    <ul class="submenu">
+                        <li class="submenu-item"><a href="berita.html"> - BERITA</a></li>
+                        <li class="submenu-item"><a href="kesehatan.html"> - KESEHATAN</a></li>
+                         <li class="submenu-item"><a href="monitor-lomba.html"> - MONITORING LOMBA</a></li>
+                    </ul>
+                </li>
+               <li class="nav-item">
+                 <a href="index.html">RUANG LITERASI</a>
+                    <ul class="submenu">
+                       <li class="submenu-item"><a href="englishmms.html"> - ENGLISH ACCADEMY</a></li>
+                        <li class="submenu-item"><a href="eperpus-mms.html"> - E-PERPUSTAKAAN</a></li>
+                       <li class="submenu-item"><a href="request-ebook.html"> - REQUEST EBOOK</a></li>
+                    </ul>
+                 </li>
+                <li class="nav-item">
+                 <a href="index.html">GAME</a>
+                    <ul class="submenu">
+                       <li class="submenu-item"><a href="/billiard/"> - BILLIARD</a></li>
+                       <li class="submenu-item"><a href="/chess/"> - CATUR</a></li>
+                    </ul>
+                 </li>
+                 <li class="nav-item">
+                 <a href="#">MARKETPLACE</a>
+                    <ul class="submenu">
+                       <li class="submenu-item"><a href="mms-marketplace.html"> - PASAR DIGITAL</a></li>
+                    </ul>
+                 </li>
+             </ul>
+            <div class="navbar-mobile-only">
+                <div class="header-socials">
+                    <a href="#" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" title="YouTube"><i class="fa-brands fa-youtube"></i></a>
+                    <a href="#" title="Facebook"><i class="fa-brands fa-facebook"></i></a>
+                    <a href="https://www.tiktok.com/@mudamudisedahromolor05?is_from_webapp=1&sender_device=pc" title="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="gallery-page-wrapper">
+        <div id="auth-frame-anggota" class="auth-card-mms" style="display: none;">
+            <i class="fa-solid fa-user-lock" style="font-size: 50px; color: #D32F2F;"></i>
+            <h3 style="margin-top:15px; color:#1e293b;">Deklarasi Hak Akses</h3>
+            <p style="font-size: 13px; color: #64748b; line-height: 1.4;">Untuk melindungi privasi arsip dokumentasi warga pemuda, silakan konfirmasi email terdaftar Anda untuk membuka galeri kegiatan.</p>
+            
+            <div class="auth-form-group">
+                <label>Alamat Email Warga</label>
+                <input type="email" id="user-email-auth" class="auth-input" placeholder="nama@email.com">
+                <a href="form-anggota.html" class="auth-register-toggle">
+                    <i class="fa-solid fa-user-plus"></i> Belum terdaftar?
+                </a>
+            </div>
+            <button class="btn-auth-submit" onclick="verifikasiAksesAnggota()"><i class="fa-solid fa-unlock-keyhole"></i> Verifikasi & Buka Galeri</button>
+        </div>
+
+        <div id="data-frame-anggota" class="content-box-gallery" style="display: none;">
+            <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 20px; background:#f8fafc; padding:10px 15px; border-radius:8px; border:1px solid #e2e8f0;">
+                <div style="font-size: 12px; color:#475569;"><i class="fa-solid fa-circle-user" style="color:#10b981;"></i> Sesi: <strong id="lbl-user-auth"></strong></div>
+                <button onclick="logoutAksesAnggota()" style="background:none; border:none; color:#ef4444; font-weight:bold; font-size:11px; cursor:pointer;"><i class="fa-solid fa-power-off"></i> Kunci Akses</button>
+            </div>
+
+            <h2 id="header-dokumentasi" class="box-title">DOKUMENTASI KEGIATAN</h2>
+            <hr class="box-divider">
+            <p class="gallery-desc">
+                Foto documentation kegiatan Muda Mudi Sedahromo Lor 05 dan Warga RT.05
+            </p>
+
+            <div class="filter-container" style="justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                <div style="font-size: 14px; color: #555; font-weight: bold;">
+                    <i class="fa-solid fa-images" style="color: #E53935;"></i> Galeri & Berkas Acara
+                </div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <select id="filter-dok-tahun" class="filter-box" onchange="terapkanFilterDokumentasi()">
+                        <option value="Semua">Semua Tahun</option>
+                    </select>
+                    
+                    <select id="filter-dok-bulan" class="filter-box" onchange="terapkanFilterDokumentasi()">
+                        <option value="Semua">Semua Bulan</option>
+                    </select>
+                    
+                    <input type="text" id="input-cari-dok" class="filter-box" style="width: 230px;" placeholder="Cari agenda atau kegiatan..." onkeyup="terapkanFilterDokumentasi()">
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="finance-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 10%; white-space: nowrap;">Tanggal</th>
+                            <th style="width: 40%; text-align: center; white-space: nowrap;">Foto / File</th>
+                            <th style="width: 12%;">Agenda</th>
+                            <th style="width: 13%;">Subjek</th>
+                            <th style="width: 25%;">Kegiatan</th>
+                        </tr>
+                    </thead>
+                    <tbody id="data-tabel-dokumentasi">
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 40px; color: #666;">
+                                <i class="fa-solid fa-spinner fa-spin fa-xl" style="color: #E53935; margin-bottom: 10px;"></i>
+                                <br>Sinkronisasi berkas gambar dari Google Drive...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="gallery-footer">
+                <a href="https://drive.google.com/drive/folders/1ZL1loVYgZPfvnuOxMz6vIHCzw9aHwanW?hl=id" target="_blank" class="btn-open-drive">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Lihat Folder Sumber di Google Drive
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="footer-container">
+            <div class="footer-column info-col">
+                <div class="footer-brand">
+                    <img src="images/mms.avif" alt="Logo MMS" class="footer-logo">
+                    <h4>Muda Mudi Sedahromo Lor</h4>
+                </div>
+                <p class="footer-text">
+                    <i class="fa-solid fa-location-dot"></i> Jl. Sedahromo Lor, RT.05 / RW.06, Kel. Kartasura, Kec. Kartasura, Sukoharjo, Jawa Tengah 57167
+                </p>
+                <p class="footer-text">
+                    <i class="fa-solid fa-envelope"></i> <a href="mailto:mudamudisedahromolor@gmail.com">mudamudisedahromolor@gmail.com</a>
+                </p>
+            </div>
+
+            <div class="footer-column links-col">
+                <h5>Sitemap</h5>
+                <ul class="footer-links">
+                    <li><a href="index.html"><i class="fa-solid fa-chevron-right"></i> Beranda</a></li>
+                    <li><a href="struktur.html"><i class="fa-solid fa-chevron-right"></i> Struktur Organisasi</a></li>
+                    <li><a href="daftar-anggota.html"><i class="fa-solid fa-chevron-right"></i> Daftar Anggota</a></li>
+                    <li><a href="laporan-keuangan.html"><i class="fa-solid fa-chevron-right"></i> Transparansi Kas</a></li>
+                    <li><a href="dokumentasi-kegiatan.html"><i class="fa-solid fa-chevron-right"></i> Dokumentasi</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-column social-col">
+                <h5>Media Sosial</h5>
+                <p class="footer-text">Ikuti linimasa kegiatan dan perkembangan pemuda kami melalui kanal resmi berikut:</p>
+                <div class="footer-social-icons">
+                    <a href="#" title="Instagram" target="_blank"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" title="YouTube" target="_blank"><i class="fa-brands fa-youtube"></i></a>
+                    <a href="#" title="Facebook" target="_blank"><i class="fa-brands fa-facebook"></i></a>
+                    <a href="https://www.tiktok.com/@mudamudisedahromolor05" title="TikTok" target="_blank"><i class="fa-brands fa-tiktok"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>Copyright &copy; 2026 Organisasi Muda Mudi Sedahromo Lor 05. All Rights Reserved.</p>
+        </div>
+    </footer>
+    
+    <script src="online-tracker.js"></script>
+    <script src="script.js?v=1"></script>
+
+    <script>
+    const linkTsvAnggota = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR45-ysPdK4uVibwJQbXKvaGGA2zlX3m2GnAS2392fiSDwENSz9ABffImneI-u4ZGmErvHbdM5RJoDi/pub?gid=992968433&single=true&output=tsv";
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const emailSaved = localStorage.getItem("mms_auth_email");
+        if (emailSaved) {
+            bukaAksesHalaman(emailSaved);
+        } else {
+            document.getElementById("auth-frame-anggota").style.display = "block";
+            document.getElementById("data-frame-anggota").style.display = "none";
+        }
+    });
+
+    function callToast(msg, type="info") {
+        const toast = document.getElementById("auth-toast");
+        const icon = document.getElementById("auth-toast-icon");
+        document.getElementById("auth-toast-msg").innerText = msg;
+        
+        icon.className = type === "success" ? "fa-solid fa-circle-check" : "fa-solid fa-circle-exclamation";
+        toast.style.background = type === "success" ? "#10b981" : "#ef4444";
+        
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 3000);
+    }
+
+    function verifikasiAksesAnggota() {
+        const emailInput = document.getElementById("user-email-auth").value.trim().toLowerCase();
+        if (!emailInput) return callToast("Alamat email wajib diisi!", "warning");
+
+        document.getElementById("custom-loader").style.display = "flex";
+        
+        // Membaca file database TSV Anggota secara lokal untuk validasi email
+        fetch(`${linkTsvAnggota}&cache=${new Date().getTime()}`)
+        .then(res => res.text())
+        .then(teksData => {
+            document.getElementById("custom-loader").style.display = "none";
+            const baris = teksData.split("\n");
+            let emailDitemukan = false;
+
+            // Memeriksa kolom indeks 1 (Kolom B / Tempat penyimpanan data email warga)
+            for (let i = 1; i < baris.length; i++) {
+                const kolom = baris[i].split("\t");
+                if (kolom[1] && kolom[1].trim().toLowerCase() === emailInput) { 
+                    emailDitemukan = true;
+                    break;
+                }
+            }
+
+            if (emailDitemukan) {
+                localStorage.setItem("mms_auth_email", emailInput);
+                callToast("Akses terverifikasi!", "success");
+                bukaAksesHalaman(emailInput);
+            } else {
+                callToast("Email Anda tidak terdaftar di database Anggota!", "danger");
+            }
+        })
+        .catch(() => {
+            document.getElementById("custom-loader").style.display = "none";
+            callToast("Gagal memuat berkas verifikasi!", "danger");
+        });
+    }
+
+    function bukaAksesHalaman(email) {
+        document.getElementById("auth-frame-anggota").style.display = "none";
+        document.getElementById("data-frame-anggota").style.display = "block";
+        document.getElementById("lbl-user-auth").innerText = email;
+        
+        // Pemicu otomatis penarik berkas galeri aslimu dari script.js jika ada
+        if (typeof loadDokumentasiDariDrive === "function") {
+            loadDokumentasiDariDrive();
+        }
+    }
+
+    function logoutAksesAnggota() {
+        localStorage.removeItem("mms_auth_email");
+        location.reload();
+    }
+    </script>
+</body>
+</html>

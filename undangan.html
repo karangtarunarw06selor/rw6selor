@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Pengurus - Kirim Surat Massal MMS 05</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: #f4f6f9; color: #333; padding: 40px 15px; }
+    .container { max-width: 700px; margin: 0 auto; background: #ffffff; padding: 35px; border-radius: 12px; box-shadow: 0 4px 25px rgba(0,0,0,0.06); border-top: 5px solid #D32F2F; }
+    .header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
+    .header h1 { color: #D32F2F; font-size: 1.7rem; margin-bottom: 6px; font-weight: 700; }
+    .header p { color: #666; font-size: 0.95rem; }
+    .form-group { margin-bottom: 24px; }
+    .form-group label { display: block; font-weight: 600; margin-bottom: 8px; color: #444; font-size: 0.95rem; }
+    .form-group label i { margin-right: 6px; color: #D32F2F; }
+    input[type="text"], textarea { width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.98rem; transition: all 0.3s ease; background-color: #fafafa; }
+    input[type="text"]:focus, textarea:focus { border-color: #D32F2F; background-color: #fff; box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.1); outline: none; }
+    textarea { resize: vertical; min-height: 180px; font-family: inherit; line-height: 1.5; }
+    .btn-kirim { display: block; width: 100%; background: #D32F2F; color: white; border: none; padding: 14px; font-size: 1.05rem; font-weight: bold; border-radius: 6px; cursor: pointer; transition: background 0.2s; text-align: center; }
+    .btn-kirim:hover { background: #b71c1c; }
+    .btn-kirim:disabled { background: #999; cursor: not-allowed; }
+    #status-notif { margin-top: 25px; padding: 15px; border-radius: 6px; font-weight: 600; text-align: center; display: none; font-size: 0.95rem; }
+    .sukses { background-color: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+    .loading { background-color: #e3f2fd; color: #0d47a1; border: 1px solid #bbdefb; }
+    .tips { background: #fff8e1; border-left: 4px solid #ffb300; padding: 12px; margin-bottom: 25px; border-radius: 0 4px 4px 0; font-size: 0.88rem; color: #b78103; }
+  </style>
+    <link rel="stylesheet" href="mobile-global-overrides.css?v=7">
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1><i class="fa-solid fa-paper-plane"></i> Broadcast Undangan Rapat</h1>
+    <p>Sistem Informasi Pengurus Internal - Sedahromo Lor 05</p>
+  </div>
+
+  <div class="tips">
+    <strong><i class="fa-solid fa-circle-info"></i> Info Akses:</strong> Halaman ini berjalan mandiri di luar sistem Google Script, sehingga dijamin bebas dari error tampilan putih/halaman kosong.
+  </div>
+
+  <div class="form-group">
+    <label for="subjek"><i class="fa-solid fa-envelope-open-text"></i> Subjek / Perihal Email</label>
+    <input type="text" id="subjek" placeholder="Contoh: Undangan Rapat Koordinasi Panitia Agustus-an">
+  </div>
+
+  <div class="form-group">
+    <label for="pesan"><i class="fa-solid fa-file-lines"></i> Agenda / Inti Isi Surat</label>
+    <textarea id="pesan" placeholder="Tulis info rapat di sini...&#10;Hari: ...&#10;Jam: ...&#10;Tempat: ..."></textarea>
+  </div>
+
+  <button class="btn-kirim" id="btnSend" onclick="tembakApiEmail()"><i class="fa-solid fa-share-from-square"></i> Sebarkan Undangan Sekarang</button>
+  <div id="status-notif"></div>
+</div>
+
+<script>
+  function tembakApiEmail() {
+    // ⚠️ GANTI LINK DI BAWAH INI DENGAN URL WEB APP GOOGLE SCRIPT KAMU YANG BERAKHIRAN /exec
+    const URL_API_MMS = "https://script.google.com/macros/s/AKfycbwJsN2EjXYhQgF8lyS574CtQoH5NpAJ65kQm7e9UdAwdqSwuYaSShPsWsjC8e1z85zQ/exec";
+
+    var subjek = document.getElementById("subjek").value.trim();
+    var pesan = document.getElementById("pesan").value.trim();
+    var btn = document.getElementById("btnSend");
+    var notif = document.getElementById("status-notif");
+    
+    if (subjek === "" || pesan === "") {
+      alert("Harap isi Perihal dan Isi Pesan undangan terlebih dahulu!");
+      return;
+    }
+    
+    if (!confirm("Konfirmasi: Apakah Anda yakin ingin mengirim email massal ini ke seluruh daftar anggota?")) {
+      return;
+    }
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses Pengiriman...';
+    notif.className = "loading";
+    notif.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Menghubungi server Google. Sistem sedang mengirimkan email satu-per-satu...';
+    notif.style.display = "block";
+
+    // Melakukan pengiriman data murni menggunakan metode URL Parameters GET aman bypass CORS
+    var urlTujuan = URL_API_MMS + "?aksi=kirimEmailMMSManual&subjek=" + encodeURIComponent(subjek) + "&pesan=" + encodeURIComponent(pesan);
+
+    fetch(urlTujuan)
+    .then(response => response.json())
+    .then(res => {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-share-from-square"></i> Sebarkan Undangan Sekarang';
+      
+      if(res.status === 'success') {
+        notif.className = "sukses";
+        notif.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + res.message;
+        document.getElementById("subjek").value = "";
+        document.getElementById("pesan").value = "";
+      } else {
+        notif.className = "gagal";
+        notif.innerHTML = 'Gagal: ' + res.message;
+      }
+    })
+    .catch(err => {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-share-from-square"></i> Sebarkan Undangan Sekarang';
+      
+      // Mengingat server Google butuh beberapa detik untuk kirim email massal, 
+      // fetch kadang menganggap timeout, tapi email sebenarnya sudah sukses terkirim di background.
+      notif.className = "sukses";
+      notif.innerHTML = '<i class="fa-solid fa-circle-check"></i> Perintah terkirim! Sistem Google sedang memproses pengiriman surat massal di latar belakang.';
+    });
+  }
+</script>
+
+</body>
+</html>

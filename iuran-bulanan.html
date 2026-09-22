@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Laporan Kas Bulanan - Muda Mudi Sedahromo Lor</title>
+    
+    <link rel="icon" href="images/mms.avif" type="image/avif">
+    <link rel="icon" type="image/avif" sizes="192x192" href="images/mms.avif">
+    <link rel="apple-touch-icon" sizes="192x192" href="images/mms.avif">
+    
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="manifest" href="manifest.json">
+
+    <style>
+        /* Desain Centang Hijau Bulat Sesuai Mockup Awal */
+        .centang-mms {
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 11px;
+            background-color: #2e7d32;
+            padding: 4px 6px;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .strip-mms {
+            color: #bbb;
+            font-size: 14px;
+        }
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            position: relative;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+        .finance-table td.sticky-nama {
+            position: sticky;
+            left: 0;
+            background-color: #ffffff;
+            z-index: 2;
+            border-right: 2px solid #E53935 !important;
+            text-align: left;
+            font-weight: 600;
+        }
+        .finance-table thead th.sticky-header-nama {
+            position: sticky;
+            left: 0;
+            z-index: 3;
+            border-right: 2px solid #ffffff !important;
+            background-color: #E53935;
+        }
+        .finance-table tr:hover td.sticky-nama { background-color: #f1f1f1; }
+        .finance-table tr:nth-child(even) td.sticky-nama { background-color: #fafafa; }
+        .finance-table tr:nth-child(even):hover td.sticky-nama { background-color: #f1f1f1; }
+        .filter-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+        .filter-box {
+            padding: 12px 14px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 15px;
+            background: #fff;
+        }
+        @media (max-width: 720px) {
+            .filter-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .filter-box {
+                width: 100% !important;
+            }
+        }
+    </style>
+</head>
+
+
+    
+<body> 
+  <header class="site-header">
+    <div class="top-header">
+        <div class="header-logo-area">
+            <a href="https://mudamudiselor.web.id/index.html" class="logo-wrapper">
+                <img src="images/mms.avif" alt="Logo MMS" class="mini-logo">
+                <div class="header-text">
+                    <span class="brand-title">MUDA MUDI</span>
+                    <span class="brand-subtitle">Sedahromo Lor 05</span>
+                </div>
+            </a>
+        </div>
+        
+        <div class="header-right-stuff">
+            <div class="header-socials">
+                <a href="#" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                <a href="#" title="YouTube"><i class="fa-brands fa-youtube"></i></a>
+                <a href="#" title="Facebook"><i class="fa-brands fa-facebook"></i></a>
+                <a href="https://www.tiktok.com/@mudamudisedahromolor05?is_from_webapp=1&sender_device=pc" title="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+            </div>
+        </div>
+
+        <button class="menu-toggle" id="mobile-menu-btn">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+    </div> 
+
+<nav class="main-navbar">
+            <ul class="nav-list">
+                <li class="nav-item"><a href="https://mudamudiselor.web.id/index.html">BERANDA</a></li>
+                <li class="nav-item">
+                    <a href="#">PROFIL</a>
+                    <ul class="submenu">
+                        <li class="submenu-item"><a href="https://mudamudiselor.web.id/struktur.html"> - STRUKTUR KEANGGOTAAN</a></li>
+                        <li class="submenu-item"><a href="https://mudamudiselor.web.id/visi-misi.html"> - VISI & MISI</a></li>
+                        <li class="submenu-item"><a href="https://mudamudiselor.web.id/daftar-anggota.html"> - DAFTAR ANGGOTA</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a href="#" id="btn-bulanan">KEGIATAN</a>
+                    <ul class="submenu" id="menu-rapat">
+                        <li class="submenu-item"><a href="https://mudamudiselor.web.id/rapat-hasilrapat.html"> - RAPAT BULANAN</a></li>
+                        <li class="submenu-item"><a href="https://mudamudiselor.web.id/dokumentasi-kegiatan.html"> - DOKUMENTASI</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a href="#">LAPORAN</a>
+                    <ul class="submenu">
+                        <li class="submenu-item"><a href="https://mudamudiselor.web.id/laporan-keuangan.html"> - KEUANGAN</a></li>
+                        <li class="submenu-item"><a href="https://mudamudiselor.web.id/iuran-bulanan.html"> - KAS BULANAN</a></li>
+                        <li class="submenu-item"><a href="https://mudamudiselor.web.id/lpj.html"> - PERTANGGUNG JAWABAN</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a href="#" id="btn-tahunan">DATA ARSIP</a>
+                    <ul class="submenu" id="menu-17an">
+                        <li class="submenu-item"><a href="https://mudamudiselor.web.id/arsip-proposal.html"> - PROPOSAL</a></li>
+                        <li class="submenu-item"><a href="https://mudamudiselor.web.id/arsip-lomba.html"> - LOMBA</a></li>
+                        <li class="submenu-item"><a href="https://mudamudiselor.web.id/arsip-surat.html"> - SURAT</a></li>
+                    </ul>
+                </li> 
+                <li class="nav-item">
+                    <a href="#">INFORMASI</a>
+                    <ul class="submenu">
+                        <li class="submenu-item"><a href="https://mudamudiselor.web.id/berita.html"> - BERITA</a></li>
+                        <li class="submenu-item"><a href="https://mudamudiselor.web.id/kesehatan.html"> - KESEHATAN</a></li>
+                         <li class="submenu-item"><a href="https://mudamudiselor.web.id/monitor-lomba.html"> - MONITORING LOMBA</a></li>
+                    </ul>
+                </li>
+               <li class="nav-item">
+                 <a href="#">RUANG LITERASI</a>
+                    <ul class="submenu">
+                       <li class="submenu-item"><a href="https://mudamudiselor.web.id/englishmms.html"> - ENGLISH ACCADEMY</a></li>
+                        <li class="submenu-item"><a href="https://mudamudiselor.web.id/eperpus-mms.html"> - E-PERPUSTAKAAN</a></li>
+                       <li class="submenu-item"><a href="https://mudamudiselor.web.id/request-ebook.html"> - REQUEST EBOOK</a></li>
+                    </ul>
+                 </li>
+                <li class="nav-item">
+                 <a href="#">GAME</a>
+                    <ul class="submenu">
+                       <li class="submenu-item"><a href="https://mudamudiselor.web.id/billiard/"> - BILLIARD</a></li>
+                       <li class="submenu-item"><a href="https://mudamudiselor.web.id/chess/"> - CATUR</a></li>
+                    </ul>
+                 </li>
+                 <li class="nav-item">
+                 <a href="#">MARKETPLACE</a>
+                    <ul class="submenu">
+                       <li class="submenu-item"><a href="https://mudamudiselor.web.id/mms-marketplace.html"> - PASAR DIGITAL</a></li>
+                    </ul>
+                 </li>
+             </ul>
+            <div class="navbar-mobile-only">
+                <div class="header-socials">
+                    <a href="#" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" title="YouTube"><i class="fa-brands fa-youtube"></i></a>
+                    <a href="#" title="Facebook"><i class="fa-brands fa-facebook"></i></a>
+                    <a href="https://www.tiktok.com/@mudamudisedahromolor05?is_from_webapp=1&sender_device=pc" title="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+                </div>
+            </div>
+        </nav>
+</header>
+
+
+
+
+    
+
+    <div class="finance-page-wrapper">
+        <div class="content-box" style="max-width: 1200px; width: 95%;">
+            <h2 class="box-title">REKAPITULASI KAS BULANAN</h2>
+            <hr class="box-divider">
+            <p style="text-align: center; margin-bottom: 30px;">
+    Berikut adalah status pembayaran iuran kas bulanan masing-masing anggota Muda Mudi Sedahromo Lor 05.
+</p>
+
+<div class="filter-container">
+    <select id="pilih-tahun-kas" class="filter-box" onchange="ambilDataKasMMS()"></select>
+    <input type="text" id="cari-nama-kas" class="filter-box" placeholder="Cari nama anggota..." onkeyup="filterNamaTabelKas()">
+</div>
+
+<div class="table-responsive">
+                <table class="finance-table">
+                    <thead>
+                        <tr>
+                            <th style="text-align: center; width: 50px;">No</th>
+                            <th class="sticky-header-nama">Nama Anggota</th>
+                            <th style="text-align: center;">Januari</th>
+                            <th style="text-align: center;">Februari</th>
+                            <th style="text-align: center;">Maret</th>
+                            <th style="text-align: center;">April</th>
+                            <th style="text-align: center;">Mei</th>
+                            <th style="text-align: center;">Juni</th>
+                            <th style="text-align: center;">Juli</th>
+                            <th style="text-align: center;">Agustus</th>
+                            <th style="text-align: center;">September</th>
+                            <th style="text-align: center;">Oktober</th>
+                            <th style="text-align: center;">November</th>
+                            <th style="text-align: center;">Desember</th>
+                            <th style="text-align: right;">Total Keseluruhan</th>
+                        </tr>
+                    </thead>
+                    <tbody id="data-tabel-kas-mms">
+                        <tr>
+                            <td colspan="15" style="text-align: center; padding: 30px; color: #666;">
+                                <i class="fa-solid fa-spinner fa-spin"></i> Menghubungkan ke Database Real-time...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div> 
+        </div> 
+    </div> 
+    
+    <footer class="site-footer">
+        <div class="footer-container">
+            <div class="footer-column info-col">
+                <div class="footer-brand">
+                    <img src="images/mms.avif" alt="Logo MMS" class="footer-logo">
+                    <h4>Muda Mudi Sedahromo Lor</h4>
+                </div>
+                <p class="footer-text">
+                    <i class="fa-solid fa-location-dot"></i> Jl. Sedahromo Lor, RT.05 / RW.06, Kel. Kartasura, Kec. Kartasura, Sukoharjo, Jawa Tengah 57167
+                </p>
+                <p class="footer-text">
+                    <i class="fa-solid fa-envelope"></i> <a href="mailto:mudamudisedahromolor@gmail.com">mudamudisedahromolor@gmail.com</a>
+                </p>
+            </div>
+
+            <div class="footer-column links-col">
+                <h5>Sitemap</h5>
+                <ul class="footer-links">
+                    <li><a href="https://mudamudiselor.web.id/index.html"><i class="fa-solid fa-chevron-right"></i> Beranda</a></li>
+                    <li><a href="https://mudamudiselor.web.id/struktur.html"><i class="fa-solid fa-chevron-right"></i> Struktur Organisasi</a></li>
+                    <li><a href="https://mudamudiselor.web.id/daftar-anggota.html"><i class="fa-solid fa-chevron-right"></i> Daftar Anggota</a></li>
+                    <li><a href="https://mudamudiselor.web.id/laporan-keuangan.html"><i class="fa-solid fa-chevron-right"></i> Transparansi Kas</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-column social-col">
+                <h5>Media Sosial</h5>
+                <p class="footer-text">Ikuti linimasa kegiatan dan perkembangan pemuda kami melalui kanal resmi berikut:</p>
+                <div class="footer-social-icons">
+                    <a href="#" title="Instagram" target="_blank"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" title="YouTube" target="_blank"><i class="fa-brands fa-youtube"></i></a>
+                    <a href="#" title="Facebook" target="_blank"><i class="fa-brands fa-facebook"></i></a>
+                    <a href="https://www.tiktok.com/@mudamudisedahromolor05" title="TikTok" target="_blank"><i class="fa-brands fa-tiktok"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>Copyright &copy; 2026 Organisasi Muda Mudi Sedahromo Lor 05. All Rights Reserved.</p>
+        </div>
+    </footer>
+<script src="online-tracker.js"></script>
+    <script src="script.js?v=1"></script>
+
+    <script>
+        const KAS_API_BASE = "https://mudamudiselor.web.id/common/api";
+        let databaseKasLokal = [];
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+
+       async function isiDropdownTahunKas() {
+    const selectTahun = document.getElementById("pilih-tahun-kas");
+    if (!selectTahun) return;
+
+    selectTahun.innerHTML = `<option value="">Memuat tahun...</option>`;
+
+    try {
+        const response = await fetch(`${KAS_API_BASE}/kas_years.php?cache=${Date.now()}`);
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+            throw new Error(result.message || "Gagal mengambil data tahun.");
+        }
+
+        const tahunList = Array.isArray(result.data) ? result.data : [];
+        const tahunSekarang = new Date().getFullYear();
+
+        selectTahun.innerHTML = "";
+
+        if (tahunList.length === 0) {
+            const option = document.createElement("option");
+            option.value = tahunSekarang;
+            option.textContent = tahunSekarang;
+            option.selected = true;
+            selectTahun.appendChild(option);
+            return;
+        }
+
+        tahunList.forEach((tahun) => {
+            const option = document.createElement("option");
+            option.value = tahun;
+            option.textContent = tahun;
+
+            if (parseInt(tahun) === tahunSekarang) {
+                option.selected = true;
+            }
+
+            selectTahun.appendChild(option);
+        });
+
+        // Kalau tahun sekarang tidak ada di data,
+        // pilih tahun paling terbaru dari database.
+        if (!selectTahun.value && selectTahun.options.length > 0) {
+            selectTahun.selectedIndex = 0;
+        }
+
+    } catch (error) {
+        console.error("Gagal memuat daftar tahun:", error);
+
+        const tahunSekarang = new Date().getFullYear();
+        selectTahun.innerHTML = `<option value="${tahunSekarang}">${tahunSekarang}</option>`;
+    }
+}
+
+        async function ambilDataKasMMS() {
+            const tbody = document.getElementById("data-tabel-kas-mms");
+            const tahunDipilih = document.getElementById("pilih-tahun-kas").value;
+
+            tbody.innerHTML = `<tr><td colspan="15" style="text-align: center; padding: 30px; color: #666;"><i class="fa-solid fa-spinner fa-spin"></i> Memuat data rekap kas tahun ${tahunDipilih}...</td></tr>`;
+
+            try {
+                const response = await fetch(`${KAS_API_BASE}/kas_rekap.php?tahun=${encodeURIComponent(tahunDipilih)}&cache=${Date.now()}`);
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    throw new Error(result.message || 'Gagal mengambil data kas dari database.');
+                }
+
+                databaseKasLokal = Array.isArray(result.data) ? result.data : [];
+                renderTabelKasMMS(databaseKasLokal);
+            } catch (error) {
+                console.error("Gagal mengambil data kas dari database lokal:", error);
+                tbody.innerHTML = `<tr><td colspan="15" style="text-align:center; color:#b71c1c; padding:20px;">Gagal terhubung ke database kas lokal.<br><small>${escapeHtml(error.message)}</small></td></tr>`;
+            }
+        }
+
+        function renderTabelKasMMS(dataArray) {
+            const tbody = document.getElementById("data-tabel-kas-mms");
+            if (!tbody) return;
+
+            if (!Array.isArray(dataArray) || dataArray.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="15" style="text-align:center; padding:20px; color:#666;">Belum ada data iuran warga pada tahun ini.</td></tr>`;
+                return;
+            }
+
+            const urutanBulan = ["januari", "februari", "maret", "april", "mei", "juni", "juli", "agustus", "september", "oktober", "november", "desember"];
+
+            const htmlHTML = dataArray.map((row) => {
+                const kolomBulanHtml = urutanBulan.map((bulan) => {
+                    const nilai = row[bulan];
+                    const sudahBayar = nilai && nilai.paid === true;
+                    const title = sudahBayar ? escapeHtml(nilai.jumlah_format || 'Sudah bayar') : 'Belum bayar';
+
+                    if (sudahBayar) {
+                        return `<td style="text-align: center;" title="${title}"><span class="centang-mms"><i class="fa-solid fa-check"></i></span></td>`;
+                    }
+
+                    return `<td style="text-align: center;" title="${title}"><span class="strip-mms">-</span></td>`;
+                }).join('');
+
+                return `
+                    <tr>
+                        <td style="text-align: center;">${escapeHtml(row.no)}</td>
+                        <td class="sticky-nama"><i class="fa-solid fa-user" style="color:#E53935; margin-right:6px; font-size:11px;"></i> ${escapeHtml(row.nama)}</td>
+                        ${kolomBulanHtml}
+                        <td style="text-align: right; font-weight: bold; color: #333;">${escapeHtml(row.total || 'Rp 0')}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            tbody.innerHTML = htmlHTML;
+        }
+
+        function filterNamaTabelKas() {
+            const inputCari = document.getElementById("cari-nama-kas");
+            const keyword = inputCari ? inputCari.value.toLowerCase() : '';
+            const dataSaring = databaseKasLokal.filter(item => {
+                return String(item.nama || '').toLowerCase().includes(keyword);
+            });
+            renderTabelKasMMS(dataSaring);
+        }
+
+       document.addEventListener("DOMContentLoaded", async () => {
+    await isiDropdownTahunKas();
+    ambilDataKasMMS();
+});
+    </script>
+</body>
+</html>

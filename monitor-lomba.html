@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monitor Lomba - BPH MMS 05</title>
+  <link rel="icon" href="images/logo.png" type="image/png">
+  <link rel="stylesheet" href="css/generator-lomba-ui-v2.css?=v1.1">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="mobile-global-overrides.css?v=7">
+</head>
+<body class="mms-admin-page mms-lomba-v2-page">
+  <main class="mms-admin-main">
+    <section class="mms-hero-card">
+      <div>
+        <span class="mms-badge">Monitor</span>
+        <h1>Monitor Lomba</h1>
+        <p>Read-only. Halaman ini hanya membaca hasil Publish dari admin.</p>
+      </div>
+      <div class="mms-hero-actions">
+        <span class="mms-status-pill" id="monitorStatus">Memuat monitor...</span>
+      </div>
+    </section>
+
+    <section class="mms-card mms-bracket-card">
+      <div class="mms-card-header">
+        <div>
+          <h2>Bagan Live</h2>
+          <p>Berubah otomatis setelah admin publish.</p>
+        </div>
+      </div>
+      <div id="monitorCompetitionInfo" class="monitor-competition-info" hidden></div>
+      <div id="monitorBracketArea" class="bracket-area"></div>
+      <div id="monitorPodiumArea"></div>
+    </section>
+
+    <section class="mms-card monitor-archive-card">
+      <button type="button" class="mms-accordion-main monitor-archive-toggle" id="btnToggleArchive">
+        <span><i class="fa-solid fa-box-archive"></i> Arsip Lomba Selesai</span>
+        <i class="fa-solid fa-chevron-down mms-accordion-icon"></i>
+      </button>
+      <div class="monitor-archive-panel" id="monitorArchivePanel">
+        <div class="monitor-archive-toolbar">
+          <div class="mms-form-group">
+            <label for="monitorArchiveSearch">Search Nama Lomba</label>
+            <input type="search" id="monitorArchiveSearch" placeholder="Cari lomba selesai...">
+          </div>
+          <div class="mms-form-group">
+            <label for="monitorArchiveYear">Tahun</label>
+            <select id="monitorArchiveYear">
+              <option value="all">Semua Tahun</option>
+            </select>
+          </div>
+        </div>
+        <div id="monitorArchiveList" class="monitor-archive-list">
+          <div class="participant-empty-state">Belum ada arsip lomba selesai.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="monitor-archive-overlay" id="monitorArchiveOverlay" hidden>
+    <div class="monitor-archive-modal" role="dialog" aria-modal="true" aria-labelledby="archiveModalTitle">
+      <div class="monitor-archive-modal-head">
+        <div>
+          <span class="mms-badge">Arsip Selesai</span>
+          <h2 id="archiveModalTitle">Arsip Lomba</h2>
+        </div>
+        <div class="monitor-archive-modal-actions">
+          <button type="button" class="mms-btn mms-btn-secondary" id="btnArchiveDownload"><i class="fa-solid fa-file-pdf"></i> Print / Simpan PDF</button>
+          <button type="button" class="mms-icon-btn" id="btnCloseArchive" aria-label="Tutup arsip"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+      </div>
+      <div id="archiveCompetitionInfo" class="monitor-competition-info monitor-competition-info-archive" hidden></div>
+      <div id="archiveBracketArea" class="bracket-area"></div>
+      <div id="archivePodiumArea"></div>
+    </div>
+  </div>
+  <script type="module" src="js/monitor-lomba.js"></script>
+</body>
+</html>

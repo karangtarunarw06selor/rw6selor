@@ -1,0 +1,70 @@
+# Pocket Clash sensitive config
+billiard/api/db.php
+
+# Backups and test files
+billiard/*backup*.html
+billiard/test_*.html
+
+# Archives / env / database dumps
+*.zip
+*.sql
+.env
+
+# IDE / OS
+.DS_Store
+__MACOSX/
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+error_log
+logs/
+*.gz
+
+# Dependency directories
+vendor/
+node_modules/
+lavarel/vendor/
+lavarel/node_modules/
+billiard_realtime/node_modules/
+chess-online/node_modules/
+
+# Laravel specific
+lavarel/.env
+lavarel/bootstrap/cache/*.php
+lavarel/storage/logs/*.log
+lavarel/storage/framework/cache/data/*
+lavarel/storage/framework/sessions/*
+lavarel/storage/framework/views/*
+
+# Backup folders
+_backup_*/
+backup-*/
+
+# Symlinks that won't work in repo
+common
+
+# Temp files
+*.tmp
+*.temp
+tmp/
+
+# Cache
+*.cache
+.cache/
+
+# Composer
+composer.phar
+
+# Package lock files (optional - keep if needed)
+package-lock.json
+
+# SSL / Certificates
+ssl/
+*.pem
+*.key
+*.crt
+*.csr

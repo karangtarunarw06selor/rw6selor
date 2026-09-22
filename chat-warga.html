@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Warga - Mudamudi</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 800px;
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 15px;
+        }
+        
+        .chat-section {
+            display: none;
+        }
+        
+        .active-section {
+            display: block;
+        }
+        
+        /* Login Section */
+        .login-container {
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .login-title {
+            font-size: 22px;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .input-group input:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+        
+        .input-group small {
+            display: block;
+            margin-top: 6px;
+            color: #777;
+            font-size: 13px;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .member-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        
+        /* Chat Interface */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        
+        .chat-header {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .user-details h3 {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        
+        .user-details span {
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .logout-btn {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .logout-btn:hover {
+            background: #ff2e43;
+        }
+        
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f5f7fb;
+        }
+        
+        .message {
+            background: white;
+            border-radius: 18px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+            max-width: 70%;
+            position: relative;
+            group: hover;
+        }
+        
+        .message.member {
+            border-left: 4px solid #4CAF50;
+        }
+        
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+        
+        .sender-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        .sender-status {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .time {
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .message-text {
+            color: #444;
+            line-height: 1.5;
+            font-size: 14px;
+        }
+        
+        .edited-badge {
+            font-size: 10px;
+            color: #aaa;
+            margin-left: 5px;
+            font-style: italic;
+        }
+        
+        .message-actions {
+            display: none;
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            gap: 5px;
+        }
+        
+        .message:hover .message-actions {
+            display: flex;
+        }
+        
+        .btn-action {
+            background: #eee;
+            border: none;
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 11px;
+            cursor: pointer;
+            color: #666;
+            transition: background 0.2s;
+        }
+        
+        .btn-action:hover {
+            background: #ddd;
+            color: #333;
+        }
+        
+        .btn-action.btn-delete:hover {
+            background: #ffebee;
+            color: #f44336;
+        }
+        
+        .input-container {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 12px;
+        }
+        
+        .message-input {
+            flex: 1;
+            padding: 14px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 24px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .message-input:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+        
+        .send-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .send-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .send-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .no-messages {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+            font-size: 16px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .container {
+                border-radius: 12px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .chat-container {
+                height: 500px;
+            }
+            
+            .login-container {
+                padding: 30px;
+            }
+            
+            .message {
+                max-width: 85%;
+            }
+            
+            .message-actions {
+                display: flex; /* Always show on mobile as hover doesn't exist */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Chat Warga</h1>
+            <p>Kolom Chat Bersama - Wajib menggunakan nama asli</p>
+        </div>
+        
+        <!-- Login Section -->
+        <div id="loginSection" class="login-container active-section">
+            <h2 class="login-title">Masuk ke Chat Warga</h2>
+            <p style="color: #666; margin-bottom: 30px; font-size: 14px;">
+                Silakan masukkan nama lengkap Anda untuk memulai chat. <br>
+                Jika nama Anda terdaftar sebagai anggota, akan ditampilkan badge "Anggota"
+            </p>
+            
+            <div class="input-group">
+                <label for="deviceId">ID Perangkat</label>
+                <input type="text" id="deviceId" placeholder="Contoh: android-12345" value="user-123">
+                <small>ID unik untuk mengenali perangkat Anda</small>
+            </div>
+            
+            <div class="input-group">
+                <label for="fullName">Nama Lengkap</label>
+                <input type="text" id="fullName" placeholder="Masukkan nama lengkap Anda" value="John Doe">
+                <small>Gunakan nama asli Anda. Nama akan dicocokkan ke database anggota, dan bila terdaftar akan ditandai sebagai (anggota).</small>
+            </div>
+            
+            <button id="loginBtn" class="btn">Masuk ke Chat</button>
+        </div>
+        
+        <!-- Chat Interface -->
+        <div id="chatSection" class="chat-section">
+            <div class="chat-container">
+                <div class="chat-header">
+                    <div class="user-info">
+                        <div class="avatar" id="userAvatar">JD</div>
+                        <div class="user-details">
+                            <h3 id="userDisplayName">John Doe</h3>
+                            <span id="userStatus">Sedang online</span>
+                        </div>
+                        <span id="memberBadge" class="member-badge">(anggota)</span>
+                    </div>
+                    <button id="logoutBtn" class="logout-btn">Keluar</button>
+                </div>
+                
+                <div class="messages-container" id="messagesContainer">
+                    <div class="loading" id="loadingMessages">
+                        Memuat pesan...
+                    </div>
+                </div>
+                
+                <div class="input-container">
+                    <input type="text" class="message-input" id="messageInput" placeholder="Ketik pesan Anda..." autocomplete="off">
+                    <button id="sendBtn" class="send-btn">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M2.01 21L23 12L2.01 3L2 10L17 12L2 14L2.01 21Z" fill="white"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const API_BASE = 'https://mudamudiselor.web.id/common/api/warga-chat.php';
+        
+        class ChatWarga {
+            constructor() {
+                this.currentUser = null;
+                this.deviceId = '';
+                this.pollInterval = null;
+                this.messageQueue = [];
+                this.isSending = false;
+                
+                this.initElements();
+                this.bindEvents();
+                this.autoGenerateDeviceId();
+            }
+            
+            initElements() {
+                this.loginSection = document.getElementById('loginSection');
+                this.chatSection = document.getElementById('chatSection');
+                this.deviceIdInput = document.getElementById('deviceId');
+                this.fullNameInput = document.getElementById('fullName');
+                this.loginBtn = document.getElementById('loginBtn');
+                
+                this.userAvatar = document.getElementById('userAvatar');
+                this.userDisplayName = document.getElementById('userDisplayName');
+                this.userStatus = document.getElementById('userStatus');
+                this.memberBadge = document.getElementById('memberBadge');
+                this.messagesContainer = document.getElementById('messagesContainer');
+                this.loadingMessages = document.getElementById('loadingMessages');
+                this.messageInput = document.getElementById('messageInput');
+                this.sendBtn = document.getElementById('sendBtn');
+                this.logoutBtn = document.getElementById('logoutBtn');
+            }
+            
+            autoGenerateDeviceId() {
+                const storedId = localStorage.getItem('chat_device_id');
+                if (storedId) {
+                    this.deviceIdInput.value = storedId;
+                } else {
+                    const randomId = 'user-' + Math.random().toString(36).substr(2, 9);
+                    this.deviceIdInput.value = randomId;
+                    localStorage.setItem('chat_device_id', randomId);
+                }
+            }
+            
+            bindEvents() {
+                this.loginBtn.addEventListener('click', () => this.handleLogin());
+                this.sendBtn.addEventListener('click', () => this.sendMessage());
+                this.messageInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.sendMessage();
+                    }
+                });
+                this.logoutBtn.addEventListener('click', () => this.handleLogout());
+            }
+            
+            async handleLogin() {
+                const deviceId = this.deviceIdInput.value.trim();
+                const fullName = this.fullNameInput.value.trim();
+                
+                if (!deviceId || !fullName) {
+                    alert('Device ID dan Nama Lengkap wajib diisi!');
+                    return;
+                }
+                
+                try {
+                    const response = await fetch(API_BASE, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            action: 'register',
+                            device_id: deviceId,
+                            display_name: fullName
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                if (data.ok) {
+                    this.deviceId = deviceId;
+                    this.currentUser = data.data;
+                    
+                    localStorage.setItem('chat_device_id', deviceId);
+                    localStorage.setItem('chat_user_name', this.currentUser.display_name || fullName);
+                    
+                    this.switchToChat();
+                    this.updateUserInfo();
+                    this.startPolling();
+                } else {
+                        alert('Login gagal: ' + (data.message || 'Terjadi kesalahan'));
+                    }
+                } catch (error) {
+                    alert('Terjadi kesalahan saat login. Periksa koneksi internet Anda.');
+                }
+            }
+            
+            switchToChat() {
+                this.loginSection.classList.remove('active-section');
+                this.chatSection.classList.add('active-section');
+                this.messageInput.focus();
+            }
+            
+            updateUserInfo() {
+                if (!this.currentUser) return;
+                
+                const initials = this.currentUser.display_name
+                    .split(' ')
+                    .map(word => word[0])
+                    .join('')
+                    .toUpperCase()
+                    .substring(0, 2);
+                
+                this.userAvatar.textContent = initials;
+                this.userDisplayName.textContent = this.currentUser.display_name;
+                
+                if (this.currentUser.is_member) {
+                    this.memberBadge.textContent = '(anggota)';
+                    this.memberBadge.style.display = 'inline-block';
+                    this.userStatus.textContent = 'Sedang online • anggota terverifikasi';
+                } else {
+                    this.memberBadge.style.display = 'none';
+                    this.userStatus.textContent = 'Sedang online';
+                }
+            }
+            
+            async loadMessages() {
+                try {
+                    const response = await fetch(`${API_BASE}?action=list&limit=50`);
+                    const data = await response.json();
+                    
+                    if (data.ok) {
+                        this.displayMessages(data.data);
+                    }
+                } catch (error) {
+                    this.loadingMessages.style.display = 'none';
+                }
+            }
+            
+            displayMessages(messages) {
+                this.loadingMessages.style.display = 'none';
+                this.messagesContainer.innerHTML = '';
+                
+                if (messages.length === 0) {
+                    this.messagesContainer.innerHTML = `
+                        <div class="no-messages">
+                            Belum ada pesan hari ini. Jadilah yang pertama mengirim pesan!
+                        </div>
+                    `;
+                    return;
+                }
+                
+                messages.forEach(msg => {
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = `message ${msg.is_member ? 'member' : ''}`;
+                    
+                    const time = new Date(msg.created_at);
+                    const timeStr = time.toLocaleTimeString('id-ID', { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                    });
+                    
+                    const isOwnMessage = msg.device_id === this.deviceId;
+                    
+                    messageDiv.innerHTML = `
+                        <div class="message-header">
+                            <div>
+                                <span class="sender-name">${this.escapeHtml(msg.display_name)}</span>
+                                ${msg.is_member ? '<span class="sender-status">(anggota)</span>' : ''}
+                            </div>
+                            <span class="time">${timeStr}</span>
+                        </div>
+                        <div class="message-text">
+                            ${this.escapeHtml(msg.message)}
+                            ${msg.is_edited ? '<span class="edited-badge">(edited)</span>' : ''}
+                        </div>
+                        ${isOwnMessage ? `
+                            <div class="message-actions">
+                                <button class="btn-action btn-edit" onclick="window.chatApp.editMessage(${msg.id}, \`${this.escapeJs(msg.message)}\`)">Edit</button>
+                                <button class="btn-action btn-delete" onclick="window.chatApp.deleteMessage(${msg.id})">Hapus</button>
+                            </div>
+                        ` : ''}
+                    `;
+                    
+                    this.messagesContainer.appendChild(messageDiv);
+                });
+                
+                this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+            }
+            
+            async sendMessage() {
+                const message = this.messageInput.value.trim();
+                if (!message || this.isSending) return;
+                
+                this.isSending = true;
+                this.sendBtn.disabled = true;
+                
+                try {
+                    const response = await fetch(API_BASE, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            action: 'send',
+                            device_id: this.deviceId,
+                            message: message
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.ok) {
+                        this.messageInput.value = '';
+                        this.loadMessages();
+                    } else {
+                        alert('Gagal mengirim pesan: ' + (data.message || 'Terjadi kesalahan'));
+                    }
+                } catch (error) {
+                    alert('Terjadi kesalahan saat mengirim pesan.');
+                } finally {
+                    this.isSending = false;
+                    this.sendBtn.disabled = false;
+                    this.messageInput.focus();
+                }
+            }
+
+            async editMessage(id, currentText) {
+                const newText = prompt('Edit pesan Anda:', currentText);
+                if (newText === null || newText.trim() === '' || newText === currentText) return;
+
+                try {
+                    const response = await fetch(API_BASE, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'edit',
+                            device_id: this.deviceId,
+                            message_id: id,
+                            message: newText.trim()
+                        })
+                    });
+                    const data = await response.json();
+                    if (data.ok) {
+                        this.loadMessages();
+                    } else {
+                        alert('Gagal edit pesan: ' + data.message);
+                    }
+                } catch (error) {
+                    alert('Terjadi kesalahan saat mengedit pesan.');
+                }
+            }
+
+            async deleteMessage(id) {
+                if (!confirm('Hapus pesan ini?')) return;
+
+                try {
+                    const response = await fetch(API_BASE, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'delete',
+                            device_id: this.deviceId,
+                            message_id: id
+                        })
+                    });
+                    const data = await response.json();
+                    if (data.ok) {
+                        this.loadMessages();
+                    } else {
+                        alert('Gagal hapus pesan: ' + data.message);
+                    }
+                } catch (error) {
+                    alert('Terjadi kesalahan saat menghapus pesan.');
+                }
+            }
+            
+            startPolling() {
+                this.loadMessages();
+                this.pollInterval = setInterval(() => {
+                    this.loadMessages();
+                }, 5000);
+            }
+            
+            handleLogout() {
+                if (confirm('Apakah Anda yakin ingin keluar?')) {
+                    clearInterval(this.pollInterval);
+                    this.currentUser = null;
+                    this.deviceId = '';
+                    
+                    this.chatSection.classList.remove('active-section');
+                    this.loginSection.classList.add('active-section');
+                    
+                    this.messagesContainer.innerHTML = '';
+                    this.loadingMessages.style.display = 'block';
+                }
+            }
+            
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            escapeJs(text) {
+                return text.replace(/`/g, '\\`').replace(/\${/g, '\\${');
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            window.chatApp = new ChatWarga();
+            
+            // Try to auto-login if there's stored data
+            const storedDeviceId = localStorage.getItem('chat_device_id');
+            const storedUserName = localStorage.getItem('chat_user_name');
+            
+            if (storedDeviceId && storedUserName) {
+                document.getElementById('deviceId').value = storedDeviceId;
+                document.getElementById('fullName').value = storedUserName;
+            }
+        });
+    </script>
+</body>
+</html>

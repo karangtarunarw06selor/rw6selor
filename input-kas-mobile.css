@@ -1,0 +1,244 @@
+.kas-bulanan-page .kas-form {
+    width: 100%;
+    margin-top: 22px;
+}
+
+.kas-bulanan-page .kas-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    align-items: start;
+}
+
+.kas-bulanan-page .kas-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+    min-width: 0;
+}
+
+.kas-bulanan-page .kas-field-wide {
+    grid-column: 1 / -1;
+}
+
+.kas-bulanan-page .kas-field span {
+    display: block;
+    font-weight: 700;
+    color: #333;
+    font-size: 14px;
+    line-height: 1.35;
+}
+
+.kas-bulanan-page .kas-field input,
+.kas-bulanan-page .kas-field select,
+.kas-bulanan-page .kas-field textarea {
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 12px 14px;
+    font: inherit;
+    background: #fff;
+    box-sizing: border-box;
+}
+
+.kas-bulanan-page .kas-field input[type="date"] {
+    display: block;
+    width: 100% !important;
+    min-width: 0;
+    max-width: 100%;
+    appearance: none;
+    -webkit-appearance: none;
+    line-height: 1.2;
+}
+
+.kas-bulanan-page .kas-month-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.kas-bulanan-page .kas-month-grid label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #fff;
+    min-width: 0;
+}
+
+.kas-bulanan-page .kas-month-grid input {
+    width: auto;
+    flex: 0 0 auto;
+}
+
+.kas-bulanan-page .kas-actions {
+    margin-top: 18px;
+    text-align: right;
+}
+
+.kas-bulanan-page .kas-submit-btn {
+    background: #2c3e50;
+    color: #fff;
+    border: 0;
+    border-radius: 8px;
+    padding: 12px 18px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.kas-bulanan-page .kas-total-filter {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+    font-weight: 800;
+}
+
+.kas-bulanan-page .kas-total-filter .filter-box {
+    min-width: 140px;
+}
+
+.kas-bulanan-page .kas-accordion {
+    margin-top: 24px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.kas-bulanan-page .kas-accordion-toggle {
+    width: 100%;
+    border: 0;
+    background: #fff;
+    color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 14px 16px;
+    cursor: pointer;
+    font-weight: 800;
+    text-align: left;
+}
+
+.kas-bulanan-page .kas-toggle-icon {
+    transition: transform .2s ease;
+}
+
+.kas-bulanan-page .kas-accordion-body {
+    display: none;
+    padding: 16px;
+    border-top: 1px solid #eee;
+}
+
+.kas-bulanan-page .kas-accordion.open .kas-accordion-body {
+    display: block;
+}
+
+.kas-bulanan-page .kas-accordion.open .kas-toggle-icon {
+    transform: rotate(180deg);
+}
+
+.kas-bulanan-page .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.kas-bulanan-page .finance-table {
+    width: 100%;
+    min-width: 720px;
+}
+
+.kas-bulanan-page .kas-bulanan-link-wrap {
+    margin-top: 12px;
+}
+
+.kas-bulanan-page .kas-bulanan-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: #eef2f7;
+    color: #2c3e50;
+    text-decoration: none;
+    font-weight: 700;
+}
+
+@media (max-width: 768px) {
+    .kas-bulanan-page .finance-page-wrapper {
+        padding-top: 84px !important;
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+        padding-bottom: 28px !important;
+    }
+
+    .kas-bulanan-page .content-box {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 22px 14px !important;
+        margin: 0 auto !important;
+    }
+
+    .kas-bulanan-page .kas-form-grid {
+        grid-template-columns: 1fr !important;
+        gap: 14px !important;
+    }
+
+    .kas-bulanan-page .kas-field-wide {
+        grid-column: 1 / -1 !important;
+    }
+
+    .kas-bulanan-page .kas-month-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .kas-bulanan-page .kas-actions {
+        text-align: stretch;
+    }
+
+    .kas-bulanan-page .kas-submit-btn,
+    .kas-bulanan-page .kas-total-filter .filter-box,
+    .kas-bulanan-page .kas-bulanan-link,
+    .kas-bulanan-page .kas-field input[type="date"],
+    .kas-bulanan-page .kas-field input[type="number"],
+    .kas-bulanan-page .kas-field select,
+    .kas-bulanan-page .kas-field textarea {
+        width: 100% !important;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    .kas-bulanan-page .kas-total-filter {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+        align-items: stretch;
+    }
+
+    .kas-bulanan-page .finance-table th,
+    .kas-bulanan-page .finance-table td {
+        padding: 10px 12px;
+        font-size: 13px;
+        vertical-align: top;
+    }
+
+    .kas-bulanan-page .kas-accordion-body {
+        padding: 14px 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .kas-bulanan-page .kas-form-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .kas-bulanan-page .kas-month-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
