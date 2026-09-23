@@ -45,7 +45,7 @@ services:
     volumes:
       - rw6selor-db-data:/var/lib/mysql
       - ./db-init:/docker-entrypoint-initdb.d:ro
-      - ./sql/mudamudi_common_SAFE_UPDATE.sql:/docker-entrypoint-initdb.d/mudamudi_common_SAFE_UPDATE.sql:ro
+      - ./sql:/rw6-data/sql:ro
 
   # For Node.js realtime games
   rw6selor-billiard-realtime:

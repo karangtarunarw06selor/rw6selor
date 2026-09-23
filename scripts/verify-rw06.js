@@ -30,10 +30,15 @@ if (manifest.name !== 'RW06 Selor' || manifest.theme_color !== '#0f5ea8') {
 }
 
 const compose = fs.readFileSync(path.join(root, 'docker-compose.yml'), 'utf8');
-for (const needle of ['rw6selor-db', 'mariadb:11.4', 'rw6selor-db-data', 'mudamudi_common_SAFE_UPDATE.sql']) {
+for (const needle of ['rw6selor-db', 'mariadb:11.4', 'rw6selor-db-data', './sql:/rw6-data/sql:ro']) {
   if (!compose.includes(needle)) {
     throw new Error(`docker-compose missing ${needle}`);
   }
+}
+
+const dbInit = fs.readFileSync(path.join(root, 'db-init/01-mudamudi-common.sql'), 'utf8');
+if (!dbInit.includes('/rw6-data/sql/mudamudi_common_SAFE_UPDATE.sql')) {
+  throw new Error('database init does not source Mudamudi RW06 data');
 }
 
 const style = fs.readFileSync(path.join(root, 'style.css'), 'utf8');
