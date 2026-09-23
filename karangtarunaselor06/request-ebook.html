@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>Request E-Book ePerpustakaan RW06 SELOR</title>
+    
+    <link rel="icon" href="images/mms.avif" type="image/avif">
+    <link rel="icon" type="image/avif" sizes="192x192" href="images/mms.avif">
+    <link rel="apple-touch-icon" sizes="192x192" href="images/mms.avif">
+    <link rel="apple-touch-icon" sizes="512x512" href="images/mms.avif">
+    
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="manifest" href="manifest.json">
+    
+    <style>
+        .request-page-wrapper {
+            max-width: 520px;
+            margin: 30px auto;
+            padding: 0 16px;
+        }
+        .request-card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+            overflow: hidden;
+        }
+        .request-card-header {
+            background: linear-gradient(135deg, #E53935, #D32F2F);
+            padding: 18px 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .request-card-header i {
+            font-size: 1.5rem;
+            color: rgba(255,255,255,0.9);
+        }
+        .request-card-header h2 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: #fff;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+        .request-card-body {
+            padding: 24px;
+        }
+        .request-card-body .info-text {
+            font-size: 0.85rem;
+            color: #888;
+            margin: 0 0 18px 0;
+            line-height: 1.5;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 14px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #444;
+            margin-bottom: 4px;
+        }
+        .form-group label i {
+            width: 16px;
+            color: #E53935;
+            margin-right: 4px;
+        }
+        .form-group label .required {
+            color: #E53935;
+            margin-left: 2px;
+        }
+        .form-group .form-input {
+            width: 100%;
+            padding: 10px 14px;
+            font-size: 0.9rem;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 8px;
+            outline: none;
+            transition: 0.2s;
+            background: #fafafa;
+            box-sizing: border-box;
+        }
+        .form-group .form-input:focus {
+            border-color: #E53935;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(229,57,53,0.1);
+        }
+        .form-group .form-input::placeholder {
+            color: #bbb;
+            font-size: 0.85rem;
+        }
+        .btn-submit-request {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 12px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #fff;
+            background: linear-gradient(135deg, #E53935, #D32F2F);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 4px;
+            letter-spacing: 0.3px;
+        }
+        .btn-submit-request:hover {
+            background: linear-gradient(135deg, #D32F2F, #B71C1C);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(229,57,53,0.3);
+        }
+        .btn-submit-request:active {
+            transform: translateY(0);
+        }
+        .btn-submit-request:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .request-alert {
+            display: none;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 0.88rem;
+            line-height: 1.5;
+        }
+        .request-alert.success {
+            display: block;
+            background: #E8F5E9;
+            color: #2E7D32;
+            border: 1px solid #C8E6C9;
+        }
+        .request-alert.error {
+            display: block;
+            background: #FFEBEE;
+            color: #C62828;
+            border: 1px solid #FFCDD2;
+        }
+        .request-footer {
+            text-align: center;
+            padding: 16px 24px 20px;
+            border-top: 1px solid #f0f0f0;
+        }
+        .request-footer a {
+            color: #E53935;
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: 0.2s;
+        }
+        .request-footer a:hover {
+            color: #B71C1C;
+            gap: 10px;
+        }
+        @media (max-width: 480px) {
+            .request-page-wrapper {
+                margin: 16px auto;
+            }
+            .request-card-header {
+                padding: 14px 18px;
+            }
+            .request-card-header h2 {
+                font-size: 1rem;
+            }
+            .request-card-body {
+                padding: 18px;
+            }
+        }
+    </style>
+</head>
+<body> 
+    
+    <header class="site-header">
+        <div class="top-header">
+            <div class="header-logo-area">
+                <a href="index.html" class="logo-wrapper">
+                    <img src="images/mms.avif" alt="Logo RW06 Selor" class="mini-logo">
+                    <div class="header-text">
+                        <span class="brand-title">RW06 SELOR</span>
+                        <span class="brand-subtitle">Sedahromo Lor 05</span>
+                    </div>
+                </a>
+            </div>
+            <div class="header-right-stuff">
+                <div class="header-socials">
+                    <a href="#" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" title="YouTube"><i class="fa-brands fa-youtube"></i></a>
+                    <a href="#" title="Facebook"><i class="fa-brands fa-facebook"></i></a>
+                    <a href="https://www.tiktok.com/@mudamudisedahromolor05?is_from_webapp=1&sender_device=pc" title="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+                </div>
+            </div>
+            <button class="menu-toggle" id="mobile-menu-btn">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+        </div> 
+
+     <nav class="main-navbar">
+            <ul class="nav-list">
+                <li class="nav-item"><a href="index.html">BERANDA</a></li>
+                <li class="nav-item">
+                    <a href="#">PROFIL</a>
+                    <ul class="submenu">
+                        <li class="submenu-item"><a href="struktur.html"> - STRUKTUR KEANGGOTAAN</a></li>
+                        <li class="submenu-item"><a href="visi-misi.html"> - VISI & MISI</a></li>
+                        <li class="submenu-item"><a href="daftar-anggota.html"> - DAFTAR ANGGOTA</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a href="#" id="btn-bulanan">KEGIATAN</a>
+                    <ul class="submenu" id="menu-rapat">
+                        <li class="submenu-item"><a href="rapat-hasilrapat.html"> - RAPAT BULANAN</a></li>
+                        <li class="submenu-item"><a href="dokumentasi-kegiatan.html"> - DOKUMENTASI</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a href="#">LAPORAN</a>
+                    <ul class="submenu">
+                        <li class="submenu-item"><a href="laporan-keuangan.html"> - KEUANGAN</a></li>
+                        <li class="submenu-item"><a href="iuran-bulanan.html"> - KAS BULANAN</a></li>
+                        <li class="submenu-item"><a href="lpj.html"> - PERTANGGUNG JAWABAN</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a href="#" id="btn-tahunan">DATA ARSIP</a>
+                    <ul class="submenu" id="menu-17an">
+                        <li class="submenu-item"><a href="arsip-proposal.html"> - PROPOSAL</a></li>
+                        <li class="submenu-item"><a href="arsip-lomba.html"> - LOMBA</a></li>
+                        <li class="submenu-item"><a href="arsip-surat.html"> - SURAT</a></li>
+                    </ul>
+                </li> 
+                <li class="nav-item">
+                    <a href="#">INFORMASI</a>
+                    <ul class="submenu">
+                        <li class="submenu-item"><a href="berita.html"> - BERITA</a></li>
+                        <li class="submenu-item"><a href="kesehatan.html"> - KESEHATAN</a></li>
+                         <li class="submenu-item"><a href="monitor-lomba.html"> - MONITORING LOMBA</a></li>
+                    </ul>
+                </li>
+               <li class="nav-item">
+                 <a href="#">RUANG LITERASI</a>
+                    <ul class="submenu">
+                       <li class="submenu-item"><a href="englishmms.html"> - ENGLISH ACCADEMY</a></li>
+                        <li class="submenu-item"><a href="eperpus-mms.html"> - E-PERPUSTAKAAN</a></li>
+                       <li class="submenu-item"><a href="request-ebook.html"> - REQUEST EBOOK</a></li>
+                    </ul>
+                 </li>
+                <li class="nav-item">
+                 <a href="#">GAME</a>
+                    <ul class="submenu">
+                       <li class="submenu-item"><a href="billiard/"> - BILLIARD</a></li>
+                       <li class="submenu-item"><a href="chess/"> - CATUR</a></li>
+                    </ul>
+                 </li>
+                 <li class="nav-item">
+                 <a href="#">MARKETPLACE</a>
+                    <ul class="submenu">
+                       <li class="submenu-item"><a href="mms-marketplace.html"> - PASAR DIGITAL</a></li>
+                    </ul>
+                 </li>
+             </ul>
+            <div class="navbar-mobile-only">
+                <div class="header-socials">
+                    <a href="#" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" title="YouTube"><i class="fa-brands fa-youtube"></i></a>
+                    <a href="#" title="Facebook"><i class="fa-brands fa-facebook"></i></a>
+                    <a href="https://www.tiktok.com/@mudamudisedahromolor05?is_from_webapp=1&sender_device=pc" title="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="request-page-wrapper">
+        <div class="request-card">
+            <div class="request-card-header">
+                <i class="fa-solid fa-book-medical"></i>
+                <h2>Request E-Book Baru</h2>
+            </div>
+            <div class="request-card-body">
+                <p class="info-text">Ajukan usulan judul e-book yang ingin kamu baca di E-Perpustakaan RW06 SELOR</p>
+                
+                <div id="requestAlert" class="request-alert"></div>
+                
+                <form id="requestForm" onsubmit="return kirimRequest(event)">
+                    <div class="form-group">
+                        <label for="reqNama"><i class="fa-solid fa-user"></i>Nama Pengusul</label>
+                        <input type="text" id="reqNama" class="form-input" placeholder="Masukkan nama lengkap" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="reqJudul"><i class="fa-solid fa-book"></i>Judul Buku<span class="required">*</span></label>
+                        <input type="text" id="reqJudul" class="form-input" placeholder="Masukkan judul buku yang diinginkan" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="reqPenulis"><i class="fa-solid fa-pen-nib"></i>Nama Penulis</label>
+                        <input type="text" id="reqPenulis" class="form-input" placeholder="Nama penulis (jika tahu)">
+                    </div>
+                    
+                    <button type="submit" id="btnSubmitRequest" class="btn-submit-request">
+                        <i class="fa-solid fa-paper-plane"></i> Kirim Usulan
+                    </button>
+                </form>
+            </div>
+            <div class="request-footer">
+                <a href="eperpus-mms.html"><i class="fa-solid fa-arrow-left"></i> Kembali ke E-Perpustakaan</a>
+            </div>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="footer-container">
+            <div class="footer-column info-col">
+                <div class="footer-brand">
+                    <img src="images/mms.avif" alt="Logo RW06 Selor" class="footer-logo">
+                    <h4>RW06 Selor</h4>
+                </div>
+                <p class="footer-text">
+                    <i class="fa-solid fa-location-dot"></i> Jl. Sedahromo Lor, RT.05 / RW.06, Kel. Kartasura, Kec. Kartasura, Sukoharjo, Jawa Tengah 57167
+                </p>
+                <p class="footer-text">
+                    <i class="fa-solid fa-envelope"></i> <a href="mailto:mudamudisedahromolor@gmail.com">mudamudisedahromolor05@gmail.com</a>
+                </p>
+            </div>
+
+            <div class="footer-column links-col">
+                <h5>Sitemap</h5>
+                <ul class="footer-links">
+                    <li><a href="index.html"><i class="fa-solid fa-chevron-right"></i> Beranda</a></li>
+                    <li><a href="struktur.html"><i class="fa-solid fa-chevron-right"></i> Struktur Organisasi</a></li>
+                    <li><a href="daftar-anggota.html"><i class="fa-solid fa-chevron-right"></i> Daftar Anggota</a></li>
+                    <li><a href="laporan-keuangan.html"><i class="fa-solid fa-chevron-right"></i> Transparansi Kas</a></li>
+                    <li><a href="dokumentasi-kegiatan.html"><i class="fa-solid fa-chevron-right"></i> Dokumentasi</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-column social-col">
+                <h5>Media Sosial</h5>
+                <p class="footer-text">Ikuti linimasa kegiatan dan perkembangan pemuda kami melalui kanal resmi berikut:</p>
+                <div class="footer-social-icons">
+                    <a href="#" title="Instagram" target="_blank"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" title="YouTube" target="_blank"><i class="fa-brands fa-youtube"></i></a>
+                    <a href="#" title="Facebook" target="_blank"><i class="fa-brands fa-facebook"></i></a>
+                    <a href="https://www.tiktok.com/@mudamudisedahromolor05" title="TikTok" target="_blank"><i class="fa-brands fa-tiktok"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>Copyright &copy; 2026 RW06 Selor. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        const API_URL = "/common/api/eperpus.php";
+        
+        // Auto-fill nama jika sudah login di eperpus
+        (function() {
+            try {
+                var saved = sessionStorage.getItem('ePerpusUser');
+                if (saved) {
+                    var user = JSON.parse(saved);
+                    if (user.nama) {
+                        document.getElementById('reqNama').value = user.nama;
+                    }
+                }
+            } catch(e) {}
+        })();
+
+        function kirimRequest(event) {
+            event.preventDefault();
+            
+            var nama = document.getElementById('reqNama').value.trim();
+            var judul = document.getElementById('reqJudul').value.trim();
+            var penulis = document.getElementById('reqPenulis').value.trim();
+            
+            if (!nama) {
+                tampilkanAlert('Silakan masukkan nama lengkap Anda.', 'error');
+                return false;
+            }
+            if (!judul) {
+                tampilkanAlert('Judul buku wajib diisi.', 'error');
+                return false;
+            }
+            
+            var btn = document.getElementById('btnSubmitRequest');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengirim...';
+            
+            var payload = {
+                aksi: "tambahRequestBuku",
+                namaPengusul: nama,
+                judulBuku: judul,
+                penulisBuku: penulis
+            };
+            
+            fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(res) {
+                if (res.status === 'success') {
+                    tampilkanAlert('Usulan e-book berhasil dikirim! Terima kasih atas partisipasimu.', 'success');
+                    document.getElementById('reqJudul').value = '';
+                    document.getElementById('reqPenulis').value = '';
+                } else {
+                    tampilkanAlert('Gagal: ' + (res.message || 'Terjadi kesalahan.'), 'error');
+                }
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Kirim Usulan';
+            })
+            .catch(function() {
+                tampilkanAlert('Koneksi gagal. Silakan coba lagi nanti.', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Kirim Usulan';
+            });
+            
+            return false;
+        }
+        
+        function tampilkanAlert(pesan, tipe) {
+            var el = document.getElementById('requestAlert');
+            el.className = 'request-alert ' + tipe;
+            el.innerHTML = '<i class="fa-solid ' + (tipe === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle') + '"></i> ' + pesan;
+            
+            // Scroll ke alert
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Auto-hide success setelah 5 detik
+            if (tipe === 'success') {
+                setTimeout(function() {
+                    el.style.display = 'none';
+                }, 5000);
+            }
+        }
+    </script>
+
+    <script src="online-tracker.js"></script>
+    <script src="script.js?v=2"></script>
+ 
+</body>
+</html>

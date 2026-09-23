@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>e-Perpustakaan RW06 Selor</title>
+    
+    <link rel="icon" href="images/mms.avif" type="image/avif">
+    <link rel="icon" type="image/avif" sizes="192x192" href="images/mms.avif">
+    <link rel="apple-touch-icon" sizes="192x192" href="images/mms.avif">
+    <link rel="apple-touch-icon" sizes="512x512" href="images/mms.avif">
+    <link rel="stylesheet" href="style.css?v=6">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link rel="manifest" href="manifest.json">
+
+    <style>
+      /* Pengaturan Dasar Tampilan Literasi */
+      body { background: #FAFBFB; color: #333; font-family: 'Segoe UI', sans-serif; padding-top: 0; }
+      
+      .site-header { position: relative !important; width: 100%; z-index: 1000; }
+      
+      /* Tombol Utama Tema Merah Organisasi */
+      .btn-red-custom { background-color: #E53935; color: white; border: none; font-weight: 600; transition: 0.2s; border-radius: 6px; }
+      .btn-red-custom:hover { background-color: #D32F2F; color: white; }
+      
+      /* Container Form Login Anggota */
+      .login-container { max-width: 90%; width: 360px; margin: 60px auto 120px auto; border-top: 5px solid #E53935; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08) !important; background: white; padding: 25px; border-radius: 8px; }
+      
+      /* Struktur Tabel Request */
+      .table-organisasi { width: 100% !important; border-collapse: collapse !important; }
+      .table-organisasi thead { background-color: #5A6268; color: white; }
+      .table-organisasi thead th { font-weight: 600; border: none; padding: 10px 8px; font-size: 0.85rem; }
+      .table-organisasi tbody td { vertical-align: middle; padding: 10px 8px; border-bottom: 1px solid #EAEAEA; font-size: 0.82rem; }
+      
+      /* Navbar Filter Kategori Buku */
+      .category-navbar { display: flex; gap: 8px; margin-bottom: 10px; background: #fff; padding: 8px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border: 1px solid #EAEAEA; overflow-x: auto; white-space: nowrap; }
+      .category-nav-btn { background: #f8f9fa; color: #5A6268; border: 1px solid #EAEAEA; font-size: 0.8rem; font-weight: 600; padding: 6px 16px; border-radius: 20px; transition: all 0.2s ease; cursor: pointer; }
+      .category-nav-btn:hover { background: #E53935; color: white; border-color: #E53935; }
+      .category-nav-btn.active { background: #E53935; color: white; border-color: #E53935; box-shadow: 0 3px 8px rgba(229, 57, 53, 0.2); }
+
+      /* Sub Navbar Kategori */
+      .sub-category-navbar { display: flex; gap: 6px; margin-bottom: 15px; padding: 4px 8px; overflow-x: auto; white-space: nowrap; }
+      .sub-category-btn { background: transparent; color: #7F8C8D; border: 1px dashed #BDC3C7; font-size: 0.72rem; font-weight: 600; padding: 4px 12px; border-radius: 15px; cursor: pointer; }
+      .sub-category-btn.active { background: #5A6268; color: white; border-color: #5A6268; border-style: solid; }
+
+      /* ==========================================================================
+         DATATABLES HYBRID CATALOGUE GRID CARD
+         ========================================================================= */
+      .dataTables_wrapper { width: 100% !important; overflow-x: hidden; }
+      #tabelBuku { border: none !important; background: transparent !important; display: block !important; width: 100% !important; }
+      #tabelBuku thead { display: none !important; } 
+      
+      #tabelBuku tbody { 
+        display: grid !important; 
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important; 
+        gap: 15px !important; 
+        padding: 5px 0 10px 0 !important; 
+        width: 100% !important; 
+        border: none !important;
+      }
+      #tabelBuku tr, #tabelBuku td { display: block !important; padding: 0 !important; border: none !important; width: 100% !important; }
+      
+      .book-card { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 3px 8px rgba(0,0,0,0.05); transition: all 0.3s ease; border: 1px solid #EAEAEA; display: flex; flex-direction: column; height: 320px !important; position: relative; width: 100%; }
+      .book-card:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(229, 57, 53, 0.12); border-color: rgba(229, 57, 53, 0.25); }
+      
+      .book-cover-wrapper { position: relative; width: 100%; height: 155px; background-color: #ECEFF1; display: flex; align-items: center; justify-content: center; overflow: hidden; border-bottom: 1px solid #F0F0F0; }
+      .book-cover-img { width: 100%; height: 100%; object-fit: cover; z-index: 2; position: relative; }
+      
+      .book-info-body { padding: 10px; display: flex; flex-direction: column; justify-content: space-between; height: 165px; background: #ffffff; }
+      .book-title-text { font-size: 0.8rem; font-weight: 700; color: #2C3E50; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 2.3rem; text-align: left; }
+      .book-author-text { font-size: 0.68rem; color: #7F8C8D; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; }
+      
+      .category-tag-box { display: flex; flex-wrap: wrap; gap: 4px; width: 100%; max-height: 48px; overflow: hidden; margin-bottom: 8px; }
+      .category-tag { font-size: 0.6rem; font-weight: 700; padding: 3px 6px; border-radius: 4px; background-color: #E8F5E9; color: #2E7D32; text-transform: uppercase; }
+      
+      .badge-status-pending { background-color: #FFF3CD; color: #856404; border: 1px solid #FFEBAA; padding: 4px 8px; border-radius: 20px; font-size: 0.72rem; }
+      .badge-status-success { background-color: #D4EDDA; color: #155724; border: 1px solid #C3E6CB; padding: 4px 8px; border-radius: 20px; font-size: 0.72rem; }
+      
+      .page-item.active .page-link { background-color: #E53935 !important; border-color: #E53935 !important; color: white !important; }
+      .page-link { color: #E53935; padding: 5px 12px; font-size: 0.8rem; font-weight: bold; }
+      
+      .dataTables_wrapper .dataTables_filter { width: 100% !important; margin-bottom: 12px; text-align: left !important; }
+      .dataTables_wrapper .dataTables_filter input { width: 100% !important; border-radius: 6px; padding: 8px 12px; border: 1px solid #DDD; display: block; font-size: 0.85rem; }
+      .dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_info { display: none !important; } 
+      
+      /* Efek Glow Pulse untuk Nama Anggota */
+      .glow-text { 
+        font-weight: 700; 
+        color: #E53935; 
+        display: inline-block;
+        animation: glowPulse 2s infinite ease-in-out;
+      }
+
+      @keyframes glowPulse {
+        0% { text-shadow: 0 0 4px rgba(229, 57, 53, 0.2); }
+        50% { text-shadow: 0 0 16px rgba(229, 57, 53, 0.7), 0 0 22px rgba(229, 57, 53, 0.4); }
+        100% { text-shadow: 0 0 4px rgba(229, 57, 53, 0.2); }
+      }
+
+      /* Gaya Tampilan Badge Anggota Aktif */
+      .active-badge-wrapper {
+        cursor: pointer;
+        background-color: #E8F5E9;
+        color: #2E7D32;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.72rem;
+        font-weight: bold;
+        border: 1px solid #C8E6C9;
+        transition: 0.2s;
+      }
+      .active-badge-wrapper:hover {
+        background-color: #C8E6C9;
+      }
+      .dot-pulse-green {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: #4CAF50;
+        margin-right: 5px;
+        box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7);
+        animation: activeDotPulse 1.5s infinite cubic-bezier(0.66, 0, 0, 1);
+      }
+      @keyframes activeDotPulse {
+        to { box-shadow: 0 0 0 8px rgba(76, 175, 80, 0); }
+      }
+
+      .hidden { display: none !important; }
+
+      @media (max-width: 576px) {
+        #tabelBuku tbody { grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)) !important; gap: 10px !important; }
+        .book-card { height: 320px !important; }
+        .book-cover-wrapper { height: 145px; }
+      }
+    </style>
+</head>
+<body> 
+    
+    <header class="site-header">
+        <div class="top-header">
+            <div class="header-logo-area">
+                <a href="index.html" class="logo-wrapper">
+                    <img src="images/mms.avif" alt="Logo RW06 Selor" class="mini-logo">
+                    <div class="header-text">
+                        <span class="brand-title">RW06 SELOR</span>
+                        <span class="brand-subtitle">Sedahromo Lor 05</span>
+                    </div>
+                </a>
+            </div>
+            <div class="header-right-stuff">
+                <div class="header-socials">
+                    <a href="#" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" title="YouTube"><i class="fa-brands fa-youtube"></i></a>
+                    <a href="#" title="Facebook"><i class="fa-brands fa-facebook"></i></a>
+                    <a href="https://www.tiktok.com/@mudamudisedahromolor05" title="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+                </div>
+            </div>
+            <button class="menu-toggle" id="mobile-menu-btn">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+        </div> 
+
+        <nav class="main-navbar">
+            <ul class="nav-list">
+                <li class="nav-item"><a href="index.html">BERANDA</a></li>
+                <li class="nav-item">
+                    <a href="#">PROFIL</a>
+                    <ul class="submenu">
+                        <li class="submenu-item"><a href="struktur.html"> - STRUKTUR KEANGGOTAAN</a></li>
+                        <li class="submenu-item"><a href="visi-misi.html"> - VISI & MISI</a></li>
+                        <li class="submenu-item"><a href="daftar-anggota.html"> - DAFTAR ANGGOTA</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a href="#" id="btn-bulanan">KEGIATAN</a>
+                    <ul class="submenu" id="menu-rapat">
+                        <li class="submenu-item"><a href="rapat-hasilrapat.html"> - RAPAT BULANAN</a></li>
+                        <li class="submenu-item"><a href="dokumentasi-kegiatan.html"> - DOKUMENTASI</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a href="#">LAPORAN</a>
+                    <ul class="submenu">
+                        <li class="submenu-item"><a href="laporan-keuangan.html"> - KEUANGAN</a></li>
+                        <li class="submenu-item"><a href="iuran-bulanan.html"> - KAS BULANAN</a></li>
+                        <li class="submenu-item"><a href="lpj.html"> - PERTANGGUNG JAWABAN</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a href="#" id="btn-tahunan">DATA ARSIP</a>
+                    <ul class="submenu" id="menu-17an">
+                        <li class="submenu-item"><a href="arsip-proposal.html"> - PROPOSAL</a></li>
+                        <li class="submenu-item"><a href="arsip-lomba.html"> - LOMBA</a></li>
+                        <li class="submenu-item"><a href="arsip-surat.html"> - SURAT</a></li>
+                    </ul>
+                </li> 
+                <li class="nav-item">
+                    <a href="#">INFORMASI</a>
+                    <ul class="submenu">
+                        <li class="submenu-item"><a href="berita.html"> - BERITA</a></li>
+                        <li class="submenu-item"><a href="kesehatan.html"> - KESEHATAN</a></li>
+                         <li class="submenu-item"><a href="monitor-lomba.html"> - MONITORING LOMBA</a></li>
+                    </ul>
+                </li>
+               <li class="nav-item">
+                 <a href="#">RUANG LITERASI</a>
+                    <ul class="submenu">
+                       <li class="submenu-item"><a href="englishmms.html"> - ENGLISH ACCADEMY</a></li>
+                        <li class="submenu-item"><a href="eperpus-mms.html"> - E-PERPUSTAKAAN</a></li>
+                       <li class="submenu-item"><a href="request-ebook.html"> - REQUEST EBOOK</a></li>
+                    </ul>
+                 </li>
+                <li class="nav-item">
+                 <a href="#">GAME</a>
+                    <ul class="submenu">
+                       <li class="submenu-item"><a href="billiard/"> - Billiard</a></li>
+                       <li class="submenu-item"><a href="chess/"> - Billiard</a></li>
+                    </ul>
+                 </li>
+                 <li class="nav-item">
+                 <a href="#">MARKETPLACE</a>
+                    <ul class="submenu">
+                       <li class="submenu-item"><a href="mms-marketplace.html"> - PASAR DIGITAL</a></li>
+                    </ul>
+                 </li>
+             </ul>
+            <div class="navbar-mobile-only">
+                <div class="header-socials">
+                    <a href="#" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" title="YouTube"><i class="fa-brands fa-youtube"></i></a>
+                    <a href="#" title="Facebook"><i class="fa-brands fa-facebook"></i></a>
+                    <a href="https://www.tiktok.com/@mudamudisedahromolor05?is_from_webapp=1&sender_device=pc" title="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container my-4" style="max-width: 960px;">
+        
+        <div id="loginPage" class="login-container">
+          <div class="text-center mb-4">
+            <h5 class="fw-bold style-header" style="color: #E53935;"><i class="fa-solid fa-book-bookmark me-2"></i>E-PERPUSTAKAAN RW06 SELOR RT.05</h5>
+            <p class="text-muted small">Validasi Khusus Anggota Resmi RW06</p>
+          </div>
+          <div id="loginAlert" class="alert alert-danger hidden">Email pendaftaran tidak ditemukan!</div>
+          <div class="mb-3 text-start">
+            <label class="form-label small fw-bold text-secondary">Alamat Email Anggota</label>
+            <input type="email" id="emailInput" class="form-control" placeholder="nama@email.com" required>
+          </div>
+          <button id="btnLogin" class="btn btn-red-custom w-100 p-2" onclick="prosesLoginAPI()">Verifikasi Akun Literasi</button>
+        </div>
+
+        <div id="mainPage" class="bg-white p-3 shadow-sm rounded border hidden">
+          <div class="d-flex justify-content-between align-items-start mb-3 border-bottom pb-2 gap-2 text-start">
+            <div>
+              <h4 class="mb-0 fw-bold" style="color: #E53935; font-size: 1.2rem;"><i class="fa-solid fa-folder-open me-2"></i>RUANG LITERASI DIGITAL</h4>
+              <div id="welcomeMsg" class="small mt-1 text-secondary"></div>
+            </div>
+            
+            <div class="d-flex align-items-center gap-2">
+              <div id="activeUserBadge" class="active-badge-wrapper hidden" onclick="bukaModalAnggotaAktif()">
+                <span class="dot-pulse-green"></span> <span id="activeUserCount">0</span> Aktif
+              </div>
+              <button class="btn btn-outline-secondary btn-sm px-2 py-1" style="font-size: 0.72rem" onclick="logoutSesi()"><i class="fa-solid fa-power-off me-1"></i>Keluar</button>
+            </div>
+          </div>
+
+          <div class="mb-4 text-start">
+            <button class="btn btn-sm btn-red-custom w-100 text-start d-flex justify-content-between align-items-center p-2.5" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRequest">
+              <span><i class="fa-solid fa-bullhorn me-2"></i> <strong>Daftar Usulan E-book</strong></span>
+              <i class="fa-solid fa-chevron-down"></i>
+            </button>
+            <div class="collapse mt-2" id="collapseRequest">
+              <div class="card card-body p-2 bg-light border-0 shadow-inner">
+                <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+                  <span class="text-muted small fw-bold"><i class="fa-solid fa-history me-1"></i> Log Request</span>
+                  <button class="btn btn-xs btn-outline-danger p-1 px-2" style="font-size:0.7rem; font-weight:600;" type="button" data-bs-toggle="collapse" data-bs-target="#formRequestPanel">
+                    <i class="fa-solid fa-plus-circle me-1"></i> Ajukan Judul Baru
+                  </button>
+                </div>
+                
+                <div class="collapse mb-3" id="formRequestPanel">
+                  <div class="bg-white p-3 rounded border">
+                    <h6 class="fw-bold mb-2 text-dark" style="font-size:0.8rem;"><i class="fa-solid fa-file-signature text-danger me-1"></i> Formulir Usulan Buku Baru</h6>
+                    <div class="row g-2">
+                      <div class="col-sm-6"><input type="text" id="reqJudul" class="form-control form-control-sm" placeholder="Judul Buku *"></div>
+                      <div class="col-sm-6"><input type="text" id="reqPenulis" class="form-control form-control-sm" placeholder="Nama Penulis"></div>
+                      <div class="col-12"><button id="btnKirimRequest" class="btn btn-sm btn-red-custom w-100" onclick="kirimRequestBaruAPI()">Kirim Usulan</button></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="table-responsive">
+                  <table class="table table-sm table-hover table-organisasi w-100 m-0">
+                    <thead><tr><th>Judul Request</th><th>Pengusul</th><th>Status</th></tr></thead>
+                    <tbody id="requestTableBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="category-navbar">
+            <button class="category-nav-btn active" onclick="filterKategoriBuku('semua', this)">Semua Buku</button>
+            <button class="category-nav-btn" onclick="filterKategoriBuku('fiksi', this)">Fiksi</button>
+            <button class="category-nav-btn" onclick="filterKategoriBuku('non-fiksi', this)">Non-Fiksi</button>
+          </div>
+          <div id="subCategoryNavbar" class="sub-category-navbar hidden"></div>
+          
+          <table id="tabelBuku" class="table w-100 m-0">
+            <thead><tr><th>Katalog Koleksi E-Book</th></tr></thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+    </div>
+
+    <div class="modal fade" id="disclaimerModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 12px; overflow: hidden; border-top: 5px solid #E53935;">
+          <div class="modal-header bg-light">
+            <h5 class="modal-title fw-bold text-dark" style="font-size: 1.05rem;">
+              <i class="fa-solid fa-circle-info text-danger me-2"></i>Informasi & Aturan Ruang Literasi
+            </h5>
+          </div>
+          <div class="modal-body p-3 small text-secondary" style="line-height: 1.6;">
+            <p class="mb-2 fw-semibold text-dark" style="font-size: 0.9rem;">
+              Halo <span id="disclaimerNama" class="glow-text">Anggota RW06 Selor RW06 SELOR</span>,
+            </p>
+            <p class="mb-3">Halaman ini <strong>dibuat khusus untuk seluruh anggota resmi</strong> RW06 Selor guna membantu meningkatkan minat baca dan wawasan literasi kita bersama.</p>
+            <div style="background-color: #f8f9fa; padding: 12px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 15px; color: #333;">
+              <p class="mb-1 fw-bold text-danger" style="font-size: 0.8rem;"><i class="fa-solid fa-triangle-exclamation me-1"></i> PENTING UNTUK DIPATUHI:</p>
+              <ul class="m-0 ps-3 small">
+                <li>Seluruh file e-book di sini <strong>tidak untuk dipublikasikan luas atau dikomersilkan</strong> di luar organisasi.</li>
+                <li>Jika kamu suka dengan isi bukunya, <strong>silakan beli buku fisik aslinya di toko buku terdekat</strong> sebagai bentuk nyata dukungan kita kepada penulis dan penerbit.</li>
+              </ul>
+            </div>
+            <p class="m-0 text-center text-muted small" style="font-style: italic;">"Budayakan baca Buku, Agar Tidak Plenger Seperti Wakil Presidenmu"</p>
+          </div>
+          <div class="modal-footer bg-light p-2">
+            <button type="button" class="btn btn-sm btn-red-custom px-3 py-1.5 w-100" data-bs-dismiss="modal" style="border-radius: 6px; font-size: 0.85rem;">
+              Saya Mengerti & Siap Membaca <i class="fa-solid fa-arrow-right-to-bracket ms-1"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="activeUsersModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 10px; overflow: hidden; border-top: 4px solid #4CAF50;">
+          <div class="modal-header bg-light p-2 px-3">
+            <h6 class="modal-title fw-bold text-dark" style="font-size: 0.85rem;"><i class="fa-solid fa-users text-success me-1"></i> Anggota Online</h6>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" style="font-size: 0.7rem;"></button>
+          </div>
+          <div class="modal-body p-2">
+            <ul id="activeUsersList" class="list-group list-group-flush small" style="max-height: 250px; overflow-y: auto;">
+              </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="pdfModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 8px; overflow: hidden;">
+          <div class="modal-header bg-dark text-white p-2 px-3">
+            <h6 class="modal-title fw-bold" id="pdfTitle" style="font-size: 0.85rem;">Membaca E-book</h6>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body p-0 bg-secondary">
+            <iframe id="pdfFrame" src="" width="100%" height="600px" style="border:none; display: block;"></iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+
+   <footer class="site-footer">
+        <div class="footer-container">
+            <div class="footer-column info-col">
+                <div class="footer-brand">
+                    <img src="images/mms.avif" alt="Logo RW06 Selor" class="footer-logo">
+                    <h4>RW06 Selor</h4>
+                </div>
+                <p class="footer-text">
+                    <i class="fa-solid fa-location-dot"></i> Jl. Sedahromo Lor, RT.05 / RW.06, Kel. Kartasura, Kec. Kartasura, Sukoharjo, Jawa Tengah 57167
+                </p>
+                <p class="footer-text">
+                    <i class="fa-solid fa-envelope"></i> <a href="mailto:mudamudisedahromolor@gmail.com">mudamudisedahromolor@gmail.com</a>
+                </p>
+            </div>
+
+            <div class="footer-column links-col">
+                <h5>Sitemap</h5>
+                <ul class="footer-links">
+                    <li><a href="index.html"><i class="fa-solid fa-chevron-right"></i> Beranda</a></li>
+                    <li><a href="struktur.html"><i class="fa-solid fa-chevron-right"></i> Struktur Organisasi</a></li>
+                    <li><a href="daftar-anggota.html"><i class="fa-solid fa-chevron-right"></i> Daftar Anggota</a></li>
+                    <li><a href="laporan-keuangan.html"><i class="fa-solid fa-chevron-right"></i> Transparansi Kas</a></li>
+                    <li><a href="dokumentasi-kegiatan.html"><i class="fa-solid fa-chevron-right"></i> Dokumentasi</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-column social-col">
+                <h5>Media Sosial</h5>
+                <p class="footer-text">Ikuti linimasa kegiatan dan perkembangan pemuda kami melalui kanal resmi berikut:</p>
+                <div class="footer-social-icons">
+                    <a href="#" title="Instagram" target="_blank"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" title="YouTube" target="_blank"><i class="fa-brands fa-youtube"></i></a>
+                    <a href="#" title="Facebook" target="_blank"><i class="fa-brands fa-facebook"></i></a>
+                    <a href="https://www.tiktok.com/@mudamudisedahromolor05" title="TikTok" target="_blank"><i class="fa-brands fa-tiktok"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>Copyright &copy; 2026 RW06 Selor. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+      // ==========================================================================
+      // PASTE ALAMAT URL WEB APP APPS SCRIPT (MURNI API BARU) DI SINI:
+      // ==========================================================================
+      const API_URL = "/common/api/eperpus.php";
+
+      let userSessionGlobal = null;
+      let kategoriUtamaAktif = 'semua';
+      let listAnggotaOnlineGlobal = []; // Array penampung user aktif secara real-time
+      let intervalPingRW06 = null;
+
+      $(document).ready(function() {
+        var savedSession = sessionStorage.getItem('ePerpusUser');
+        if (savedSession) {
+          userSessionGlobal = JSON.parse(savedSession);
+          renderHalamanRW06(userSessionGlobal);
+          mulaiSistemSinyalAktif();
+        } else {
+          document.getElementById('loginPage').classList.remove('hidden');
+        }
+      });
+
+      // Fungsi Pengiriman Sinyal Ping Anggota Aktif (Berjalan berkala tiap 30 detik)
+      function mulaiSistemSinyalAktif() {
+        if(!userSessionGlobal || !userSessionGlobal.nama) return;
+        
+        function kirimSinyal() {
+          fetch(`${API_URL}?aksi=pingAktif&namaUser=${encodeURIComponent(userSessionGlobal.nama)}`)
+            .then(r => r.json())
+            .then(res => {
+              if(res.status === 'success' && res.onlineUsers) {
+              if (!Array.isArray(res.onlineUsers)) res.onlineUsers = [];
+                listAnggotaOnlineGlobal = res.onlineUsers;
+                document.getElementById('activeUserCount').innerText = res.onlineUsers.length;
+                document.getElementById('activeUserBadge').classList.remove('hidden');
+              }
+            })
+            .catch(() => { console.log("Gagal menyinkronkan status aktif."); });
+        }
+        
+        kirimSinyal(); // Jalankan sekali di awal
+        if(intervalPingRW06) clearInterval(intervalPingRW06);
+        intervalPingRW06 = setInterval(kirimSinyal, 30000); // Ulangi berkala setiap 30 detik
+      }
+
+      // Menampilkan nama-nama anggota yang sedang online ke dalam modal khusus
+      function bukaModalAnggotaAktif() {
+        let htmlList = '';
+        if(listAnggotaOnlineGlobal && listAnggotaOnlineGlobal.length > 0) {
+          listAnggotaOnlineGlobal.forEach(u => {
+            htmlList += `<li class="list-group-item d-flex align-items-center p-2"><i class="fa-solid fa-circle text-success me-2" style="font-size:0.55rem;"></i>${u.nama}</li>`;
+          });
+        } else {
+          htmlList = `<li class="list-group-item text-muted text-center p-2">Hanya Anda yang aktif.</li>`;
+        }
+        document.getElementById('activeUsersList').innerHTML = htmlList;
+        new bootstrap.Modal(document.getElementById('activeUsersModal')).show();
+      }
+
+      // ENGINE LOGIN BARU: Melakukan panggilan AJAX/Fetch langsung bypass CORS iframe
+      function prosesLoginAPI() {
+        var email = document.getElementById('emailInput').value.trim();
+        if(!email) { alert('Silakan masukkan email Anda!'); return; }
+        
+        var btn = $('#btnLogin').prop('disabled', true).text('Memverifikasi Anggota...');
+        $('#loginAlert').addClass('hidden');
+
+        fetch(`${API_URL}?email=${encodeURIComponent(email)}`)
+          .then(r => r.json())
+          .then(res => {
+            if(res.status === 'authorized') {
+              sessionStorage.setItem('ePerpusUser', JSON.stringify(res));
+              userSessionGlobal = res;
+              renderHalamanRW06(res);
+              mulaiSistemSinyalAktif();
+              
+              document.getElementById('disclaimerNama').innerText = res.nama;
+              if (!sessionStorage.getItem('disclaimerDibaca')) {
+                new bootstrap.Modal(document.getElementById('disclaimerModal')).show();
+                sessionStorage.setItem('disclaimerDibaca', 'true');
+              }
+            } else if(res.status === 'unauthorized') {
+              $('#loginAlert').removeClass('hidden');
+              btn.prop('disabled', false).text('Verifikasi Akun Literasi');
+            } else {
+              alert('Terjadi kesalahan: ' + (res.message || 'Unknown error'));
+              btn.prop('disabled', false).text('Verifikasi Akun Literasi');
+            }
+          })
+          .catch(() => {
+            alert("Koneksi API sibuk. Silakan coba lagi.");
+            btn.prop('disabled', false).text('Verifikasi Akun Literasi');
+          });
+      }
+
+      function renderHalamanRW06(res) {
+        $('#loginPage').addClass('hidden');
+        $('#mainPage').removeClass('hidden');
+        
+        document.getElementById('welcomeMsg').innerHTML = `<i class="fa-solid fa-circle-user text-danger me-1"></i> Anggota: <b class="glow-text">${res.nama}</b> (${res.nim})`;
+        
+        // Mengurutkan otomatis data buku berdasarkan alfabet (A-Z) judul buku
+        if (res.buku && res.buku.length > 0) {
+          res.buku.sort((a, b) => {
+            let judulA = (a.judul || '').toLowerCase();
+            let judulB = (b.judul || '').toLowerCase();
+            return judulA.localeCompare(judulB);
+          });
+        }
+
+        let htmlBuku = '';
+        res.buku.forEach(row => {
+          if(row.linkDrive && row.linkDrive.indexOf('/d/') !== -1) { 
+            let driveId = row.linkDrive.split('/d/')[1].split('/')[0];
+            let embedUrl = "https://drive.google.com/file/d/" + driveId + "/preview";
+            let thumbnailLink = `https://drive.google.com/thumbnail?id=${driveId}&sz=w300`;
+            
+            let judul = row.judul || 'Judul Kosong';
+            let penulis = row.penulis || 'Anonim';
+            let kategoriStr = row.kategori || 'Umum';
+            let searchMeta = `${judul} ${penulis} ${kategoriStr}`.toLowerCase();
+
+            let kategoriBadges = '';
+            kategoriStr.split(',').forEach(kat => {
+              if(kat.trim()) kategoriBadges += `<span class="category-tag">${kat.trim()}</span>`;
+            });
+
+            htmlBuku += `<tr>
+              <td>
+                <span class="hidden d-none">${judul.toLowerCase()} ${searchMeta}</span>
+                <div class="book-card">
+                  <div class="book-cover-wrapper">
+                    <i class="fa-solid fa-book-journal-whills" style="position: absolute; font-size: 3.5rem; color: #CFD8DC; z-index: 1;"></i>
+                    <img src="${thumbnailLink}" class="book-cover-img" loading="lazy" onerror="this.style.display='none';">
+                  </div>
+                  <div class="book-info-body">
+                    <div>
+                      <div class="book-title-text" title="${judul}">${judul}</div>
+                      <div class="book-author-text"><i class="fa-solid fa-pen-nib me-1"></i>${penulis}</div>
+                    </div>
+                    <div>
+                      <div class="category-tag-box">${kategoriBadges}</div>
+                      <button class="btn btn-red-custom btn-sm w-100 py-1.5 fw-bold" style="font-size:0.75rem;" data-url="${embedUrl}" data-judul="${judul}" onclick="bukaViewerEbook(this)"><i class="fa-solid fa-book-open-reader me-1"></i> Baca PDF</button>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>`;
+          }
+        });
+        
+        document.getElementById('tableBody').innerHTML = htmlBuku;
+        renderTabelRequest(res.requests);
+        
+        var tabel = $('#tabelBuku').DataTable({
+          "pageLength": 12, 
+          "bDestroy": true,
+          "ordering": true,
+          "order": [[0, "asc"]],
+          "language": {
+            "search": "",
+            "searchPlaceholder": "Cari judul, kategori atau penulis e-book...",
+            "zeroRecords": "E-book tidak ditemukan",
+            "paginate": { "next": "»", "previous": "«" }
+          }
+        });
+
+        // Logika Event Listener DataTables untuk Auto Scroll Up ketika pagination diklik (angka maupun prev/next)
+        tabel.on('page.dt', function() {
+          $('html, body').animate({
+            scrollTop: $("#mainPage").offset().top - 20
+          }, 300);
+        });
+      }
+
+      function filterKategoriBuku(kategori, btnElement) {
+        $('.category-nav-btn').removeClass('active');
+        $(btnElement).addClass('active');
+        kategoriUtamaAktif = kategori; 
+        
+        var table = $('#tabelBuku').DataTable();
+        var subNav = $('#subCategoryNavbar');
+        
+        if(kategori === 'semua') {
+          table.search('').draw();
+          subNav.addClass('hidden').html('');
+        } else if(kategori === 'fiksi') {
+          table.search('(?<!non-)fiksi', true, false).draw();
+          let htmlSub = `
+            <button class="sub-category-btn active" onclick="filterSubKategori('', this)">Semua Cerita</button>
+            <button class="sub-category-btn" onclick="filterSubKategori('novel', this)">Novel</button>
+            <button class="sub-category-btn" onclick="filterSubKategori('komik', this)">Komik</button>
+            <button class="sub-category-btn" onclick="filterSubKategori('sastra', this)">Sastra</button>
+          `;
+          subNav.removeClass('hidden').html(htmlSub);
+        } else if(kategori === 'non-fiksi') {
+          table.search('non-fiksi', true, false).draw();
+          let htmlSub = `
+            <button class="sub-category-btn active" onclick="filterSubKategori('', this)">Semua Ilmu</button>
+            <button class="sub-category-btn" onclick="filterSubKategori('pendidikan', this)">Pendidikan</button>
+            <button class="sub-category-btn" onclick="filterSubKategori('politik', this)">Politik</button>
+            <button class="sub-category-btn" onclick="filterSubKategori('biografi', this)">Biografi</button>
+          `;
+          subNav.removeClass('hidden').html(htmlSub);
+        }
+      }
+
+      function filterSubKategori(subKategori, btnElement) {
+        $('.sub-category-btn').removeClass('active');
+        $(btnElement).addClass('active');
+        var table = $('#tabelBuku').DataTable();
+        
+        if(!subKategori) {
+          table.search(kategoriUtamaAktif === 'fiksi' ? '(?<!non-)fiksi' : 'non-fiksi', true, false).draw();
+        } else {
+          let pattern = kategoriUtamaAktif === 'fiksi' ? '(?<!non-)fiksi.*' + subKategori : 'non-fiksi.*' + subKategori;
+          table.search(pattern, true, false).draw();
+        }
+      }
+
+      function renderTabelRequest(dataRequest) {
+        let htmlRequest = '';
+        if(dataRequest && dataRequest.length > 0) {
+          dataRequest.forEach(row => {
+            let statusText = row.status || 'Pending';
+            let badgeStatus = statusText.toLowerCase() === 'sudah tersedia' ? 'badge-status-success' : 'badge-status-pending';
+            htmlRequest += `<tr><td><b>${row.judul}</b><span class="text-muted small d-block">Penulis: ${row.penulis || '-'}</span></td><td>${row.pengusul}</td><td><span class="${badgeStatus}">${statusText}</span></td></tr>`;
+          });
+        } else {
+          htmlRequest = `<tr><td colspan="3" class="text-center text-muted p-3">Belum ada usulan buku.</td></tr>`;
+        }
+        document.getElementById('requestTableBody').innerHTML = htmlRequest;
+      }
+
+      function kirimRequestBaruAPI() {
+        let judul = document.getElementById('reqJudul').value.trim();
+        let penulis = document.getElementById('reqPenulis').value.trim();
+        if(!judul) { alert('Judul buku wajib diisi!'); return; }
+
+        let btn = $('#btnKirimRequest').prop('disabled', true).text('Mengirim Usulan...');
+
+        let payload = {
+          aksi: "tambahRequestBuku",
+          namaPengusul: userSessionGlobal.nama,
+          judulBuku: judul,
+          penulisBuku: penulis
+        };
+
+        // Kirim lewat POST ke API PHP endpoint
+        fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) })
+          .then(r => r.json())
+          .then(res => {
+            if(res.status === 'success') {
+              alert('Usulan request buku Anda berhasil dikirim!');
+              document.getElementById('reqJudul').value = '';
+              document.getElementById('reqPenulis').value = '';
+              userSessionGlobal.requests = res.requests;
+              sessionStorage.setItem('ePerpusUser', JSON.stringify(userSessionGlobal));
+              renderTabelRequest(res.requests);
+              bootstrap.Collapse.getInstance(document.getElementById('formRequestPanel')).hide();
+            }
+            btn.prop('disabled', false).text('Kirim Usulan');
+          })
+          .catch(() => {
+             alert('Usulan terkirim! Silakan buka kembali daftar request beberapa saat lagi.');
+             btn.prop('disabled', false).text('Kirim Usulan');
+          });
+      }
+
+      function bukaViewerEbook(btnElement) {
+        document.getElementById('pdfTitle').innerText = "Membaca E-book: " + btnElement.getAttribute('data-judul');
+        document.getElementById('pdfFrame').src = btnElement.getAttribute('data-url');
+        new bootstrap.Modal(document.getElementById('pdfModal')).show();
+      }
+
+      function logoutSesi() { 
+        if(intervalPingRW06) clearInterval(intervalPingRW06);
+        sessionStorage.clear(); 
+        location.reload(); 
+      }
+    </script>
+    <script src="script.js?v=30"></script>
+</body>
+</html>

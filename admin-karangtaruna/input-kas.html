@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <script src="auth-guard.js"></script>
+    
+    <title>Input Kas RW06 Selor</title>
+    
+    <link rel="icon" href="images/fix.avif" type="image/avif">
+    <link rel="icon" type="image/avif" sizes="192x192" href="images/fix.avif">
+    <link rel="apple-touch-icon" sizes="192x192" href="images/fix.avif">
+    <link rel="apple-touch-icon" sizes="512x512" href="images/fix.avif">
+    
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="mobile-global-overrides.css?v=7">
+    <link rel="stylesheet" href="input-kas-mobile.css?v=3">
+</head>
+<body class="kas-bulanan-page">
+    
+     <header class="site-header">
+        <div class="top-header">
+            <div class="header-logo-area">
+                <a href="admin.html" class="logo-wrapper">
+                    <img src="images/fix.avif" alt="Logo RW06 Selor" class="mini-logo">
+                    <div class="header-text">
+                        <span class="brand-title">RW06 SELOR</span>
+                        <span class="brand-subtitle">Sedahromo Lor 05</span>
+                    </div>
+                </a>
+            </div>
+            <div class="header-right-stuff">
+                <div class="header-socials">
+                    <a href="#" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" title="YouTube"><i class="fa-brands fa-youtube"></i></a>
+                    <a href="#" title="Facebook"><i class="fa-brands fa-facebook"></i></a>
+                    <a href="https://www.tiktok.com/@mudamudisedahromolor05?is_from_webapp=1&sender_device=pc" title="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+                </div>
+            </div>
+            <button class="menu-toggle" id="mobile-menu-btn">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+        </div> 
+
+     <nav class="main-navbar">
+        
+            <ul class="nav-list">
+                <li class="nav-item"><a href="admin.html">BERANDA</a></li>
+                
+                <li class="nav-item">
+                    <a href="#">BENDAHARA</a>
+                    <ul class="submenu">
+                        <li class="submenu-item"><a href="catat-cashflow.html">  - INPUT CASHFLOW</a></li>
+                        <li class="submenu-item"><a href="input-kas.html">  - INPUT KAS BULANAN</a></li>
+                    </ul>
+                </li>
+                
+                <li class="nav-item">
+                    <a href="#">SEKRETARIS</a>
+                    <ul class="submenu">
+                        <li class="submenu-item"><a href="form-hasilrapat.html">  - INPUT NOTULEN</a></li>
+                        <li class="submenu-item"><a href="editor-anggota.html">  - INPUT BIODATA</a></li>
+                        <li class="submenu-item"><a href="input-arsip-surat.html">  - INPUT ARSIP SURAT</a></li>
+                        <li class="submenu-item"><a href="input-arsip-lpj.html">  - INPUT ARSIP LPJ </a></li>
+                        <li class="submenu-item"><a href="input-arsip-proposal.html">  - INPUT ARSIP PROPOSAL </a></li>
+                        <li class="submenu-item"><a href="input-arsip-lomba.html">  - INPUT ARSIP LOMBA </a></li>
+                    </ul>
+                </li>
+                
+                <li class="nav-item">
+                    <a href="#">MEDIA & HUMAS</a>
+                    <ul class="submenu">
+                        <li class="submenu-item"><a href="upload-dokumentasi.html">  - INPUT DOKUMENTASI</a></li>
+                        <li class="submenu-item"><a href="https://script.google.com/macros/library/d/1I6LEQGlm_weJMhjY4bj_5wdnMQQy_fYCsPOryUzADr4XWc8N5YxzVrtQ/2">  - INPUT UNDANGAN</a></li>
+                    </ul>
+                </li>
+                
+                <li class="nav-item">
+                    <a href="#">TOOLS</a>
+                    <ul class="submenu">
+                        <li class="submenu-item"><a href="generator-lomba-ui-v2.html"> - GENERATOR LOMBA</a></li>
+                        <li class="submenu-item"><a href="input-ebook.html"> - INPUT EBOOK</a></li>
+                        <li class="submenu-item"><a href="english-editor.html"> - ENGLISH EDITOR</a></li>
+                        <li class="submenu-item"><a href="editor-chatwarga.html"> - CHAT WARGA EDITOR</a></li>
+                    </ul>
+                </li>
+
+            <li>
+               <div class="navbar-mobile-only">
+                  <div class="header-socials">
+                            <a href="#" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                            <a href="#" title="YouTube"><i class="fa-brands fa-youtube"></i></a>
+                            <a href="#" title="Facebook"><i class="fa-brands fa-facebook"></i></a>
+                            <a href="https://www.tiktok.com/@mudamudisedahromolor05?is_from_webapp=1&sender_device=pc" title="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+                    </div>
+               </div>
+            </li>
+            </ul> 
+        </nav>
+    </header>
+
+
+
+  <div class="finance-page-wrapper">
+        <div class="content-box" style="max-width: 1000px; width: 100%;">
+            <h2 class="box-title">INPUT DATA IURAN KAS BULANAN</h2>
+            <hr class="box-divider">
+            <p style="text-align: center; margin-bottom: 20px;">Gunakan Form Dibawah Ini Untuk Mencatat Anggota Yang Membayar Iuran Kas Bulanan</p>
+
+
+
+        <form id="formKasBulanan" class="kas-form">
+            <div id="kasAlert" class="kas-alert" role="status" aria-live="polite"></div>
+
+            <div class="kas-form-grid">
+                <label class="kas-field">
+                    <span>Nama Anggota</span>
+                    <select id="namaKas" name="nama" required>
+                        <option value="">Memuat anggota...</option>
+                    </select>
+                </label>
+
+                <label class="kas-field">
+                    <span>Tanggal Bayar</span>
+                    <input type="date" id="tanggalKas" name="tanggal" required>
+                </label>
+
+                <label class="kas-field">
+                    <span>Tahun</span>
+                    <select id="tahunKas" name="tahun" required></select>
+                </label>
+
+                <label class="kas-field">
+                    <span>Nominal per Bulan</span>
+                    <input type="number" id="jumlahKas" name="jumlah" value="5000" min="1" step="500" required>
+                </label>
+
+                <label class="kas-field">
+                    <span>Metode Pembayaran</span>
+                    <select id="metodeKas" name="metode_pembayaran" required>
+                        <option value="Tunai">Tunai</option>
+                        <option value="Transfer">Transfer</option>
+                        <option value="QRIS">QRIS</option>
+                        <option value="Lainnya">Lainnya</option>
+                    </select>
+                </label>
+
+                <label class="kas-field kas-field-wide">
+                    <span>Keterangan</span>
+                    <textarea id="keteranganKas" name="keterangan" rows="3" placeholder="Opsional"></textarea>
+                </label>
+            </div>
+
+            <div class="kas-field kas-field-wide">
+                <span>Bulan Dibayar</span>
+                <div id="bulanKasWrap" class="kas-month-grid"></div>
+            </div>
+
+            <div class="kas-actions">
+                <button type="submit" class="kas-submit-btn">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    Simpan Pembayaran
+                </button>
+            </div>
+        </form>
+
+        <section class="kas-accordion" id="kasAccordion">
+            <button type="button" class="kas-accordion-toggle" id="kasAccordionToggle" aria-expanded="false" aria-controls="kasAccordionBody" onclick="this.parentElement.classList.toggle('open');this.setAttribute('aria-expanded',this.parentElement.classList.contains('open')?'true':'false');">
+                <span class="kas-toggle-left">
+                    <i class="fa-solid fa-table-list"></i>
+                    Data Pembayaran Terbaru
+                </span>
+                <i class="fa-solid fa-chevron-down kas-toggle-icon"></i>
+            </button>
+            <div class="kas-accordion-body" id="kasAccordionBody">
+                <div class="kas-total-filter">
+                    <label for="filterTahunKas">Filter tahun</label>
+                    <select id="filterTahunKas" class="filter-box"></select>
+                    <span>Total: <strong id="totalKasPreview">Rp 0</strong></span>
+                </div>
+                <div class="kas-bulanan-link-wrap">
+                    <a class="kas-bulanan-link" href="iuran-bulanan.html" target="_blank" rel="noopener">
+                        <i class="fa-solid fa-eye"></i> Lihat daftar kas bulanan
+                    </a>
+                </div>
+                <div class="table-responsive">
+                    <table class="finance-table">
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Nama</th>
+                                <th>Bulan</th>
+                                <th>Tahun</th>
+                                <th>Jumlah</th>
+                                <th>Sumber</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelKasPreview">
+                            <tr><td colspan="6">Memuat data kas...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </div> 
+</div> 
+    
+    <footer class="site-footer">
+    <div class="footer-container">
+        
+        <div class="footer-column info-col">
+            <div class="footer-brand">
+                <img src="images/fix.avif" alt="Logo RW06 Selor" class="footer-logo">
+                <h4>RW06 Selor</h4>
+            </div>
+            <p class="footer-text">
+                <i class="fa-solid fa-location-dot"></i> Jl. Sedahromo Lor, RT.05 / RW.06, Kel. Kartasura, Kec. Kartasura, Sukoharjo, Jawa Tengah 57167
+            </p>
+            <p class="footer-text">
+                <i class="fa-solid fa-envelope"></i> <a href="mailto:mudamudisedahromolor@gmail.com">mudamudisedahromolor05@gmail.com</a>
+            </p>
+        </div>
+
+        <div class="footer-column links-col">
+            <h5>Sitemap</h5>
+            <ul class="footer-links">
+                <li><a href="index.html"><i class="fa-solid fa-chevron-right"></i> Beranda</a></li>
+                <li><a href="struktur.html"><i class="fa-solid fa-chevron-right"></i> Struktur Organisasi</a></li>
+                <li><a href="daftar-anggota.html"><i class="fa-solid fa-chevron-right"></i> Daftar Anggota</a></li>
+                <li><a href="laporan-keuangan.html"><i class="fa-solid fa-chevron-right"></i> Transparansi Kas</a></li>
+                <li><a href="dokumentasi-kegiatan.html"><i class="fa-solid fa-chevron-right"></i> Dokumentasi</a></li>
+            </ul>
+        </div>
+
+        <div class="footer-column social-col">
+            <h5>Media Sosial</h5>
+            <p class="footer-text">Ikuti linimasa kegiatan dan perkembangan pemuda kami melalui kanal resmi berikut:</p>
+            <div class="footer-social-icons">
+                <a href="#" title="Instagram" target="_blank"><i class="fa-brands fa-instagram"></i></a>
+                <a href="#" title="YouTube" target="_blank"><i class="fa-brands fa-youtube"></i></a>
+                <a href="#" title="Facebook" target="_blank"><i class="fa-brands fa-facebook"></i></a>
+                <a href="https://www.tiktok.com/@mudamudisedahromolor05" title="TikTok" target="_blank"><i class="fa-brands fa-tiktok"></i></a>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="footer-bottom">
+        <p>Copyright &copy; 2026 RW06 Selor. All Rights Reserved.</p>
+    </div>
+</footer>
+
+<script src="script.js?v=22"></script>
+<script src="kas-input.js?v=3"></script>
+ 
+    <script src="input-kas-mobile.js?v=1"></script>
+</body>
+</html>

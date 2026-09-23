@@ -1,0 +1,349 @@
+.editor-anggota-page .member-admin-box {
+    padding: 22px 20px;
+    border-radius: 16px;
+}
+
+.editor-anggota-page .member-list-accordion {
+    padding: 0 !important;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+}
+
+.editor-anggota-page .member-list-toggle {
+    list-style: none;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 0;
+    background: #2c3e50;
+    color: #fff;
+    font-weight: 800;
+    font-size: 15px;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.editor-anggota-page .member-list-toggle::-webkit-details-marker {
+    display: none;
+}
+
+.editor-anggota-page .member-list-toggle-left {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.editor-anggota-page .member-list-toggle-icon {
+    transition: transform .2s ease;
+}
+
+.editor-anggota-page .member-list-body {
+    display: block;
+    padding: 16px;
+}
+
+.editor-anggota-page .member-list-accordion:not([open]) .member-list-body {
+    display: none;
+}
+
+.editor-anggota-page .member-list-accordion[open] .member-list-toggle-icon {
+    transform: rotate(180deg);
+}
+
+.editor-anggota-page .member-list-filters {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.editor-anggota-page .member-admin-form {
+    width: 100%;
+    margin-top: 18px;
+}
+
+.editor-anggota-page .member-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    align-items: start;
+}
+
+.editor-anggota-page .member-form-grid .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+.editor-anggota-page .member-form-grid .form-group label {
+    font-weight: 700;
+    color: #333;
+    line-height: 1.4;
+    font-size: 14px;
+}
+
+.editor-anggota-page .member-form-grid .form-group input,
+.editor-anggota-page .member-form-grid .form-group select,
+.editor-anggota-page .member-form-grid .form-group textarea,
+.editor-anggota-page #memberSearchInput,
+.editor-anggota-page #memberStatusFilter,
+.editor-anggota-page #memberActiveFilter {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #d9d9d9;
+    border-radius: 10px;
+    padding: 13px 14px;
+    background: #fff;
+    font: inherit;
+    font-size: 15px;
+    min-height: 46px;
+}
+
+.editor-anggota-page .member-form-grid .form-group input[type="date"] {
+    appearance: none;
+    -webkit-appearance: none;
+    line-height: 1.2;
+}
+
+.editor-anggota-page .admin-photo-upload-card {
+    margin-top: 20px;
+    padding: 20px 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    background: #fbfbfc;
+}
+
+.editor-anggota-page .admin-photo-upload-card h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.editor-anggota-page .admin-photo-upload-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    background: #2c3e50;
+    color: #fff;
+    font-weight: 700;
+    text-decoration: none;
+    min-height: 48px;
+    width: 100%;
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+.editor-anggota-page .admin-photo-upload-button .upload-toggle-track {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 42px;
+    height: 24px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.22);
+    padding: 3px;
+    box-sizing: border-box;
+}
+
+.editor-anggota-page .admin-photo-upload-button .upload-toggle-knob {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    display: block;
+}
+
+.editor-anggota-page .admin-photo-file-name {
+    margin-top: 12px;
+    font-size: 14px;
+    color: #4b5563;
+    text-align: center;
+}
+
+.editor-anggota-page .admin-photo-preview-wrap {
+    margin-top: 14px;
+}
+
+.editor-anggota-page .admin-photo-placeholder,
+.editor-anggota-page .admin-photo-preview {
+    min-height: 180px;
+    border-radius: 14px;
+    width: 100%;
+    border: 1px dashed #cbd5e1;
+    background: #f8fafc;
+}
+
+.editor-anggota-page .admin-photo-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.editor-anggota-page .form-submit-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.editor-anggota-page .form-submit-row .btn-primary,
+.editor-anggota-page .form-submit-row .btn-secondary {
+    min-height: 48px;
+    padding: 13px 18px;
+    border-radius: 10px;
+    font-size: 15px;
+}
+
+.editor-anggota-page .member-admin-table {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    background: #fff;
+}
+
+.editor-anggota-page .member-admin-table table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 920px;
+}
+
+.editor-anggota-page .member-admin-table th {
+    background: #2c3e50;
+    color: #fff;
+    padding: 12px 10px;
+    white-space: nowrap;
+}
+
+.editor-anggota-page .member-admin-table td {
+    padding: 12px 10px;
+    border-top: 1px solid #e5e7eb;
+    background: #fff;
+}
+
+.editor-anggota-page .member-sort-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: 0;
+    color: inherit;
+    font: inherit;
+    font-weight: 700;
+}
+
+.editor-anggota-page .member-admin-table tbody tr:nth-child(even) td {
+    background: #f8fafc;
+}
+
+.editor-anggota-page .member-admin-table td:last-child {
+    min-width: 120px;
+}
+
+.editor-anggota-page .member-admin-table td:last-child button,
+.editor-anggota-page .member-admin-table td:last-child a,
+.editor-anggota-page .member-admin-table td:last-child .btn,
+.editor-anggota-page .member-admin-table td:last-child span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    margin: 2px 4px 2px 0;
+}
+
+@media (max-width: 768px) {
+    .editor-anggota-page .finance-page-wrapper {
+        padding-top: 84px !important;
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+        padding-bottom: 28px !important;
+    }
+
+    .editor-anggota-page .content-box {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 20px 12px !important;
+        margin: 0 auto !important;
+    }
+
+    .editor-anggota-page .member-admin-box {
+        padding: 16px 12px !important;
+    }
+
+    .editor-anggota-page .member-form-grid {
+        grid-template-columns: 1fr !important;
+        gap: 14px !important;
+    }
+
+    .editor-anggota-page .member-form-grid .form-group input,
+    .editor-anggota-page .member-form-grid .form-group select,
+    .editor-anggota-page .member-form-grid .form-group textarea,
+    .editor-anggota-page #memberSearchInput,
+    .editor-anggota-page #memberStatusFilter,
+    .editor-anggota-page #memberActiveFilter {
+        min-height: 48px;
+        font-size: 16px;
+        padding: 12px 14px;
+    }
+
+    .editor-anggota-page .member-list-filters {
+        grid-template-columns: 1fr;
+    }
+
+    .editor-anggota-page .admin-photo-upload-button,
+    .editor-anggota-page .form-submit-row .btn-primary,
+    .editor-anggota-page .form-submit-row .btn-secondary,
+    .editor-anggota-page #memberSearchInput,
+    .editor-anggota-page #memberStatusFilter,
+    .editor-anggota-page #memberActiveFilter {
+        width: 100% !important;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    .editor-anggota-page .form-submit-row {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .editor-anggota-page .member-admin-table table {
+        min-width: 760px;
+    }
+
+    .editor-anggota-page .member-list-toggle {
+        font-size: 14px;
+        padding: 13px 14px;
+    }
+
+    .editor-anggota-page .member-list-body {
+        padding: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .editor-anggota-page .box-title {
+        font-size: 26px;
+        line-height: 1.2;
+    }
+
+    .editor-anggota-page .member-admin-box {
+        padding: 14px 10px !important;
+    }
+
+    .editor-anggota-page .admin-photo-upload-card {
+        padding: 16px 12px;
+    }
+}

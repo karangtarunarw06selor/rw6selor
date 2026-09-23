@@ -1,0 +1,377 @@
+html,
+body.ea-app {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+body.ea-app {
+    background: #eef2f7;
+    color: #1f2937;
+}
+
+.ea-app *,
+.ea-app *::before,
+.ea-app *::after {
+    box-sizing: border-box;
+}
+
+.ea-header {
+    width: 100%;
+    max-width: 100%;
+}
+
+.ea-main,
+.ea-wrap {
+    width: min(1280px, calc(100% - 36px));
+    max-width: 1280px;
+    margin: 128px auto 48px;
+    padding: 0;
+    overflow: visible;
+}
+
+.ea-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: flex-end;
+    margin-bottom: 18px;
+    min-width: 0;
+}
+
+.ea-head h1 {
+    font-size: clamp(24px, 3vw, 28px);
+    color: #1f2937;
+    margin: 0;
+    line-height: 1.15;
+}
+
+.ea-head p {
+    margin: 6px 0 0;
+    color: #64748b;
+    font-weight: 600;
+    line-height: 1.45;
+}
+
+.ea-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+    max-width: 100%;
+}
+
+.ea-tab {
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    color: #334155;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-weight: 800;
+    cursor: pointer;
+    min-width: 0;
+}
+
+.ea-tab.active {
+    background: #2c3e50;
+    color: #fff;
+    border-color: #2c3e50;
+}
+
+.ea-panel {
+    display: none;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    background: #fff;
+    border: 1px solid #dbe3ef;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, .08);
+    overflow: hidden;
+}
+
+.ea-panel.active {
+    display: block;
+}
+
+.ea-toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(140px, .8fr) minmax(160px, .8fr) auto;
+    gap: 10px;
+    margin-bottom: 12px;
+    min-width: 0;
+}
+
+.ea-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+    min-width: 0;
+}
+
+.ea-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.ea-form .full {
+    grid-column: 1 / -1;
+}
+
+.ea-field,
+.ea-preview,
+.ea-table-wrap {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.ea-field label {
+    display: block;
+    font-size: 12px;
+    color: #475569;
+    font-weight: 800;
+    margin-bottom: 5px;
+}
+
+.ea-field input,
+.ea-field select,
+.ea-field textarea,
+.ea-toolbar input,
+.ea-toolbar select {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 10px;
+    font: inherit;
+    background: #fff;
+}
+
+.ea-field textarea {
+    min-height: 86px;
+    resize: vertical;
+}
+
+.ea-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: visible;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    -webkit-overflow-scrolling: touch;
+}
+
+.ea-table {
+    width: 100%;
+    min-width: 680px;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.ea-table th,
+.ea-table td {
+    padding: 10px;
+    border-bottom: 1px solid #e2e8f0;
+    text-align: left;
+    vertical-align: top;
+    overflow-wrap: anywhere;
+}
+
+.ea-table th {
+    background: #f8fafc;
+    color: #334155;
+}
+
+.ea-actions {
+    display: flex;
+    gap: 7px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+    min-width: 0;
+}
+
+.ea-btn {
+    border: none;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-weight: 900;
+    cursor: pointer;
+    background: #2c3e50;
+    color: #fff;
+    min-width: 0;
+}
+
+.ea-btn.secondary {
+    background: #e2e8f0;
+    color: #334155;
+}
+
+.ea-btn.danger {
+    background: #dc2626;
+}
+
+.ea-btn.good {
+    background: #059669;
+}
+
+.ea-badge {
+    display: inline-flex;
+    max-width: 100%;
+    border-radius: 999px;
+    padding: 3px 8px;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+}
+
+.ea-preview {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px;
+    min-height: 120px;
+    overflow-wrap: anywhere;
+}
+
+.ea-top-actions {
+    margin: 0 0 12px;
+}
+
+.ea-upload-btn {
+    width: 100%;
+    margin-top: 8px;
+}
+
+.ea-preview-assets {
+    display: grid;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.ea-preview-media {
+    width: 100%;
+    max-height: 260px;
+    border: 1px solid #dbe3ef;
+    border-radius: 8px;
+    background: #0f172a;
+    object-fit: contain;
+}
+
+.ea-status {
+    margin: 10px 0;
+    color: #475569;
+    font-weight: 700;
+    min-height: 20px;
+}
+
+@media (max-width: 768px) {
+    .ea-main,
+    .ea-wrap {
+        width: 100%;
+        max-width: 100%;
+        margin: 104px auto 32px;
+        padding: 0 12px;
+    }
+
+    .ea-head {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .ea-head .ea-btn,
+    #ea-refresh {
+        width: 100%;
+    }
+
+    .ea-tabs {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .ea-tab {
+        width: 100%;
+        padding: 10px 8px;
+        font-size: 13px;
+        white-space: normal;
+    }
+
+    .ea-panel {
+        padding: 12px;
+        border-radius: 8px;
+    }
+
+    .ea-grid,
+    .ea-toolbar,
+    .ea-form {
+        grid-template-columns: 1fr;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .ea-form .full {
+        grid-column: auto;
+    }
+
+    .ea-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .ea-actions .ea-btn,
+    .ea-toolbar .ea-btn {
+        width: 100%;
+    }
+
+    .ea-table {
+        min-width: 620px;
+    }
+}
+
+@media (max-width: 480px) {
+    .ea-main,
+    .ea-wrap {
+        margin-top: 96px;
+        padding: 0 10px;
+    }
+
+    .ea-head h1 {
+        font-size: 22px;
+    }
+
+    .ea-tabs {
+        grid-template-columns: 1fr;
+    }
+
+    .ea-panel {
+        padding: 10px;
+    }
+
+    .ea-field input,
+    .ea-field select,
+    .ea-field textarea,
+    .ea-toolbar input,
+    .ea-toolbar select,
+    .ea-btn {
+        font-size: 14px;
+    }
+
+    .ea-table {
+        min-width: 560px;
+        font-size: 12px;
+    }
+
+    .ea-table th,
+    .ea-table td {
+        padding: 8px;
+    }
+}

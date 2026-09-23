@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Smart Health Assistant - RW06 Selor</title>
+
+    <meta name="description" content="Hitung kebutuhan BMR, target protein, tracker kalori makanan, dan log olahraga harian bersama asisten kesehatan pintar RW06 Selor.">
+    <link rel="canonical" href="kesehatan.html">
+    
+    <link rel="icon" href="images/mms.avif" type="image/png">
+    <link rel="icon" type="image/avif" sizes="192x192" href="images/mms.avif">
+    <link rel="apple-touch-icon" sizes="192x192" href="images/mms.avif">
+    <link rel="apple-touch-icon" sizes="512x512" href="images/mms.avif">
+    
+    <link rel="stylesheet" href="style.css?v=103">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="manifest" href="manifest.json">
+
+    <style>
+        .health-container-wrapper { max-width: 1200px; margin: 62px auto 40px auto; padding: 20px; }
+        .health-grid { display: grid; grid-template-columns: 1fr; gap: 20px; margin-top: 20px; }
+        @media(min-width: 992px) { .health-grid { grid-template-columns: 1fr 1.3fr; } }
+        .card-health { background: #fff; padding: 25px; padding-top: 20px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 13px; color: #475569; }
+        .form-input { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; box-sizing: border-box; }
+        .btn-mms { background-color: #D32F2F; color: #fff; border: none; padding: 12px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-mms:hover { background-color: #b71c1c; }
+        .search-results { border: 1px solid #e2e8f0; max-height: 250px; overflow-y: auto; background: #fff; position: absolute; width: 100%; z-index: 100; border-radius: 6px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .search-item { padding: 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
+        .search-item:hover { background-color: #f8fafc; }
+        
+        .progress-container { background: #e2e8f0; border-radius: 20px; height: 22px; width: 100%; overflow: hidden; margin-top: 10px; position: relative; }
+        .progress-fill { height: 100%; width: 0%; transition: width 0.5s ease; background: #10b981; }
+        .progress-text { position: absolute; width: 100%; text-align: center; top: 2px; font-weight: bold; font-size: 11px; color: #1e293b; }
+        
+        .alert-banner { padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; display: flex; align-items: center; gap: 10px; border-left: 5px solid; font-size: 13px;}
+        .alert-danger { background: #fef2f2; color: #991b1b; border-color: #ef4444; }
+        .alert-warning { background: #fffbeb; color: #92400e; border-color: #f59e0b; }
+        .alert-success { background: #ecfdf5; color: #065f46; border-color: #10b981; }
+        
+        .badge-cal { background: #fef08a; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; color: #854d0e; }
+        .badge-pro { background: #bfdbfe; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; color: #1e3a8a; margin-left: 5px;}
+        
+        .journal-box { display: grid; grid-template-columns: 1fr; gap: 15px; margin-top: 15px; }
+        @media(min-width: 768px) { .journal-box { grid-template-columns: 1fr 1fr; } }
+        .journal-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; max-height: 300px; overflow-y: auto; }
+        .journal-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #fff; border: 1px solid #edf2f7; border-radius: 6px; margin-bottom: 8px; font-size: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+
+        .card-header-toggle { display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
+        .btn-toggle-profile { background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #475569; transition: 0.2s; }
+        .btn-toggle-profile:hover { background: #e2e8f0; }
+        .profile-content-wrapper { transition: all 0.3s ease-in-out; overflow: hidden; }
+
+        /* Kumpulan Style Kustom Komponen Modal */
+        .mms-modal { display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(4px); justify-content: center; align-items: center; }
+        .mms-modal-content { background-color: #fff; padding: 30px; border-radius: 16px; max-width: 420px; width: 90%; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); border-top: 6px solid #D32F2F; animation: slideDown 0.3s ease; }
+        @keyframes slideDown { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-small-text { display: block; font-size: 11px; color: #64748b; margin-top: 15px; background: #f1f5f9; padding: 8px; border-radius: 6px; border-left: 3px solid #64748b; text-align: left; }
+
+        /* Style Efek Glow Pulse Merah ePerpustakaan RW06 */
+        .welcome-user-box { padding: 15px 20px; background: #fff; border: 1px solid #ef4444; border-radius: 10px; font-weight: bold; font-size: 16px; color: #1e293b; display: flex; align-items: center; gap: 12px; margin-bottom: 20px; box-shadow: 0 0 10px rgba(211, 47, 47, 0.2); animation: pulse-glow-red 2s infinite alternate; }
+        @keyframes pulse-glow-red {
+            0% { box-shadow: 0 0 8px rgba(211, 47, 47, 0.3); border-color: #ef4444; }
+            100% { box-shadow: 0 0 18px rgba(211, 47, 47, 0.7); border-color: #b71c1c; }
+        }
+        .username-glow { color: #D32F2F; text-transform: uppercase; letter-spacing: 0.5px; text-shadow: 0 0 2px rgba(211, 47, 47, 0.1); }
+    </style>
+</head>
+<body> 
+    
+<div id="custom-loader" class="loading-overlay" style="display: none;">
+    <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 40px; color:#D32F2F;"></i>
+    <div id="loader-text" style="font-weight:bold;">Memproses...</div>
+</div>
+
+<div id="custom-toast" class="custom-toast">
+    <i id="toast-icon" class="fa-solid"></i>
+    <span id="toast-msg"></span>
+</div>
+
+    <div id="reminder-modal" class="mms-modal">
+        <div class="mms-modal-content">
+            <i class="fa-solid fa-heart-circle-check" style="font-size: 55px; color: #D32F2F; margin-bottom: 15px;"></i>
+            <h3 style="margin-top:0; color:#1e293b;">Kontrol Asupan Gizi</h3>
+            <p style="font-size: 14px; color: #475569; line-height: 1.5; margin-bottom: 20px;">
+                Tetap semangat memantau asupan kalori dan makananmu hari ini. Jaga selalu pola makan demi kesehatan investasimu di masa depan!
+            </p>
+            <button class="btn-mms" onclick="tutupModalReminder()"><i class="fa-solid fa-circle-check"></i> Saya Siap Catat</button>
+            <small class="modal-small-text">
+                <i class="fa-solid fa-triangle-exclamation"></i> <strong>Catatan:</strong> Jangan lupa klik tombol <strong>"Reset Log"</strong> jika Anda ingin mengosongkan riwayat lama untuk menghitung ulang data/asupan baru hari ini.
+            </small>
+        </div>
+    </div>
+
+    <div id="confirm-reset-modal" class="mms-modal">
+        <div class="mms-modal-content" style="border-top: 6px solid #b91c1c; max-width: 400px;">
+            <i class="fa-solid fa-triangle-exclamation" style="font-size: 55px; color: #b91c1c; margin-bottom: 15px;"></i>
+            <h3 style="margin-top:0; color:#1e293b;">Konfirmasi Hapus Log</h3>
+            <p style="font-size: 14px; color: #475569; line-height: 1.5; margin-bottom: 25px;">
+                Yakin ingin menghapus dan bersihkan baris log hari ini di spreadsheet? Tindakan ini tidak dapat dibatalkan.
+            </p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <button class="btn-mms" onclick="tutupModalReset()" style="background-color: #64748b;"><i class="fa-solid fa-xmark"></i> Batal</button>
+                <button class="btn-mms" onclick="eksekusiResetServer()" style="background-color: #b91c1c;"><i class="fa-solid fa-trash-can"></i> Ya, Hapus</button>
+            </div>
+        </div>
+    </div>
+
+    <header class="site-header">
+        <div class="top-header">
+            <div class="header-logo-area">
+                <a href="index.html" class="logo-wrapper">
+                    <img src="images/mms.avif" alt="Logo RW06 Selor" class="mini-logo">
+                    <div class="header-text">
+                        <span class="brand-title">RW06 SELOR</span>
+                        <span class="brand-subtitle">Sedahromo Lor 05</span>
+                    </div>
+                </a>
+            </div>
+            <div class="header-right-stuff">
+                <div class="header-socials">
+                    <a href="#" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" title="YouTube"><i class="fa-brands fa-youtube"></i></a>
+                    <a href="#" title="Facebook"><i class="fa-brands fa-facebook"></i></a>
+                    <a href="https://www.tiktok.com/@mudamudisedahromolor05" title="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+                </div>
+            </div>
+            <button class="menu-toggle" id="mobile-menu-btn"><i class="fa-solid fa-bars"></i></button>
+        </div> 
+
+        
+      <nav class="main-navbar">
+            <ul class="nav-list">
+                <li class="nav-item"><a href="index.html">BERANDA</a></li>
+                <li class="nav-item">
+                    <a href="#">PROFIL</a>
+                    <ul class="submenu">
+                        <li class="submenu-item"><a href="struktur.html"> - STRUKTUR KEANGGOTAAN</a></li>
+                        <li class="submenu-item"><a href="visi-misi.html"> - VISI & MISI</a></li>
+                        <li class="submenu-item"><a href="daftar-anggota.html"> - DAFTAR ANGGOTA</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a href="#" id="btn-bulanan">KEGIATAN</a>
+                    <ul class="submenu" id="menu-rapat">
+                        <li class="submenu-item"><a href="rapat-hasilrapat.html"> - RAPAT BULANAN</a></li>
+                        <li class="submenu-item"><a href="dokumentasi-kegiatan.html"> - DOKUMENTASI</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a href="#">LAPORAN</a>
+                    <ul class="submenu">
+                        <li class="submenu-item"><a href="laporan-keuangan.html"> - KEUANGAN</a></li>
+                        <li class="submenu-item"><a href="iuran-bulanan.html"> - KAS BULANAN</a></li>
+                        <li class="submenu-item"><a href="lpj.html"> - PERTANGGUNG JAWABAN</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a href="#" id="btn-tahunan">DATA ARSIP</a>
+                    <ul class="submenu" id="menu-17an">
+                        <li class="submenu-item"><a href="arsip-proposal.html"> - PROPOSAL</a></li>
+                        <li class="submenu-item"><a href="arsip-lomba.html"> - LOMBA</a></li>
+                        <li class="submenu-item"><a href="arsip-surat.html"> - SURAT</a></li>
+                    </ul>
+                </li> 
+                <li class="nav-item">
+                    <a href="#">INFORMASI</a>
+                    <ul class="submenu">
+                        <li class="submenu-item"><a href="berita.html"> - BERITA</a></li>
+                        <li class="submenu-item"><a href="kesehatan.html"> - KESEHATAN</a></li>
+                         <li class="submenu-item"><a href="monitor-lomba.html"> - MONITORING LOMBA</a></li>
+                    </ul>
+                </li>
+               <li class="nav-item">
+                 <a href="#">RUANG LITERASI</a>
+                    <ul class="submenu">
+                       <li class="submenu-item"><a href="englishmms.html"> - ENGLISH ACCADEMY</a></li>
+                        <li class="submenu-item"><a href="eperpus-mms.html"> - E-PERPUSTAKAAN</a></li>
+                       <li class="submenu-item"><a href="request-ebook.html"> - REQUEST EBOOK</a></li>
+                    </ul>
+                 </li>
+                <li class="nav-item">
+                 <a href="#">GAME</a>
+                    <ul class="submenu">
+                       <li class="submenu-item"><a href="/billiard/"> - BILLIARD</a></li>
+                       <li class="submenu-item"><a href="/chess/"> - CATUR</a></li>
+                    </ul>
+                 </li>
+                 <li class="nav-item">
+                 <a href="#">MARKETPLACE</a>
+                    <ul class="submenu">
+                       <li class="submenu-item"><a href="mms-marketplace.html"> - PASAR DIGITAL</a></li>
+                    </ul>
+                 </li>
+             </ul>
+            <div class="navbar-mobile-only">
+                <div class="header-socials">
+                    <a href="#" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" title="YouTube"><i class="fa-brands fa-youtube"></i></a>
+                    <a href="#" title="Facebook"><i class="fa-brands fa-facebook"></i></a>
+                    <a href="https://www.tiktok.com/@mudamudisedahromolor05?is_from_webapp=1&sender_device=pc" title="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="health-container-wrapper">
+        <div id="login-frame" class="card-health" style="max-width: 400px; margin: 40px auto; text-align: center;">
+            <i class="fa-solid fa-heart-pulse" style="font-size: 50px; color: #D32F2F; margin-bottom: 15px;"></i>
+            <h3>Akses Database Kesehatan</h3>
+            <div class="form-group" style="text-align: left; margin-top:20px;">
+                <label>Masukkan Email Untuk Menggunakan Aplikasi Ini</label>
+                <input type="email" id="user-email-input" class="form-input" placeholder="email@anda.com">
+            </div>
+            <button class="btn-mms" onclick="loginApp()"><i class="fa-solid fa-right-to-bracket"></i> Masuk Sistem</button>
+        </div>
+
+        <div id="dashboard-frame" style="display: none;">
+            <div style="background: #1e293b; color:#fff; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom:20px;">
+                <div>Sesi: <strong id="lbl-email"></strong></div>
+                <button class="btn-mms" onclick="logoutApp()" style="width:auto; padding:6px 12px; background:#475569; font-size:12px;">Keluar</button>
+            </div>
+
+            <div id="mms-welcome-banner"></div>
+            <div id="ai-bmi-banner"></div>
+
+            <div class="health-grid">
+                <div class="card-health">
+                    <div class="card-header-toggle" onclick="toggleProfile()">
+                        <h4 style="margin:0; color:#D32F2F;"><i class="fa-solid fa-address-card"></i> Profil & Konfigurasi AI</h4>
+                        <button class="btn-toggle-profile" id="btn-toggle-icon"><i class="fa-solid fa-chevron-up"></i></button>
+                    </div>
+                    
+                    <div id="profile-content-area" class="profile-content-wrapper" style="margin-top: 15px;">
+                        <hr style="border:none; border-top:1px solid #e2e8f0; margin-bottom:15px; margin-top:0;">
+                        <div class="form-group"><label>Nama</label><input type="text" id="p-nama" class="form-input"></div>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                            <div class="form-group"><label>Gender</label><select id="p-gender" class="form-input"><option value="Laki-laki">Laki-laki</option><option value="Perempuan">Perempuan</option></select></div>
+                            <div class="form-group"><label>Umur</label><input type="number" id="p-umur" class="form-input"></div>
+                        </div>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                            <div class="form-group"><label>Tinggi (cm)</label><input type="number" id="p-tb" class="form-input"></div>
+                            <div class="form-group"><label>Berat (kg)</label><input type="number" id="p-bb" class="form-input"></div>
+                        </div>
+                        <div class="form-group" style="background:#fffbeb; padding:12px; border-radius:6px; border:1px solid #fcd34d;">
+                            <label style="color:#b45309;"><i class="fa-solid fa-bullseye"></i> Program Diet Mingguan</label>
+                            <select id="p-diet" class="form-input" style="border-color:#f59e0b;" onchange="kalkulasiUI()">
+                                <option value="maintain">Normal / Pertahankan BB</option>
+                                <option value="lose_025">Turun Ringan (-0.25 kg/minggu)</option>
+                                <option value="lose_050">Turun Sedang (-0.50 kg/minggu)</option>
+                                <option value="lose_100">Turun Agresif (-1.00 kg/minggu)</option>
+                            </select>
+                        </div>
+                        <button class="btn-mms" onclick="simpanProfil()"><i class="fa-solid fa-floppy-disk"></i> Simpan & Generate Target</button>
+                    </div>
+                </div>
+
+                <div class="card-health">
+                    <h4 style="margin-top:0; color:#0f766e;"><i class="fa-solid fa-microchip"></i> Smart Tracker Log</h4>
+                    <hr style="border:none; border-top:1px solid #e2e8f0; margin-bottom:15px;">
+                    
+                    <div style="background:#f8fafc; padding:15px; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:20px;">
+                        <div style="display:flex; justify-content:space-between; font-weight:bold; color:#334155; font-size:14px;">
+                            <span>Target Kalori: <span id="ui-netkal">0</span> kcal</span>
+                            <span>Sisa: <span id="ui-sisakal" style="color:#10b981;">0</span> kcal</span>
+                        </div>
+                        <div class="progress-container"><div id="bar-kal" class="progress-fill"></div><div id="txt-kal" class="progress-text">0%</div></div>
+                        
+                        <div style="display:flex; justify-content:space-between; font-weight:bold; color:#334155; font-size:13px; margin-top:15px;">
+                            <span>Target Protein: <span id="ui-netpro">0</span> g</span>
+                            <span>Tercapai: <span id="ui-sisapro" style="color:#3b82f6;">0</span> g</span>
+                        </div>
+                        <div class="progress-container"><div id="bar-pro" class="progress-fill" style="background:#3b82f6;"></div><div id="txt-pro" class="progress-text" style="color:#fff;">0%</div></div>
+                    </div>
+
+                    <div style="background:#f8fafc; padding:15px; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:15px; position:relative;">
+                        <label style="font-weight:bold; font-size:13px; display:block; margin-bottom:10px;"><i class="fa-solid fa-burger" style="color:#D32F2F;"></i> Cari & Tambah Makanan / Minuman</label>
+                        <input type="text" id="box-cari" class="form-input" placeholder="Ketik nama makanan..." onfocus="cariMenu('')" oninput="cariMenu(this.value)">
+                        <div id="hasil-cari" class="search-results" style="display:none;"></div>
+                        
+                        <div id="cart-area" style="background:#f1f5f9; padding:10px; border-radius:6px; margin-top:15px; display:none;">
+                            <div style="font-size:11px; font-weight:bold; margin-bottom:5px; color:#64748b;">Akan Disubmit:</div>
+                            <div id="cart-list"></div>
+                            <button onclick="submitMakan()" class="btn-mms" style="background:#10b981; padding:8px; margin-top:8px; font-size:13px;"><i class="fa-solid fa-check"></i> Catat Jurnal (<span id="cart-c">0</span> kcal | <span id="cart-p">0</span>g)</button>
+                        </div>
+                    </div>
+
+                    <div style="border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+                        <div onclick="toggleSubMenu('fold-olahraga', 'icon-fold-olahraga')" style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:12px 15px; cursor:pointer; user-select:none;">
+                            <span style="font-weight:bold; font-size:13px; color:#334155;"><i class="fa-solid fa-person-running" style="color:#0f766e;"></i> Catat Olahraga Harian</span>
+                            <span id="icon-fold-olahraga" style="color:#64748b; font-size:12px;"><i class="fa-solid fa-chevron-down"></i></span>
+                        </div>
+                        <div id="fold-olahraga" style="display:none; padding:15px; border-top:1px solid #e2e8f0; background:#fff;">
+                            <select id="akt-jenis" class="form-input" style="margin-bottom:10px;" onchange="aturInputAkt(this.value)">
+                                <option value="Lari">Lari</option>
+                                <option value="Jalan Kaki">Jalan Kaki</option>
+                                <option value="Bersepeda">Bersepeda</option>
+                                <option value="Angkat Beban">Angkat Beban / Gym</option>
+                            </select>
+                            
+                            <div id="in-kardio" style="display:flex; flex-direction:column; gap:10px;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                                    <div style="position:relative;">
+                                        <input type="number" id="akt-km" class="form-input" placeholder="Jarak..." style="padding-right: 40px;">
+                                        <span style="position:absolute; right:10px; top:10px; color:#64748b; font-weight:bold; font-size:12px;">km</span>
+                                    </div>
+                                    <div style="position:relative;">
+                                        <input type="number" id="akt-menit" class="form-input" placeholder="Waktu..." style="padding-right: 50px;">
+                                        <span style="position:absolute; right:10px; top:10px; color:#64748b; font-weight:bold; font-size:12px;">menit</span>
+                                    </div>
+                                </div>
+                                <div id="box-elevasi" style="position:relative;">
+                                    <label style="font-size:11px; font-weight:bold; color:#64748b; display:block; margin-bottom:4px;">Elevasi Lintasan (Incline Treadmill)</label>
+                                    <select id="akt-elevasi" class="form-input">
+                                        <option value="0">Datar / Luar Ruangan (0%)</option>
+                                        <option value="2">Incline Ringan (1% - 3%)</option>
+                                        <option value="5">Incline Sedang (4% - 6%)</option>
+                                        <option value="9">Incline Tinggi / Menanjak (7% - 10%)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div id="in-beban" style="display:none; flex-direction:column; gap:10px;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                                    <div style="position:relative;"><input type="number" id="akt-set" class="form-input" placeholder="Berapa Set?"><span style="position:absolute; right:10px; top:10px; color:#64748b; font-size:12px;">Set</span></div>
+                                    <div style="position:relative;"><input type="number" id="akt-kg" class="form-input" placeholder="Beban?"><span style="position:absolute; right:10px; top:10px; color:#64748b; font-size:12px;">Kg</span></div>
+                                </div>
+                                <div style="position:relative;">
+                                    <input type="number" id="akt-durasi-beban" class="form-input" placeholder="Durasi latihan beban..." style="padding-right:50px;">
+                                    <span style="position:absolute; right:10px; top:10px; color:#64748b; font-size:12px;">menit</span>
+                                </div>
+                            </div>
+
+                            <button onclick="submitAkt()" class="btn-mms" style="background:#0f766e; padding:8px; margin-top:12px; font-size:13px;"><i class="fa-solid fa-fire"></i> Catat Pembakaran</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-health" style="grid-column: 1 / -1;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h4 style="margin:0;"><i class="fa-solid fa-book-open"></i> Jurnal Hari Ini</h4>
+                        <div style="display:flex; gap:8px;">
+                            <button onclick="manualRefresh()" class="btn-mms" style="width:auto; padding:6px 12px; background:#3b82f6; font-size:11px;"><i class="fa-solid fa-rotate"></i> Refresh Data</button>
+                            <button onclick="resetHarian()" style="background:transparent; border:1px solid #ef4444; color:#ef4444; border-radius:4px; padding:4px 12px; cursor:pointer; font-size:11px; font-weight:bold;"><i class="fa-solid fa-trash"></i> Reset Log</button>
+                        </div>
+                    </div>
+                    <div class="journal-box">
+                        <div class="journal-card">
+                            <h5 style="margin:0 0 10px 0; color:#b91c1c;">🍱 Makanan / Minuman Masuk</h5>
+                            <div id="jr-makan"></div>
+                        </div>
+                        <div class="journal-card">
+                            <h5 style="margin:0 0 10px 0; color:#15803d;">🏃 Aktivitas Fisik</h5>
+                            <div id="jr-akt"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+      <footer class="site-footer">
+        <div class="footer-container">
+            <div class="footer-column info-col">
+                <div class="footer-brand">
+                    <img src="images/mms.avif" alt="Logo RW06 Selor" class="footer-logo">
+                    <h4>RW06 Selor</h4>
+                </div>
+                <p class="footer-text">
+                    <i class="fa-solid fa-location-dot"></i> Jl. Sedahromo Lor, RT.05 / RW.06, Kel. Kartasura, Kec. Kartasura, Sukoharjo, Jawa Tengah 57167
+                </p>
+                <p class="footer-text">
+                    <i class="fa-solid fa-envelope"></i> <a href="mailto:mudamudisedahromolor@gmail.com">mudamudisedahromolor@gmail.com</a>
+                </p>
+            </div>
+
+            <div class="footer-column links-col">
+                <h5>Sitemap</h5>
+                <ul class="footer-links">
+                    <li><a href="index.html"><i class="fa-solid fa-chevron-right"></i> Beranda</a></li>
+                    <li><a href="struktur.html"><i class="fa-solid fa-chevron-right"></i> Struktur Organisasi</a></li>
+                    <li><a href="daftar-anggota.html"><i class="fa-solid fa-chevron-right"></i> Daftar Anggota</a></li>
+                    <li><a href="laporan-keuangan.html"><i class="fa-solid fa-chevron-right"></i> Transparansi Kas</a></li>
+                    <li><a href="dokumentasi-kegiatan.html"><i class="fa-solid fa-chevron-right"></i> Dokumentasi</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-column social-col">
+                <h5>Media Sosial</h5>
+                <p class="footer-text">Ikuti linimasa kegiatan dan perkembangan pemuda kami melalui kanal resmi berikut:</p>
+                <div class="footer-social-icons">
+                    <a href="#" title="Instagram" target="_blank"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" title="YouTube" target="_blank"><i class="fa-brands fa-youtube"></i></a>
+                    <a href="#" title="Facebook" target="_blank"><i class="fa-brands fa-facebook"></i></a>
+                    <a href="https://www.tiktok.com/@mudamudisedahromolor05" title="TikTok" target="_blank"><i class="fa-brands fa-tiktok"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>Copyright &copy; 2026 RW06 Selor. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+
+
+    
+
+    <script src="online-tracker.js"></script> 
+
+    <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbzN0NB4NmmJuEaEvtwUr9yGKNbNitMEz_7OE80Umd4uMkQ2I3WOk_WwVJx929ThQodt/exec";
+
+    let sess = null;
+    let kamusMenu = [];
+    let cart = [];
+
+    function bukaModalReminder() {
+        document.getElementById('reminder-modal').style.display = 'flex';
+    }
+
+    function tutupModalReminder() {
+        document.getElementById('reminder-modal').style.display = 'none';
+        buatBannerSalam();
+    }
+
+    function buatBannerSalam() {
+        const bannerBox = document.getElementById('mms-welcome-banner');
+        if (sess && sess.nama) {
+            bannerBox.innerHTML = `
+                <div class="welcome-user-box">
+                    <i class="fa-solid fa-user-shield" style="color: #D32F2F;"></i>
+                    <span>Halo, <span class="username-glow">${sess.nama}</span></span>
+                </div>`;
+        } else if (sess) {
+            bannerBox.innerHTML = `
+                <div class="alert-banner alert-warning">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Silakan isi data diri Anda terlebih dahulu untuk melanjutkan penggunaan sistem!
+                </div>`;
+        } else {
+            bannerBox.innerHTML = "";
+        }
+    }
+
+    function resetHarian() {
+        document.getElementById('confirm-reset-modal').style.display = 'flex';
+    }
+
+    function tutupModalReset() {
+        document.getElementById('confirm-reset-modal').style.display = 'none';
+    }
+
+    function eksekusiResetServer() {
+        tutupModalReset();
+        loading(true, "Menghapus baris harian di server...");
+        fetch(API_URL, { method: "POST", body: JSON.stringify({ aksi: "resetHarian", email: sess.email }) })
+        .then(r=>r.json()).then(res => {
+            loading(false);
+            sess.kaloriMasuk = 0; 
+            sess.proteinMasuk = 0; 
+            sess.kaloriBakar = 0; 
+            sess.jurnal = res.jurnal;
+            localStorage.setItem("mms_v2", JSON.stringify(sess)); 
+            kalkulasiUI(); drawJurnal(); toast("Log harian di sheet terhapus otomatis!", "success");
+        }).catch(() => { loading(false); toast("Gagal terkoneksi", "danger"); });
+    }
+
+    function toggleProfile() {
+        const area = document.getElementById('profile-content-area');
+        const icon = document.getElementById('btn-toggle-icon');
+        
+        if (area.style.display === 'none') {
+            area.style.display = 'block';
+            icon.innerHTML = '<i class="fa-solid fa-chevron-up"></i>';
+        } else {
+            area.style.display = 'none';
+            icon.innerHTML = '<i class="fa-solid fa-chevron-down"></i>';
+        }
+    }
+
+    function setProfileVisibility(show) {
+        const area = document.getElementById('profile-content-area');
+        const icon = document.getElementById('btn-toggle-icon');
+        if(show) {
+            area.style.display = 'block';
+            icon.innerHTML = '<i class="fa-solid fa-chevron-up"></i>';
+        } else {
+            area.style.display = 'none';
+            icon.innerHTML = '<i class="fa-solid fa-chevron-down"></i>';
+        }
+    }
+
+    function loading(show, text="Memproses...") {
+        document.getElementById('loader-text').innerText = text;
+        document.getElementById('custom-loader').style.display = show ? 'flex' : 'none';
+    }
+
+    function toast(msg, type="info") {
+        const el = document.getElementById('custom-toast');
+        document.getElementById('toast-msg').innerText = msg;
+        el.className = `custom-toast t-${type} toast-show`;
+        setTimeout(() => el.classList.remove('toast-show'), 3500);
+    }
+
+    window.onload = () => {
+        localStorage.removeItem("mms_v2");
+        document.getElementById('login-frame').style.display = 'block';
+        document.getElementById('dashboard-frame').style.display = 'none';
+        fetchKamus();
+    };
+
+    function toggleSubMenu(idTarget, idIcon) {
+        const areaMenu = document.getElementById(idTarget);
+        const areaIcon = document.getElementById(idIcon);
+        
+        if (areaMenu.style.display === 'none' || areaMenu.style.display === '') {
+            areaMenu.style.display = 'block';
+            areaIcon.innerHTML = '<i class="fa-solid fa-chevron-up"></i>';
+        } else {
+            areaMenu.style.display = 'none';
+            areaIcon.innerHTML = '<i class="fa-solid fa-chevron-down"></i>';
+        }
+    }
+
+    function fetchKamus() {
+        fetch(`${API_URL}?aksi=getMakanan`).then(r=>r.json()).then(d => { kamusMenu = d; }).catch(console.error);
+    }
+
+    function loginApp() {
+        let email = document.getElementById('user-email-input').value.trim();
+        if(!email) return toast("Email wajib diisi", "danger");
+        loading(true, "Membuka database...");
+        fetch(`${API_URL}?aksi=login&email=${email}`).then(r=>r.json()).then(res => {
+            loading(false);
+            if(res.status === 'old_user') {
+                sess = res.data; sess.jurnal = res.jurnal; toast("Data dimuat!", "success");
+                localStorage.setItem("mms_v2", JSON.stringify(sess));
+                initUI();
+                setProfileVisibility(false); 
+                bukaModalReminder();
+            } else {
+                sess = {email: email, nama:"", gender:"Laki-laki", umur:"", tb:"", bb:"", bmr:0, targetProtein:0, kaloriMasuk:0, proteinMasuk:0, kaloriBakar:0, diet:"maintain", jurnal:{makanan:[], aktivitas:[]}};
+                localStorage.setItem("mms_v2", JSON.stringify(sess));
+                initUI();
+                setProfileVisibility(true); 
+                buatBannerSalam();
+            }
+        }).catch(()=> { loading(false); toast("Gagal terhubung server", "danger"); });
+    }
+
+    function manualRefresh() {
+        if(!sess || !sess.email) return;
+        loading(true, "Sinkronisasi data terbaru...");
+        fetch(`${API_URL}?aksi=login&email=${sess.email}`).then(r=>r.json()).then(res => {
+            loading(false);
+            if(res.status === 'old_user') {
+                sess = res.data; sess.jurnal = res.jurnal;
+                localStorage.setItem("mms_v2", JSON.stringify(sess));
+                initUI(); toast("Tampilan terupdate!", "success");
+            }
+        }).catch(() => { loading(false); toast("Gagal mengambil data", "danger"); });
+    }
+
+    function logoutApp() { localStorage.removeItem("mms_v2"); location.reload(); }
+
+    function initUI() {
+        document.getElementById('login-frame').style.display = 'none';
+        document.getElementById('dashboard-frame').style.display = 'block';
+        document.getElementById('lbl-email').innerText = sess.email;
+        
+        document.getElementById('p-nama').value = sess.nama || ""; 
+        document.getElementById('p-gender').value = sess.gender || "Laki-laki";
+        document.getElementById('p-umur').value = sess.umur || ""; 
+        document.getElementById('p-tb').value = sess.tb || "";
+        document.getElementById('p-bb').value = sess.bb || ""; 
+        document.getElementById('p-diet').value = sess.diet || "maintain";
+        
+        kalkulasiUI(); drawJurnal();
+    }
+
+    function kalkulasiUI() {
+        let bb = Number(document.getElementById('p-bb').value) || 0;
+        let tb = Number(document.getElementById('p-tb').value) || 0;
+        let aiBox = document.getElementById('ai-bmi-banner');
+        if(bb > 0 && tb > 0) {
+            let bmi = (bb / ((tb/100)*(tb/100))).toFixed(1);
+            if(bmi >= 25) aiBox.innerHTML = `<div class="alert-banner alert-danger"><i class="fa-solid fa-triangle-exclamation"></i> AI Alert: Kategori Obesitas (BMI ${bmi}). Sistem sangat menyarankan memilih program 'Turun Agresif' dan perhatikan asupan protein!</div>`;
+            else if(bmi >= 23) aiBox.innerHTML = `<div class="alert-banner alert-warning"><i class="fa-solid fa-circle-exclamation"></i> AI Alert: Overweight (BMI ${bmi}). Waspada kenaikan berat daemon.</div>`;
+            else aiBox.innerHTML = `<div class="alert-banner alert-success"><i class="fa-solid fa-check-circle"></i> AI: Berat Badan Ideal (BMI ${bmi}). Pertahankan!</div>`;
+        }
+
+        let diet = document.getElementById('p-diet').value;
+        let defisit = diet === "lose_025" ? 275 : (diet === "lose_050" ? 550 : (diet === "lose_100" ? 1100 : 0));
+        let baseBMR = sess.bmr || 0;
+        let targetKalori = baseBMR - defisit;
+        if(targetKalori < 1100 && baseBMR > 0) targetKalori = 1100;
+        
+        let netKaloriMasuk = Number(sess.kaloriMasuk || 0) - Number(sess.kaloriBakar || 0); if(netKaloriMasuk < 0) netKaloriMasuk = 0;
+        let sisaKalori = targetKalori - netKaloriMasuk;
+        let pctKal = targetKalori > 0 ? Math.min(Math.round((netKaloriMasuk/targetKalori)*100), 100) : 0;
+
+        document.getElementById('ui-netkal').innerText = targetKalori;
+        document.getElementById('ui-sisakal').innerText = sisaKalori > 0 ? sisaKalori : "HABIS!";
+        document.getElementById('bar-kal').style.width = pctKal + '%';
+        document.getElementById('bar-kal').style.background = pctKal >= 100 ? '#ef4444' : '#10b981';
+        document.getElementById('txt-kal').innerText = pctKal + '%';
+
+        let targetPro = sess.targetProtein || 0;
+        let proMasuk = Number(sess.proteinMasuk || 0);
+        let pctPro = targetPro > 0 ? Math.min(Math.round((proMasuk/targetPro)*100), 100) : 0;
+        
+        document.getElementById('ui-netpro').innerText = targetPro;
+        document.getElementById('ui-sisapro').innerText = proMasuk;
+        document.getElementById('bar-pro').style.width = pctPro + '%';
+        document.getElementById('txt-pro').innerText = pctPro + '%';
+    }
+
+    function simpanProfil() {
+        let payload = {
+            aksi: "simpanProfil", email: sess.email,
+            nama: document.getElementById('p-nama').value, gender: document.getElementById('p-gender').value,
+            umur: document.getElementById('p-umur').value, tb: document.getElementById('p-tb').value,
+            bb: document.getElementById('p-bb').value, diet: document.getElementById('p-diet').value
+        };
+        loading(true, "Menghitung & Menyimpan AI Metrik...");
+        fetch(API_URL, { method: "POST", body: JSON.stringify(payload) }).then(r=>r.json()).then(res => {
+            loading(false);
+            if(res.status==='success'){
+                sess.nama = payload.nama; sess.gender = payload.gender;
+                sess.umur = payload.umur; sess.tb = payload.tb; sess.bb = payload.bb;
+                sess.bmr = res.bmr; sess.targetProtein = res.targetProtein; sess.jurnal = res.jurnal;
+                localStorage.setItem("mms_v2", JSON.stringify(sess));
+                toast("Profil & Target Diupdate ke Sistem!", "success"); initUI();
+                setProfileVisibility(false); 
+                buatBannerSalam();
+            }
+        });
+    }
+
+    function cariMenu(q) {
+        let box = document.getElementById('hasil-cari'); box.innerHTML = "";
+        let src = q.toLowerCase();
+        let filt = kamusMenu.filter(k => k.nama.toLowerCase().includes(src));
+        if(filt.length === 0) box.innerHTML = '<div style="padding:10px; font-size:12px;">Tidak ditemukan.</div>';
+        else {
+            filt.slice(0,15).forEach((f,i) => {
+                let div = document.createElement('div'); div.className = 'search-item';
+                div.innerHTML = `<span>${f.nama}</span> <div><span class="badge-cal">+${f.kalori}k</span> <span class="badge-pro">+${f.protein}p</span></div>`;
+                div.onclick = () => { tambahkanCart(f.nama, f.kalori, f.protein, f.kategori || "Makanan"); };
+                box.appendChild(div);
+            });
+        }
+        box.style.display = 'block';
+    }
+    document.addEventListener('click', (e) => { if(!e.target.closest('.form-group')) document.getElementById('hasil-cari').style.display='none'; });
+
+    function tambahkanCart(nm, cal, pro, kat) {
+        cart.push({ id: Date.now(), n: nm, c: Number(cal), p: Number(pro), k: kat });
+        document.getElementById('box-cari').value = ""; document.getElementById('hasil-cari').style.display='none';
+        renderCart();
+    }
+    function hapusCart(id) { cart = cart.filter(c => c.id !== id); renderCart(); }
+    
+    function renderCart() {
+        let cArea = document.getElementById('cart-area'); let cList = document.getElementById('cart-list');
+        if(cart.length === 0) { cArea.style.display='none'; return; }
+        cArea.style.display='block'; cList.innerHTML = "";
+        let tC=0, tP=0;
+        cart.forEach(c => {
+            tC+=c.c; tP+=c.p;
+            cList.innerHTML += `<div class="journal-item" style="margin-bottom:4px; padding:6px;"><span>${c.n} <small style="color:#64748b;">(${c.k})</small></span> <span><b style="color:#b45309;">+${c.c}k</b> <b style="color:#1d4ed8;">+${c.p}p</b> <i class="fa-solid fa-xmark" style="color:red; margin-left:8px; cursor:pointer;" onclick="hapusCart(${c.id})"></i></span></div>`;
+        });
+        document.getElementById('cart-c').innerText = tC; document.getElementById('cart-p').innerText = tP;
+    }
+
+    function submitMakan() {
+        if(cart.length===0) return;
+        let tC=0, tP=0, nms=[], kats=[];
+        cart.forEach(c => { tC+=c.c; tP+=c.p; nms.push(c.n); kats.push(c.k); });
+        
+        loading(true, "Mencatat Gizi...");
+        fetch(API_URL, { method: "POST", body: JSON.stringify({ aksi: "logMakan", email: sess.email, namaMakanan: nms.join(", "), kalori: tC, protein: tP, kategori: kats.join(", ") }) })
+        .then(r=>r.json()).then(res => {
+            loading(false);
+            sess.kaloriMasuk = res.kaloriSekarang; 
+            sess.proteinMasuk = res.proteinSekarang; 
+            sess.jurnal = res.jurnal;
+            localStorage.setItem("mms_v2", JSON.stringify(sess));
+            cart=[]; renderCart(); kalkulasiUI(); drawJurnal(); toast("Tercatat!", "success");
+        });
+    }
+
+    function aturInputAkt(jns) {
+        if(jns === "Angkat Beban") {
+            document.getElementById('in-kardio').style.display = 'none';
+            document.getElementById('in-beban').style.display = 'flex';
+        } else {
+            document.getElementById('in-kardio').style.display = 'flex';
+            document.getElementById('in-beban').style.display = 'none';
+            document.getElementById('box-elevasi').style.display = (jns === "Bersepeda") ? "none" : "block";
+        }
+    }
+
+    function submitAkt() {
+        let jenis = document.getElementById('akt-jenis').value;
+        let detail = "", kalBakar = 0;
+
+        if(jenis === "Angkat Beban") {
+            let s = Number(document.getElementById('akt-set').value); 
+            let k = Number(document.getElementById('akt-kg').value);
+            let m = Number(document.getElementById('akt-durasi-beban').value) || 30;
+            if(!s || !k) return toast("Isi set dan beban!", "warning");
+            
+            detail = `${s} Set x ${k}kg (${m} mnt)`;
+            kalBakar = Math.round(m * 4); 
+        } else {
+            let km = Number(document.getElementById('akt-km').value);
+            let m = Number(document.getElementById('akt-menit').value);
+            let el = Number(document.getElementById('akt-elevasi').value) || 0;
+            if(!km || !m) return toast("Isi jarak dan waktu menit!", "warning");
+            
+            let faktorElevasi = 1 + (el / 100); 
+            let pengaliDasar = jenis === "Lari" ? 65 : (jenis === "Jalan Kaki" ? 42 : 35);
+            
+            detail = `${km} km (${m} mnt)${el > 0 ? ' Incline '+el+'%' : ''}`;
+            kalBakar = Math.round((km * pengaliDasar) * faktorElevasi);
+        }
+
+        loading(true, "Mencatat olahraga...");
+        let payload = { aksi: "logAktivitas", email: sess.email, jenis: jenis, detail: detail, kalBakar: kalBakar };
+        fetch(API_URL, { method: "POST", body: JSON.stringify(payload) }).then(r=>r.json()).then(res => {
+            loading(false);
+            sess.kaloriBakar = res.bakarSekarang; 
+            sess.jurnal = res.jurnal;
+            localStorage.setItem("mms_v2", JSON.stringify(sess));
+            document.getElementById('akt-km').value=""; document.getElementById('akt-menit').value=""; 
+            document.getElementById('akt-set').value=""; document.getElementById('akt-kg').value=""; document.getElementById('akt-durasi-beban').value="";
+            kalkulasiUI(); drawJurnal(); toast("Keringat tercatat!", "success");
+        });
+    }
+
+    function hapusItemJurnal(idLog, tipe) {
+        if(!idLog) return toast("ID baris data tidak valid!", "danger");
+        
+        loading(true, "Menghapus item log harian...");
+        let payload = { aksi: "hapusLogPerBaris", email: sess.email, idLog: idLog, tipe: tipe };
+        
+        fetch(API_URL, { method: "POST", body: JSON.stringify(payload) }).then(r=>r.json()).then(res => {
+            loading(false);
+            if(tipe === "makanan") {
+                sess.kaloriMasuk = res.kaloriMasuk;
+                sess.proteinMasuk = res.proteinMasuk;
+            } else {
+                sess.kaloriBakar = res.kaloriBakar;
+            }
+            sess.jurnal = res.jurnal;
+            localStorage.setItem("mms_v2", JSON.stringify(sess));
+            kalkulasiUI(); drawJurnal(); toast("Item log terhapus!", "success");
+        }).catch(() => { loading(false); toast("Gagal menghapus baris data", "danger"); });
+    }
+
+    function drawJurnal() {
+        let bM = document.getElementById('jr-makan'); 
+        let bA = document.getElementById('jr-akt');
+        let j = sess.jurnal;
+        
+        bM.innerHTML = ""; 
+        bA.innerHTML = "";
+
+        if (j && j.makanan && j.makanan.length > 0) {
+            let totalKaloriHarian = 0; let totalProteinHarian = 0;
+            j.makanan.forEach((item) => {
+                totalKaloriHarian += Number(item.kalori) || 0;
+                totalProteinHarian += Number(item.protein) || 0;
+                
+                let kelasIcon = "fa-solid fa-cookie-bite";
+                let warnaIcon = "#b45309";
+                
+                if(item.kategori && item.kategori.toLowerCase().includes("minuman")) {
+                    kelasIcon = "fa-solid fa-glass-water";
+                    warnaIcon = "#1d4ed8";
+                }
+
+                bM.innerHTML += `
+                    <div class="journal-item" style="border-left: 4px solid #b91c1c; margin-bottom: 6px; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
+                        <span><i class="${kelasIcon}" style="color:${warnaIcon}; margin-right:6px;"></i> <strong>${item.nama}</strong></span>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span class="badge-cal">+${item.kalori}k</span>
+                            <span class="badge-pro">+${item.protein}p</span>
+                            <i class="fa-regular fa-trash-can" style="color:#ef4444; cursor:pointer; margin-left:4px;" onclick="hapusItemJurnal('${item.idLog}', 'makanan')" title="Hapus baris ini"></i>
+                        </div>
+                    </div>`;
+            });
+            bM.innerHTML += `<div style="text-align:right; font-size:11px; font-weight:bold; color:#b91c1c; padding-top:5px;">Total: ${totalKaloriHarian} kcal | ${totalProteinHarian}g Pro</div>`;
+        } else {
+            bM.innerHTML = `<div style="text-align:center; padding:15px; font-size:12px; color:#94a3b8;">Belum ada makanan dicatat.</div>`;
+        }
+
+        if (j && j.aktivitas && j.aktivitas.length > 0) {
+            let totalBakarHarian = 0;
+            j.aktivitas.forEach((item) => {
+                totalBakarHarian += Number(item.kalori) || 0;
+
+                bA.innerHTML += `
+                    <div class="journal-item" style="border-left: 4px solid #15803d; margin-bottom: 6px; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <span><i class="fa-solid fa-fire-flame-curved" style="color:#15803d; margin-right:6px;"></i> <strong>${item.jenis}</strong></span>
+                            <small style="display:block; color:#64748b; font-size:10px; margin-top:2px; margin-left:22px;"><i class="fa-solid fa-circle-info"></i> ${item.detail}</small>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span class="badge-cal" style="background:#ecfdf5; color:#065f46;">-${item.kalori}k</span>
+                            <i class="fa-regular fa-trash-can" style="color:#ef4444; cursor:pointer; margin-left:4px;" onclick="hapusItemJurnal('${item.idLog}', 'aktivitas')" title="Hapus baris ini"></i>
+                        </div>
+                    </div>`;
+            });
+            bA.innerHTML += `<div style="text-align:right; font-size:11px; font-weight:bold; color:#15803d; padding-top:5px;">Total Bakar: -${totalBakarHarian} kcal</div>`;
+        } else {
+            bA.innerHTML = `<div style="text-align:center; padding:15px; font-size:12px; color:#94a3b8;">Belum ada olahraga dicatat.</div>`;
+        }
+    }
+    </script>
+    <script src="script.js?v=30"></script>
+</body>
+</html>

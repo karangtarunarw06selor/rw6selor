@@ -11,6 +11,14 @@ const requiredFiles = [
   'api/config.php',
   'db-init/01-mudamudi-common.sql',
   'sql/mudamudi_common_SAFE_UPDATE.sql',
+  'karangtarunaselor06/index.html',
+  'karangtarunaselor06/style.css',
+  'karangtarunaselor06/script.js',
+  'karangtarunaselor06/common/api/members_list.php',
+  'admin-karangtaruna/index.html',
+  'admin-karangtaruna/admin.html',
+  'admin-karangtaruna/auth-guard.js',
+  'admin-karangtaruna/common/api/members_save.php',
 ];
 
 for (const file of requiredFiles) {
@@ -19,9 +27,19 @@ for (const file of requiredFiles) {
   }
 }
 
-const index = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-if (!index.includes('RW06 Selor') || index.includes('BPH MMS 05')) {
-  throw new Error('index branding is not RW06 Selor clean');
+const rootIndex = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+if (!rootIndex.includes('RW06 Selor') || rootIndex.includes('BPH MMS 05')) {
+  throw new Error('root index branding is not RW06 Selor clean');
+}
+
+const publicIndex = fs.readFileSync(path.join(root, 'karangtarunaselor06/index.html'), 'utf8');
+if (!publicIndex.includes('RW06 SELOR') || publicIndex.includes('auth-guard.js')) {
+  throw new Error('public site index is not public RW06 clean');
+}
+
+const adminIndex = fs.readFileSync(path.join(root, 'admin-karangtaruna/index.html'), 'utf8');
+if (!adminIndex.includes('ADMIN KARANG TARUNA RW06') || !adminIndex.includes('script.js')) {
+  throw new Error('admin login page missing expected branding/assets');
 }
 
 const manifest = JSON.parse(fs.readFileSync(path.join(root, 'manifest.json'), 'utf8'));
@@ -30,7 +48,18 @@ if (manifest.name !== 'RW06 Selor' || manifest.theme_color !== '#0f5ea8') {
 }
 
 const compose = fs.readFileSync(path.join(root, 'docker-compose.yml'), 'utf8');
-for (const needle of ['rw6selor-db', 'mariadb:11.4', 'rw6selor-db-data', './sql:/rw6-data/sql:ro']) {
+for (const needle of [
+  'rw6selor-db',
+  'mariadb:11.4',
+  'rw6selor-db-data',
+  './sql:/rw6-data/sql:ro',
+  'rw6selor-public',
+  'karangtaruna.rw6selor.org',
+  './karangtarunaselor06:/var/www/html:ro',
+  'rw6selor-admin',
+  'adminkarangtaruna.rw6selor.org',
+  './admin-karangtaruna:/var/www/html:ro',
+]) {
   if (!compose.includes(needle)) {
     throw new Error(`docker-compose missing ${needle}`);
   }
@@ -46,4 +75,4 @@ if (!style.includes('#0f5ea8') || !style.includes('radial-gradient(circle at top
   throw new Error('blue theme styles missing');
 }
 
-console.log('rw06 deployment smoke test passed');
+console.log('rw06 split-site deployment smoke test passed');

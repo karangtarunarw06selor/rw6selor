@@ -1,0 +1,262 @@
+.input-arsip-proposal-page .archive-input-form {
+    width: 100%;
+    margin-top: 22px;
+}
+
+.input-arsip-proposal-page .archive-input-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    align-items: start;
+}
+
+.input-arsip-proposal-page .archive-input-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+.input-arsip-proposal-page .archive-input-field.full {
+    grid-column: 1 / -1;
+}
+
+.input-arsip-proposal-page .archive-input-field span {
+    font-size: 14px;
+    font-weight: 700;
+    color: #243447;
+    line-height: 1.4;
+}
+
+.input-arsip-proposal-page .archive-input-field input,
+.input-arsip-proposal-page .archive-input-field textarea,
+.input-arsip-proposal-page .archive-input-field select {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #d7dee8;
+    border-radius: 12px;
+    padding: 13px 14px;
+    min-height: 48px;
+    font-size: 15px;
+    color: #1f2937;
+    background: #fff;
+}
+
+.input-arsip-proposal-page .archive-input-field textarea {
+    min-height: 118px;
+    resize: vertical;
+}
+
+.input-arsip-proposal-page .archive-input-field input[type="date"] {
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.input-arsip-proposal-page .archive-upload-card {
+    margin-top: 20px;
+    padding: 18px;
+    border: 1px solid #d7dee8;
+    border-radius: 16px;
+    background: #f8fafc;
+}
+
+.input-arsip-proposal-page .archive-upload-card h3 {
+    margin: 0 0 8px;
+    font-size: 20px;
+    color: #243447;
+}
+
+.input-arsip-proposal-page .archive-upload-card p {
+    margin: 0 0 14px;
+    color: #4b5563;
+    line-height: 1.55;
+}
+
+.input-arsip-proposal-page .archive-upload-toggle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: #243447;
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.input-arsip-proposal-page .archive-upload-track {
+    width: 46px;
+    height: 26px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.28);
+    position: relative;
+    flex-shrink: 0;
+}
+
+.input-arsip-proposal-page .archive-upload-knob {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #fff;
+}
+
+.input-arsip-proposal-page .archive-file-name {
+    margin-top: 12px;
+    text-align: center;
+    color: #4b5563;
+    font-size: 14px;
+}
+
+.input-arsip-proposal-page .archive-input-actions {
+    margin-top: 18px;
+}
+
+.input-arsip-proposal-page .archive-submit-btn {
+    width: 100%;
+    min-height: 50px;
+    border: 0;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #1d4ed8, #2563eb);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 16px;
+}
+
+.input-arsip-proposal-page .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid #d7dee8;
+    border-radius: 16px;
+    background: #fff;
+}
+
+.input-arsip-proposal-page .finance-table {
+    width: 100%;
+    min-width: 760px;
+    border-collapse: collapse;
+}
+
+.input-arsip-proposal-page .finance-table thead th {
+    background: #243447;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 13px 10px;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.input-arsip-proposal-page .finance-table td {
+    padding: 12px 10px;
+    border-top: 1px solid #e5e7eb;
+    vertical-align: top;
+    background: #fff;
+}
+
+.input-arsip-proposal-page .finance-table tbody tr:nth-child(even) td {
+    background: #f8fafc;
+}
+
+.input-arsip-proposal-page .archive-action-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.input-arsip-proposal-page .archive-mini-btn,
+.input-arsip-proposal-page .archive-edit-btn,
+.input-arsip-proposal-page .archive-delete-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 38px;
+    padding: 9px 12px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    border: 1px solid transparent;
+}
+
+.input-arsip-proposal-page .archive-mini-btn {
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.input-arsip-proposal-page .archive-edit-btn {
+    background: #eef2ff;
+    color: #4338ca;
+}
+
+.input-arsip-proposal-page .archive-delete-btn {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+@media (max-width: 768px) {
+    .input-arsip-proposal-page .content-box {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .input-arsip-proposal-page .archive-input-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .input-arsip-proposal-page .archive-input-field.full {
+        grid-column: auto;
+    }
+
+    .input-arsip-proposal-page .archive-upload-card {
+        padding: 16px;
+    }
+
+    .input-arsip-proposal-page .archive-upload-card h3 {
+        font-size: 18px;
+    }
+
+    .input-arsip-proposal-page .archive-upload-toggle {
+        min-height: 52px;
+    }
+
+    .input-arsip-proposal-page .archive-action-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .input-arsip-proposal-page .archive-mini-btn,
+    .input-arsip-proposal-page .archive-edit-btn,
+    .input-arsip-proposal-page .archive-delete-btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .input-arsip-proposal-page .archive-input-field span {
+        font-size: 13px;
+    }
+
+    .input-arsip-proposal-page .archive-input-field input,
+    .input-arsip-proposal-page .archive-input-field textarea,
+    .input-arsip-proposal-page .archive-input-field select {
+        font-size: 14px;
+        padding: 12px 13px;
+    }
+
+    .input-arsip-proposal-page .archive-submit-btn {
+        font-size: 14px;
+    }
+}

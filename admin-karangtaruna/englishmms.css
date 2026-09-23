@@ -1,0 +1,273 @@
+html,
+body.english-academy-page {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+body.english-academy-page {
+    background: #f8fafc;
+}
+
+.english-academy-page *,
+.english-academy-page *::before,
+.english-academy-page *::after {
+    box-sizing: border-box;
+}
+
+.english-academy-page .site-header,
+.english-academy-page .top-header,
+.english-academy-page .main-navbar {
+    max-width: 100%;
+}
+
+.english-academy-page .mms-academy-dashboard {
+    width: 100%;
+    max-width: 100%;
+    min-height: calc(100vh - 96px);
+    height: auto;
+    padding: clamp(92px, 12vw, 126px) 18px 44px;
+    overflow: visible;
+}
+
+.english-academy-page .mms-dashboard-fixed {
+    position: relative;
+    top: auto;
+    z-index: 1;
+    background: transparent;
+    padding: 0;
+}
+
+.english-academy-page .mms-dashboard-hero {
+    width: min(920px, 100%);
+    margin: 0 auto 24px;
+    text-align: center;
+}
+
+.english-academy-page .mms-dashboard-hero h1 {
+    margin: 0;
+    font-size: clamp(34px, 7vw, 58px);
+    line-height: 1.05;
+    font-weight: 900;
+    color: #0f172a;
+    letter-spacing: 0;
+    overflow-wrap: anywhere;
+}
+
+.english-academy-page .mms-dashboard-hero p {
+    width: min(680px, 100%);
+    margin: 10px auto 0;
+    font-size: clamp(15px, 2.5vw, 18px);
+    line-height: 1.55;
+    font-weight: 700;
+    color: #64748b;
+}
+
+.english-academy-page .mms-dashboard-scroll {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    overflow: visible;
+    padding: 0 0 36px;
+}
+
+.english-academy-page .mms-lumia-grid {
+    width: min(920px, 100%);
+    max-width: 100%;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+    padding: 4px 0 28px;
+}
+
+.english-academy-page .mms-lumia-tile {
+    width: 100%;
+    min-width: 0;
+    min-height: 224px;
+    height: auto;
+    max-height: none;
+    border: 0;
+    border-radius: 18px;
+    padding: clamp(20px, 3vw, 28px);
+    color: #fff;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 10px;
+    overflow: visible;
+    box-shadow: 0 16px 35px rgba(15, 23, 42, .16);
+}
+
+.english-academy-page .mms-lumia-tile i {
+    font-size: clamp(42px, 6vw, 58px);
+    margin-bottom: auto;
+    max-width: 100%;
+}
+
+.english-academy-page .mms-lumia-tile strong {
+    font-size: clamp(21px, 3.2vw, 26px);
+    line-height: 1.12;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0;
+    overflow-wrap: anywhere;
+}
+
+.english-academy-page .mms-lumia-tile span {
+    display: block;
+    font-size: clamp(14px, 2vw, 15px);
+    line-height: 1.5;
+    font-weight: 700;
+    opacity: .95;
+    overflow-wrap: anywhere;
+}
+
+.english-academy-page #materi-body {
+    width: min(1120px, 100%);
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 104px 18px 120px !important;
+    overflow: visible;
+}
+
+.english-academy-page #materi-body img,
+.english-academy-page #materi-body iframe,
+.english-academy-page #materi-body video {
+    max-width: 100%;
+}
+
+.english-academy-page .mms-video-inline {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #0f172a;
+    margin: 16px 0;
+}
+
+.english-academy-page .mms-video-inline iframe,
+.english-academy-page .mms-video-inline video {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+}
+
+.english-academy-page .mms-materi-page,
+.english-academy-page .mms-materi-detail-card,
+.english-academy-page .mms-learning-flow,
+.english-academy-page .mms-learning-card,
+.english-academy-page .mms-bab-content {
+    max-width: 100%;
+    min-width: 0;
+}
+
+.english-academy-page .mms-bab-content,
+.english-academy-page .mms-dashboard-menu,
+.english-academy-page .mms-pattern-group-row,
+.english-academy-page .mms-pattern-chip-row {
+    overflow-x: auto;
+}
+
+.english-academy-page .site-footer {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+@media (max-width: 768px) {
+    .english-academy-page .header-right-stuff {
+        display: none;
+    }
+
+    .english-academy-page .top-header,
+    .english-academy-page .main-navbar {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .english-academy-page .mms-academy-dashboard {
+        min-height: auto;
+        padding: 96px 14px 36px;
+    }
+
+    .english-academy-page .mms-dashboard-hero {
+        margin-bottom: 18px;
+    }
+
+    .english-academy-page .mms-lumia-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+        padding-bottom: 20px;
+    }
+
+    .english-academy-page .mms-lumia-tile {
+        min-height: 164px;
+        padding: 20px;
+        border-radius: 16px;
+        overflow: visible;
+    }
+
+    .english-academy-page .mms-lumia-tile:hover {
+        transform: none;
+    }
+
+    .english-academy-page #materi-body {
+        width: 100%;
+        padding: 92px 12px 104px !important;
+    }
+
+    .english-academy-page .mms-materi-header,
+    .english-academy-page .mms-summary-top,
+    .english-academy-page .mms-summary-bottom {
+        max-width: 100%;
+        min-width: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .english-academy-page .top-header {
+        padding: 10px 12px;
+    }
+
+    .english-academy-page .main-navbar {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .english-academy-page .mms-academy-dashboard {
+        padding: 88px 10px 30px;
+    }
+
+    .english-academy-page .mms-dashboard-hero h1 {
+        font-size: clamp(31px, 12vw, 42px);
+    }
+
+    .english-academy-page .mms-dashboard-hero p {
+        font-size: 14.5px;
+    }
+
+    .english-academy-page .mms-lumia-tile {
+        min-height: 152px;
+        padding: 18px;
+        gap: 8px;
+    }
+
+    .english-academy-page .mms-lumia-tile i {
+        font-size: 38px;
+    }
+
+    .english-academy-page .mms-lumia-tile strong {
+        font-size: 21px;
+    }
+
+    .english-academy-page .mms-lumia-tile span {
+        font-size: 14px;
+    }
+
+    .english-academy-page #materi-body {
+        padding: 86px 10px 96px !important;
+    }
+}

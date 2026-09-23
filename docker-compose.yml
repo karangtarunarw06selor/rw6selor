@@ -31,6 +31,70 @@ services:
       - ./:/var/www/html:ro
       - rw6selor-php-logs:/var/log/apache2
 
+  rw6selor-public:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rw6selor-public
+    restart: unless-stopped
+    networks:
+      - coolify
+      - rw6selor-internal
+    depends_on:
+      - rw6selor-db
+    environment:
+      DB_HOST: rw6selor-db
+      DB_NAME: ${DB_NAME:-rw06selor}
+      DB_USER: ${DB_USER:-rw06selor}
+      DB_PASS: ${DB_PASS:?set DB_PASS in .env}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.rw6selor-public.entrypoints=http"
+      - "traefik.http.routers.rw6selor-public.rule=Host(`karangtaruna.rw6selor.org`)"
+      - "traefik.http.routers.rw6selor-public.middlewares=gzip"
+      - "traefik.http.routers.rw6selor-public-https.entrypoints=https"
+      - "traefik.http.routers.rw6selor-public-https.rule=Host(`karangtaruna.rw6selor.org`)"
+      - "traefik.http.routers.rw6selor-public-https.middlewares=gzip"
+      - "traefik.http.routers.rw6selor-public-https.tls=true"
+      - "traefik.http.routers.rw6selor-public-https.service=rw6selor-public"
+      - "traefik.http.services.rw6selor-public.loadbalancer.server.port=80"
+      - "coolify.managed=true"
+    volumes:
+      - ./karangtarunaselor06:/var/www/html:ro
+      - rw6selor-public-php-logs:/var/log/apache2
+
+  rw6selor-admin:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rw6selor-admin
+    restart: unless-stopped
+    networks:
+      - coolify
+      - rw6selor-internal
+    depends_on:
+      - rw6selor-db
+    environment:
+      DB_HOST: rw6selor-db
+      DB_NAME: ${DB_NAME:-rw06selor}
+      DB_USER: ${DB_USER:-rw06selor}
+      DB_PASS: ${DB_PASS:?set DB_PASS in .env}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.rw6selor-admin.entrypoints=http"
+      - "traefik.http.routers.rw6selor-admin.rule=Host(`adminkarangtaruna.rw6selor.org`)"
+      - "traefik.http.routers.rw6selor-admin.middlewares=gzip"
+      - "traefik.http.routers.rw6selor-admin-https.entrypoints=https"
+      - "traefik.http.routers.rw6selor-admin-https.rule=Host(`adminkarangtaruna.rw6selor.org`)"
+      - "traefik.http.routers.rw6selor-admin-https.middlewares=gzip"
+      - "traefik.http.routers.rw6selor-admin-https.tls=true"
+      - "traefik.http.routers.rw6selor-admin-https.service=rw6selor-admin"
+      - "traefik.http.services.rw6selor-admin.loadbalancer.server.port=80"
+      - "coolify.managed=true"
+    volumes:
+      - ./admin-karangtaruna:/var/www/html:ro
+      - rw6selor-admin-php-logs:/var/log/apache2
+
   rw6selor-db:
     image: mariadb:11.4
     container_name: rw6selor-db
@@ -47,7 +111,6 @@ services:
       - ./db-init:/docker-entrypoint-initdb.d:ro
       - ./sql:/rw6-data/sql:ro
 
-  # For Node.js realtime games
   rw6selor-billiard-realtime:
     build:
       context: .
@@ -61,7 +124,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.rw6selor-billiard-ws.entrypoints=http"
-      - "traefik.http.routers.rw6selor-billiard-ws.rule=Host(`rw6selor.org`) && PathPrefix(`/billiard/socket.io`)"
+      - "traefik.http.routers.rw6selor-billiard-ws.rule=(Host(`rw6selor.org`) || Host(`karangtaruna.rw6selor.org`)) && PathPrefix(`/billiard/socket.io`)"
       - "traefik.http.services.rw6selor-billiard-ws.loadbalancer.server.port=3000"
     volumes:
       - ./billiard_realtime:/app/billiard_realtime
@@ -79,7 +142,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.rw6selor-chess-ws.entrypoints=http"
-      - "traefik.http.routers.rw6selor-chess-ws.rule=Host(`rw6selor.org`) && PathPrefix(`/chess/socket.io`)"
+      - "traefik.http.routers.rw6selor-chess-ws.rule=(Host(`rw6selor.org`) || Host(`karangtaruna.rw6selor.org`)) && PathPrefix(`/chess/socket.io`)"
       - "traefik.http.services.rw6selor-chess-ws.loadbalancer.server.port=3000"
     volumes:
       - ./chess-online:/app/chess-online
@@ -92,4 +155,6 @@ networks:
 
 volumes:
   rw6selor-php-logs:
+  rw6selor-public-php-logs:
+  rw6selor-admin-php-logs:
   rw6selor-db-data:

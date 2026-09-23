@@ -1,0 +1,488 @@
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pocket Clash Lobby</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      color: white;
+      background:
+        radial-gradient(circle at top, #164b39, #06110e 70%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+    }
+
+    .lobbyCard {
+      width: min(420px, 94vw);
+      padding: 24px;
+      border-radius: 22px;
+      background: rgba(5, 8, 15, .86);
+      border: 1px solid rgba(255,255,255,.16);
+      box-shadow: 0 18px 48px rgba(0,0,0,.55);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      color: #ffd650;
+      font-size: 32px;
+      text-align: center;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: rgba(255,255,255,.72);
+      margin-bottom: 24px;
+      font-size: 14px;
+    }
+
+
+.sectionTitle {
+  margin-top: 22px;
+  margin-bottom: 8px;
+
+  color: #ffd650;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: .3px;
+}
+
+
+    label {
+      display: block;
+      margin: 14px 0 6px;
+      color: rgba(255,255,255,.78);
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    input,
+    select {
+        width: 100%;
+        padding: 13px 14px;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,.18);
+        background: rgba(255,255,255,.08);
+        color: white;
+        font-size: 16px;
+        outline: none;
+    }
+
+    input {
+        text-transform: uppercase;
+    }
+
+    select {
+        appearance: none;
+        cursor: pointer;
+        text-transform: uppercase;
+    }
+
+    select option {
+        color: #111;
+    }
+
+    input#playerNameInput {
+      text-transform: none;
+    }
+
+    input::placeholder {
+      color: rgba(255,255,255,.42);
+    }
+
+    button {
+      width: 100%;
+      margin-top: 14px;
+      padding: 13px 14px;
+      border: 0;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #ffd86b, #ff9f2e);
+      color: #251403;
+      font-weight: 900;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: rgba(255,255,255,.12);
+      color: white;
+      border: 1px solid rgba(255,255,255,.2);
+    }
+
+    .hint {
+      margin-top: 14px;
+      font-size: 12px;
+      color: rgba(255,255,255,.58);
+      line-height: 1.5;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="lobbyCard">
+  <h1>Pocket Clash</h1>
+  <div class="subtitle">Lobby billiard</div>
+
+  <label>Nama Player</label>
+  <input id="playerNameInput" placeholder="contoh: mms">
+  <label>Mode Game</label>
+<select id="gameModeInput">
+  <option value="straight_pool">STRAIGHT POOL</option>
+<option value="8ball_classic">8 BALL CLASSIC</option>
+<option value="9ball">9 BALL</option>
+<option value="10ball" disabled>10 BALL - COMING SOON</option>
+</select>
+
+  <div class="sectionTitle">Public Match</div>
+
+  <button onclick="findPublicMatch()">
+    Main Public Match
+  </button>
+
+  <div class="sectionTitle">Private Match</div>
+
+  <button onclick="createPrivateRoom()">
+    Create Private Room
+  </button>
+
+  <label>Room Code</label>
+  <input id="roomCodeInput" placeholder="CONTOH: ABC123" maxlength="10">
+
+  <button class="secondary" onclick="joinPrivateRoom()">
+    Join Private Room
+  </button>
+
+  <button class="secondary" onclick="backToHome()">
+    Kembali ke Menu Utama
+  </button>
+
+  <div class="hint" id="lobbyHint">
+    Public Match dan Create Private Room akan disambungkan ke API setelah ini.
+    Join Private Room sudah bisa dipakai.
+  </div>
+</div>
+
+ <script>
+ const DEBUG = false;
+
+function debugLog(...args) {
+  if (DEBUG) console.log(...args);
+}
+ 
+  const savedName = localStorage.getItem("pocket_clash_username") || "";
+
+  if (savedName) {
+    document.getElementById("playerNameInput").value = savedName;
+  }
+
+  function getPlayerName() {
+    const playerName = document.getElementById("playerNameInput").value.trim();
+
+    if (!playerName) {
+      alert("Nama player wajib diisi.");
+      return "";
+    }
+
+    localStorage.setItem("pocket_clash_username", playerName);
+    return playerName;
+  }
+
+  function getSelectedMode() {
+    const modeInput = document.getElementById("gameModeInput");
+    return modeInput ? modeInput.value : "straight_pool";
+  }
+
+  function getPlayerKey() {
+    let playerKey = localStorage.getItem("pocket_clash_player_key");
+
+    if (!playerKey) {
+      playerKey =
+        "player_" +
+        Date.now() +
+        "_" +
+        Math.random().toString(36).slice(2, 10);
+
+      localStorage.setItem("pocket_clash_player_key", playerKey);
+    }
+
+    localStorage.setItem("billiard_player_key", playerKey);
+
+    return playerKey;
+  }
+
+  async function ensurePlayerRegistered(playerName) {
+    const playerKey = getPlayerKey();
+
+    const response = await fetch("api/player_join.php", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        username: playerName,
+        player_key: playerKey
+      })
+    });
+
+    const result = await response.json();
+
+    debugLog("player join result", result);
+
+    if (!result.success) {
+      throw new Error(result.message || "Gagal register player.");
+    }
+
+    return {
+      playerKey,
+      player: result.player || null
+    };
+  }
+
+  async function findPublicMatch() {
+    const playerName = getPlayerName();
+    if (!playerName) return;
+
+    const mode = getSelectedMode();
+
+    try {
+      const playerData = await ensurePlayerRegistered(playerName);
+      const playerKey = playerData.playerKey;
+
+      const publicResponse = await fetch(
+        "api/public_rooms.php?mode=" +
+          encodeURIComponent(mode) +
+          "&v=" +
+          Date.now(),
+        {
+          cache: "no-store"
+        }
+      );
+
+      const publicResult = await publicResponse.json();
+
+      debugLog("public rooms result", publicResult);
+
+      const rooms =
+        publicResult.rooms ||
+        publicResult.data ||
+        publicResult.public_rooms ||
+        [];
+
+      let targetRoom = null;
+
+      if (Array.isArray(rooms) && rooms.length > 0) {
+        const availableRooms = rooms
+          .filter(room => {
+  const status = String(room.status || "").toLowerCase();
+  const playType = String(room.play_type || "").toLowerCase();
+  const visibility = String(room.visibility || "").toLowerCase();
+
+  const count = Number(
+    room.player_count ||
+    room.players_count ||
+    room.current_players ||
+    room.total_players ||
+    0
+  );
+
+  const max = Number(room.max_players || 2);
+
+  return (
+    playType === "online" &&
+    visibility === "public" &&
+    (status === "waiting" || status === "ready") &&
+    count < max
+  );
+})
+          .sort((a, b) => {
+            const aTime = new Date(a.created_at || 0).getTime();
+            const bTime = new Date(b.created_at || 0).getTime();
+
+            return aTime - bTime;
+          });
+
+        targetRoom = availableRooms[0] || null;
+      }
+
+      if (targetRoom) {
+        const roomCode =
+          targetRoom.room_code ||
+          targetRoom.code;
+
+        if (!roomCode) {
+          alert("Room public ditemukan, tapi room_code tidak tersedia.");
+          return;
+        }
+
+        const joinResponse = await fetch("api/join_room.php", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            room_code: roomCode,
+            username: playerName,
+            player_key: playerKey
+          })
+        });
+
+        const joinResult = await joinResponse.json();
+
+        debugLog("join public room result", joinResult);
+
+        if (!joinResult.success) {
+          alert(joinResult.message || "Gagal join public room.");
+          return;
+        }
+
+        window.location.href =
+          "room.html?room_code=" +
+          encodeURIComponent(roomCode) +
+          "&player_key=" +
+          encodeURIComponent(playerKey) +
+          "&v=" +
+          Date.now();
+
+        return;
+      }
+
+      await createRoomAndRedirect("public", mode, playerName, playerKey);
+
+    } catch (error) {
+      console.error("find public match error", error);
+      alert("Gagal mencari public match: " + error.message);
+    }
+  }
+
+  async function createPrivateRoom() {
+    const playerName = getPlayerName();
+    if (!playerName) return;
+
+    const mode = getSelectedMode();
+
+    try {
+      const playerData = await ensurePlayerRegistered(playerName);
+      const playerKey = playerData.playerKey;
+
+      await createRoomAndRedirect("private", mode, playerName, playerKey);
+
+    } catch (error) {
+      console.error("create private room error", error);
+      alert("Gagal membuat private room: " + error.message);
+    }
+  }
+
+  async function createRoomAndRedirect(visibility, mode, playerName, playerKey) {
+    const response = await fetch("api/create_room.php", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        username: playerName,
+        player_key: playerKey,
+        mode: mode,
+        visibility: visibility
+      })
+    });
+
+    const result = await response.json();
+
+    debugLog("create room result", result);
+
+    if (!result.success) {
+      alert(result.message || "Gagal membuat room.");
+      return;
+    }
+
+    const roomCode =
+      result.room_code ||
+      result.room?.room_code ||
+      result.room?.code ||
+      result.data?.room_code ||
+      result.data?.room?.room_code ||
+      result.data?.room?.code ||
+      result.code;
+
+    if (!roomCode) {
+      alert("Room berhasil dibuat, tapi room_code tidak ditemukan.");
+      return;
+    }
+
+    window.location.href =
+      "room.html?room_code=" +
+      encodeURIComponent(roomCode) +
+      "&player_key=" +
+      encodeURIComponent(playerKey) +
+      "&v=" +
+      Date.now();
+  }
+
+  async function joinPrivateRoom() {
+    const playerName = getPlayerName();
+    if (!playerName) return;
+
+    const roomCode = document.getElementById("roomCodeInput").value.trim().toUpperCase();
+
+    if (!roomCode) {
+      alert("Room code wajib diisi.");
+      return;
+    }
+
+    try {
+      const playerData = await ensurePlayerRegistered(playerName);
+      const playerKey = playerData.playerKey;
+
+      const response = await fetch("api/join_room.php", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          room_code: roomCode,
+          username: playerName,
+          player_key: playerKey
+        })
+      });
+
+      const result = await response.json();
+
+      debugLog("join private room result", result);
+
+      if (!result.success) {
+        alert(result.message || "Gagal join private room.");
+        return;
+      }
+
+      window.location.href =
+        "room.html?room_code=" +
+        encodeURIComponent(roomCode) +
+        "&player_key=" +
+        encodeURIComponent(playerKey) +
+        "&v=" +
+        Date.now();
+
+    } catch (error) {
+      console.error("join private room error", error);
+      alert("Gagal join private room: " + error.message);
+    }
+  }
+
+  function backToHome() {
+    window.location.href = "/";
+  }
+</script>
+
+</body>
+</html>

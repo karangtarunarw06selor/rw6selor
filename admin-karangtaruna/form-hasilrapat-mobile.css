@@ -1,0 +1,191 @@
+.hasil-rapat-admin-form {
+    width: 100%;
+    margin-top: 22px;
+}
+
+.hasil-rapat-admin-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    align-items: start;
+}
+
+.hasil-rapat-admin-grid .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+    min-width: 0;
+}
+
+.hasil-rapat-admin-grid .form-group-wide {
+    grid-column: 1 / -1;
+}
+
+.hasil-rapat-admin-grid .form-group span {
+    font-weight: 700;
+    color: #333;
+    font-size: 14px;
+    line-height: 1.35;
+}
+
+.hasil-rapat-admin-grid .form-group input,
+.hasil-rapat-admin-grid .form-group select,
+.hasil-rapat-admin-grid .form-group textarea {
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 12px 14px;
+    font: inherit;
+    background: #fff;
+    box-sizing: border-box;
+}
+
+/* date input fix */
+.hasil-rapat-admin-grid .form-group input[type="date"] {
+    display: block;
+    width: 100% !important;
+    appearance: none;
+    -webkit-appearance: none;
+    line-height: 1.2;
+}
+
+/* accordion styling (reuse from kas) */
+.kas-accordion {
+    margin-top: 24px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    overflow: hidden;
+}
+.kas-accordion .kas-accordion-body {
+    padding: 16px;
+    border-top: 1px solid #eee;
+}
+
+.hasil-rapat-admin-form .rapat-editor-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #f8fafc;
+}
+
+.hasil-rapat-admin-form .rapat-editor-toolbar button {
+    min-height: 40px;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #fff;
+    color: #1f2937;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.hasil-rapat-admin-form .rapat-editor-toolbar button[data-format="bold"],
+.hasil-rapat-admin-form .rapat-editor-toolbar button[data-format="italic"] {
+    min-width: 42px;
+    padding: 10px;
+}
+
+.hasil-rapat-admin-form .rapat-editor-preview {
+    margin-top: 12px;
+    padding: 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #fff;
+}
+
+.hasil-rapat-form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+}
+
+.hasil-rapat-form-actions .kas-submit-btn {
+    min-height: 48px;
+    padding: 14px 18px;
+    font-size: 15px;
+}
+
+.hasil-rapat-form-actions .hasil-rapat-cancel-edit {
+    min-height: 48px;
+    padding: 12px 18px;
+    border-radius: 8px;
+}
+
+@media (max-width: 768px) {
+    .hasil-rapat-admin-form .rapat-editor-toolbar {
+        gap: 6px;
+        padding: 8px;
+    }
+
+    .hasil-rapat-admin-form .rapat-editor-toolbar button {
+        flex: 1 1 calc(50% - 6px);
+        min-width: 0;
+        min-height: 44px;
+        padding: 10px 8px;
+        font-size: 13px;
+    }
+
+    .hasil-rapat-admin-form .rapat-editor-toolbar button[data-format="bold"],
+    .hasil-rapat-admin-form .rapat-editor-toolbar button[data-format="italic"] {
+        flex: 0 0 52px;
+    }
+
+    .hasil-rapat-form-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .hasil-rapat-form-actions .kas-submit-btn,
+    .hasil-rapat-form-actions .hasil-rapat-cancel-edit {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .hasil-rapat-form-actions .kas-submit-btn {
+        min-height: 52px;
+        font-size: 15px;
+    }
+
+    .hasil-rapat-admin-form .rapat-editor-preview {
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    .hasil-rapat-admin-grid .form-group input[type="file"] {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .finance-page-wrapper {
+        padding-top: 84px !important;
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+        padding-bottom: 28px !important;
+    }
+    .content-box {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 22px 14px !important;
+        margin: 0 auto !important;
+    }
+    .hasil-rapat-admin-grid {
+        grid-template-columns: 1fr !important;
+        gap: 14px !important;
+    }
+    .hasil-rapat-admin-grid .form-group-wide {
+        grid-column: 1 / -1 !important;
+    }
+    .kas-accordion-body {
+        padding: 14px 12px;
+    }
+    .kas-submit-btn,
+    .kas-total-filter .filter-box {
+        width: 100%;
+        box-sizing: border-box;
+    }
+}

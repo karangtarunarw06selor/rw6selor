@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generator Lomba V2 - RW06 SELOR</title>
+    <link rel="icon" href="images/fix.avif" type="image/avif">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/generator-lomba-ui-v2.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="mobile-global-overrides.css?v=7">
+</head>
+<body class="mms-admin-page mms-lomba-v2-page">
+    <header class="site-header">
+        <div class="top-header">
+            <div class="header-logo-area">
+                <a href="admin.html" class="logo-wrapper">
+                    <img src="images/fix.avif" alt="Logo RW06 Selor" class="mini-logo">
+                    <div class="header-text">
+                        <span class="brand-title">RW06 SELOR</span>
+                        <span class="brand-subtitle">Sedahromo Lor 05</span>
+                    </div>
+                </a>
+            </div>
+            <div class="header-right-stuff">
+                <div class="header-socials">
+                    <a href="#" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" title="YouTube"><i class="fa-brands fa-youtube"></i></a>
+                    <a href="#" title="Facebook"><i class="fa-brands fa-facebook"></i></a>
+                    <a href="#" title="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+                </div>
+            </div>
+            <button class="menu-toggle" id="mobile-menu-btn" type="button" aria-label="Buka menu" aria-expanded="false">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+        </div>
+        <nav class="main-navbar">
+        
+            <ul class="nav-list">
+                <li class="nav-item"><a href="admin.html">BERANDA</a></li>
+                
+                <li class="nav-item">
+                    <a href="#">BENDAHARA</a>
+                    <ul class="submenu">
+                        <li class="submenu-item"><a href="catat-cashflow.html">  - INPUT CASHFLOW</a></li>
+                        <li class="submenu-item"><a href="input-kas.html">  - INPUT KAS BULANAN</a></li>
+                    </ul>
+                </li>
+                
+                <li class="nav-item">
+                    <a href="#">SEKRETARIS</a>
+                    <ul class="submenu">
+                        <li class="submenu-item"><a href="form-hasilrapat.html">  - INPUT NOTULEN</a></li>
+                        <li class="submenu-item"><a href="editor-anggota.html">  - INPUT BIODATA</a></li>
+                        <li class="submenu-item"><a href="input-arsip-surat.html">  - INPUT ARSIP SURAT</a></li>
+                        <li class="submenu-item"><a href="input-arsip-lpj.html">  - INPUT ARSIP LPJ </a></li>
+                        <li class="submenu-item"><a href="input-arsip-proposal.html">  - INPUT ARSIP PROPOSAL </a></li>
+                        <li class="submenu-item"><a href="input-arsip-lomba.html">  - INPUT ARSIP LOMBA </a></li>
+                    </ul>
+                </li>
+                
+                <li class="nav-item">
+                    <a href="#">MEDIA & HUMAS</a>
+                    <ul class="submenu">
+                        <li class="submenu-item"><a href="upload-dokumentasi.html">  - INPUT DOKUMENTASI</a></li>
+                        <li class="submenu-item"><a href="https://script.google.com/macros/library/d/1I6LEQGlm_weJMhjY4bj_5wdnMQQy_fYCsPOryUzADr4XWc8N5YxzVrtQ/2">  - INPUT UNDANGAN</a></li>
+                    </ul>
+                </li>
+                
+                <li class="nav-item">
+                    <a href="#">TOOLS</a>
+                    <ul class="submenu">
+                        <li class="submenu-item"><a href="generator-lomba-ui-v2.html"> - GENERATOR LOMBA</a></li>
+                        <li class="submenu-item"><a href="input-ebook.html"> - INPUT EBOOK</a></li>
+                        <li class="submenu-item"><a href="english-editor.html"> - ENGLISH EDITOR</a></li>
+                        <li class="submenu-item"><a href="editor-chatwarga.html"> - CHAT WARGA EDITOR</a></li>
+                    </ul>
+                </li>
+
+            <li class="nav-item navbar-mobile-social-item">
+               <div class="navbar-mobile-only">
+                  <div class="header-socials">
+                            <a href="#" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                            <a href="#" title="YouTube"><i class="fa-brands fa-youtube"></i></a>
+                            <a href="#" title="Facebook"><i class="fa-brands fa-facebook"></i></a>
+                            <a href="https://www.tiktok.com/@mudamudisedahromolor05?is_from_webapp=1&sender_device=pc" title="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+                    </div>
+               </div>
+            </li>
+            </ul> 
+        </nav>
+    </header>
+
+<main class="mms-admin-main">
+
+  <section class="mms-hero-card">
+
+    <div>
+
+      <span class="mms-badge">Admin Lomba</span>
+
+      <h1>Generator Bagan Lomba</h1>
+
+      <p>Atur peserta, mode pertandingan, dan bentuk bagan. Tampilan ini disiapkan sebagai frontend baru sebelum logic JS dibuat ulang.</p>
+
+    </div>
+
+    <div class="mms-hero-actions">
+
+      <a href="pendaftaran-lomba.html" class="mms-btn mms-btn-primary">
+
+        <i class="fa-solid fa-user-plus"></i> Pendaftaran Peserta
+
+      </a>
+
+      <a href="monitor-lomba.html" class="mms-btn mms-btn-secondary" target="_blank">
+
+        <i class="fa-solid fa-tv"></i> Buka Monitor
+
+      </a>
+
+    </div>
+
+  </section>
+
+  <section class="mms-card mms-generator-card">
+
+    <div class="mms-accordion-head">
+
+      <button type="button" class="mms-accordion-main" id="btnToggleGenerateSettings">
+
+        <span><i class="fa-solid fa-sliders"></i> Pengaturan Generate</span>
+
+        <span class="mms-accordion-line"></span>
+
+        <strong id="generatorModeSummary">Belum diatur</strong>
+
+        <i class="fa-solid fa-chevron-down mms-accordion-icon"></i>
+
+      </button>
+
+    </div>
+
+    <div class="mms-generator-panel" id="generatorPanel">
+
+      <div class="mms-control-grid">
+
+        <div class="mms-form-group mms-wide-field">
+
+          <label for="competitionName">Nama Lomba</label>
+
+          <input type="text" id="competitionName" placeholder="Contoh: Lomba Estafet Anak">
+
+        </div>
+
+        <div class="mms-form-group">
+
+          <label for="competitionMode">Mode Lomba</label>
+
+          <select id="competitionMode">
+
+            <option value="individual">Individu</option>
+
+            <option value="existing_group">Kelompok Sudah Jadi</option>
+
+            <option value="auto_group">Bentuk Kelompok Otomatis</option>
+
+          </select>
+
+        </div>
+
+        <div class="mms-form-group">
+
+          <label for="genderFilter">Gender</label>
+
+          <select id="genderFilter">
+
+            <option value="mixed">Campuran</option>
+
+            <option value="male">Laki-laki</option>
+
+            <option value="female">Perempuan</option>
+
+          </select>
+
+        </div>
+
+        <div class="mms-form-group">
+
+          <label for="ageCategoryFilter">Kategori Usia</label>
+
+          <select id="ageCategoryFilter">
+
+            <option value="all">Semua Kategori</option>
+
+            <option value="anak_all">Semua Anak</option>
+
+            <option value="umum_dewasa">Umum/Dewasa</option>
+
+            <option value="tk_2sd">TK - 2 SD</option>
+
+            <option value="sd_3_5">3 - 5 SD</option>
+
+            <option value="sd6_smp">6 SD - SMP</option>
+
+            <option value="tk_3sd">TK - 3 SD</option>
+
+            <option value="sd4_smp">4 SD - SMP</option>
+
+            <option value="remaja">Remaja</option>
+
+            <option value="ibu_ibu">Ibu-Ibu</option>
+
+            <option value="bapak_bapak">Bapak-Bapak</option>
+
+          </select>
+
+        </div>
+
+        <div class="mms-form-group" id="individualMatchSizeWrap">
+
+          <label for="individualMatchSize">Jumlah Peserta per Match</label>
+
+          <select id="individualMatchSize">
+
+            <option value="2">2 Peserta</option>
+
+            <option value="3">3 Peserta</option>
+
+            <option value="4">4 Peserta</option>
+
+            <option value="5">5 Peserta</option>
+
+            <option value="6">6 Peserta</option>
+
+          </select>
+
+        </div>
+
+        <div class="mms-form-group is-hidden" id="groupSizeWrap">
+
+          <label for="groupSize">Jumlah Anggota Kelompok</label>
+
+          <select id="groupSize">
+
+            <option value="2">2 Orang</option>
+
+            <option value="3">3 Orang</option>
+
+            <option value="4">4 Orang</option>
+
+            <option value="5">5 Orang</option>
+
+            <option value="6">6 Orang</option>
+
+          </select>
+
+        </div>
+
+        <div class="mms-form-group is-hidden" id="groupMatchSizeWrap">
+
+          <label for="groupMatchSize">Jumlah Kelompok per Match</label>
+
+          <select id="groupMatchSize">
+
+            <option value="2">2 Kelompok</option>
+
+            <option value="3">3 Kelompok</option>
+
+            <option value="4">4 Kelompok</option>
+
+            <option value="5">5 Kelompok</option>
+
+            <option value="6">6 Kelompok</option>
+
+          </select>
+
+        </div>
+
+        <div class="mms-form-group">
+
+          <label for="bracketType">Sistem Pertandingan</label>
+
+          <select id="bracketType">
+
+            <option value="single_elimination">Single Elimination</option>
+
+            <option value="round_robin">Round Robin</option>
+
+            <option value="group_stage">Group Stage</option>
+
+          </select>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+  <section class="mms-card mms-participant-card">
+
+    <div class="mms-accordion-head">
+
+      <button type="button" class="mms-accordion-main" id="btnToggleParticipantList">
+
+        <span><i class="fa-solid fa-users"></i> Daftar Peserta</span>
+
+        <span class="mms-accordion-line"></span>
+
+        <strong id="selectedParticipantCount">0/0 dipilih</strong>
+
+        <i class="fa-solid fa-chevron-down mms-accordion-icon"></i>
+
+      </button>
+
+      <button type="button" class="mms-refresh-mini" id="btnRefreshPeserta">
+
+        <i class="fa-solid fa-rotate"></i> Refresh
+
+      </button>
+
+    </div>
+
+    <div class="mms-participant-panel" id="participantPanel">
+
+      <div class="mms-filter-row" id="ageFilterChips">
+
+        <button type="button" class="mms-filter-chip is-active" data-age-filter="all">Semua Kategori</button>
+
+        <button type="button" class="mms-filter-chip" data-age-filter="anak_all">Semua Anak</button>
+
+        <button type="button" class="mms-filter-chip" data-age-filter="umum_dewasa">Umum/Dewasa</button>
+
+        <button type="button" class="mms-filter-chip" data-age-filter="tk_2sd">TK-2 SD</button>
+
+        <button type="button" class="mms-filter-chip" data-age-filter="sd_3_5">3-5 SD</button>
+
+        <button type="button" class="mms-filter-chip" data-age-filter="sd6_smp">6 SD-SMP</button>
+
+        <button type="button" class="mms-filter-chip" data-age-filter="tk_3sd">TK-3 SD</button>
+
+        <button type="button" class="mms-filter-chip" data-age-filter="sd4_smp">4 SD-SMP</button>
+
+        <button type="button" class="mms-filter-chip" data-age-filter="remaja">Remaja</button>
+
+        <button type="button" class="mms-filter-chip" data-age-filter="ibu_ibu">Ibu-Ibu</button>
+
+        <button type="button" class="mms-filter-chip" data-age-filter="bapak_bapak">Bapak-Bapak</button>
+
+      </div>
+
+      <div class="mms-list-toolbar">
+
+        <input type="search" id="participantSearch" placeholder="Cari peserta..." class="mms-search-input">
+
+        <button type="button" class="mms-btn mms-btn-ghost" id="btnSelectAllVisible">
+
+          Pilih tampil
+
+        </button>
+
+        <button type="button" class="mms-btn mms-btn-ghost" id="btnClearSelection">
+
+          Bersihkan
+
+        </button>
+
+      </div>
+
+      <div id="participantList" class="participant-list" data-render-target="participants">
+
+        <div class="participant-empty-state">Data peserta belum dimuat.</div>
+
+      </div>
+
+      <div id="groupList" class="group-list is-hidden" data-render-target="groups">
+
+        <div class="participant-empty-state">Data kelompok belum dimuat.</div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+  <section class="mms-card mms-bracket-card">
+
+    <div class="mms-card-header">
+
+      <div>
+
+        <h2>Bagan Pertandingan</h2>
+
+        <p>Area ini akan digambar oleh JS baru ke dalam <code>#bracketArea</code>.</p>
+
+      </div>
+
+      <div class="mms-bracket-status">
+
+        <span class="mms-status-pill" id="bracketDraftStatus">Draft belum dibuat</span>
+
+      </div>
+
+    </div>
+
+    <div class="mms-bracket-tools">
+
+      <button type="button" class="mms-icon-btn" id="btnZoomOut" aria-label="Perkecil bracket">
+
+        <i class="fa-solid fa-minus"></i>
+
+      </button>
+
+      <button type="button" class="mms-icon-btn" id="btnZoomReset" aria-label="Reset zoom">
+
+        <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
+
+      </button>
+
+      <button type="button" class="mms-icon-btn" id="btnZoomIn" aria-label="Perbesar bracket">
+
+        <i class="fa-solid fa-plus"></i>
+
+      </button>
+
+    </div>
+
+    <div id="bracketArea" class="bracket-area" data-render-target="bracket">
+
+      <div class="bracket-empty-state">
+
+        <i class="fa-solid fa-sitemap"></i>
+
+        <strong>Bagan belum digenerate</strong>
+
+        <span>Pilih peserta dan pengaturan lomba, lalu klik Generate Lomba.</span>
+
+      </div>
+
+    </div>
+
+    <div class="mms-bracket-bottom-actions">
+
+      <button type="button" class="mms-btn mms-btn-primary" id="btnGenerateBracket">
+
+        <i class="fa-solid fa-sitemap"></i> Generate Lomba
+
+      </button>
+
+      <button type="button" class="mms-btn mms-btn-info" id="btnSaveBracket">
+
+        <i class="fa-solid fa-floppy-disk"></i> Simpan Draft
+
+      </button>
+
+      <button type="button" class="mms-btn mms-btn-secondary" id="btnPublishBracket">
+
+        <i class="fa-solid fa-broadcast-tower"></i> Publish
+
+      </button>
+
+      <button type="button" class="mms-btn mms-btn-success" id="btnExportPdf">
+
+        <i class="fa-solid fa-file-pdf"></i> Export PDF
+
+      </button>
+
+      <button type="button" class="mms-btn mms-btn-danger" id="btnResetBracket">
+
+        <i class="fa-solid fa-trash"></i> Reset
+
+      </button>
+
+    </div>
+
+  </section>
+
+</main>
+
+    <footer class="mms-site-footer">
+        <div class="mms-footer-container">
+            <div>
+                <div class="mms-footer-brand">
+                    <img src="images/fix.avif" alt="Logo RW06 Selor">
+                    <strong>RW06 Selor</strong>
+                </div>
+                <p>Jl. Sedahromo Lor, RT.05 / RW.06, Kartasura, Sukoharjo, Jawa Tengah.</p>
+            </div>
+            <div>
+                <strong>Sitemap</strong>
+                <a href="admin.html">Beranda</a>
+                <a href="pendaftaran-lomba.html">Pendaftaran Lomba</a>
+                <a href="monitor-lomba.html">Monitor Lomba</a>
+            </div>
+            <div>
+                <strong>Media Sosial</strong>
+                <div class="mms-footer-socials">
+                    <a href="#"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#"><i class="fa-brands fa-youtube"></i></a>
+                    <a href="#"><i class="fa-brands fa-facebook"></i></a>
+                    <a href="#"><i class="fa-brands fa-tiktok"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="mms-footer-bottom">Copyright © 2026 RW06 Selor.</div>
+    </footer>
+
+    <script src="script.js?v=22"></script>
+    <script type="module" src="js/lomba-app.js"></script>
+</body>
+</html>

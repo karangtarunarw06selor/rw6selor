@@ -1,0 +1,6283 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Billyard - RW06.05</title>
+
+ <style>
+  * {
+    box-sizing: border-box;
+    user-select: none;
+  }
+
+  body {
+    margin: 0;
+    background: #07120f;
+    color: white;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+  }
+
+  #rotateOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+    background: #050807;
+    color: white;
+    text-align: center;
+  }
+
+  #rotateOverlay h1 {
+    margin-bottom: 10px;
+    font-size: 28px;
+  }
+
+  #app {
+    width: 100vw;
+    height: 100vh;
+    display: grid;
+    grid-template-columns: 210px 1fr 210px;
+    gap: 10px;
+    padding: 10px;
+    background: radial-gradient(circle at top, #123f32, #06110e 70%);
+  }
+
+  .panel {
+    padding: 12px;
+    overflow: auto;
+    background: rgba(0,0,0,.38);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 16px;
+  }
+
+  .panel h2 {
+    margin: 0 0 10px;
+    font-size: 18px;
+  }
+
+  .small {
+    font-size: 12px;
+    line-height: 1.4;
+    opacity: .75;
+  }
+
+  .player {
+    padding: 9px;
+    margin-bottom: 8px;
+    border-radius: 10px;
+    background: rgba(255,255,255,.08);
+    border: 1px solid transparent;
+  }
+
+  .player.active {
+    border-color: #ffe66b;
+    background: rgba(255,230,107,.15);
+  }
+
+  .player .name {
+    margin-bottom: 4px;
+    font-weight: bold;
+  }
+
+  .badge {
+    display: inline-block;
+    margin-top: 4px;
+    margin-right: 4px;
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.15);
+    font-size: 11px;
+  }
+
+  .tableWrap {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    overflow: visible;
+  }
+
+  .tableFrame {
+    position: relative;
+    overflow: visible;
+    width: 100%;
+    max-width: 960px;
+    aspect-ratio: 16 / 9;
+    padding: 0;
+    background: transparent;
+    border-radius: 30px;
+    box-shadow: 0 22px 50px rgba(0,0,0,.55);
+  }
+
+  canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    background: transparent;
+    border-radius: 30px;
+    touch-action: none;
+    box-shadow: inset 0 0 28px rgba(0,0,0,.55);
+  }
+
+  .htmlCueStick {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 260px;
+    height: 4px;
+    border-radius: 999px;
+    display: none;
+    pointer-events: none;
+    z-index: 80;
+    transform-origin: left center;
+    background:
+      linear-gradient(
+        90deg,
+        #fff3b0 0%,
+        #f0cf75 16%,
+        #c47a38 58%,
+        #6c3416 86%,
+        #2b1208 100%
+      );
+    box-shadow:
+      0 1px 2px rgba(0,0,0,.45),
+      inset 0 1px 0 rgba(255,255,255,.45);
+  }
+
+  .htmlCueStick::before {
+    content: "";
+    position: absolute;
+    left: -8px;
+    top: 1px;
+    width: 11px;
+    height: 2px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.95);
+    box-shadow: 0 0 2px rgba(255,255,255,.55);
+  }
+
+  button {
+    width: 100%;
+    margin-top: 8px;
+    padding: 11px 12px;
+    border: 0;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #ffd86b, #ff9f2e);
+    color: #251403;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  button.secondary {
+    background: rgba(255,255,255,.12);
+    color: white;
+    border: 1px solid rgba(255,255,255,.2);
+  }
+
+  #statusBox {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    background: rgba(0,0,0,.35);
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .statusRow {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+
+  .statusRow:last-child {
+    border-bottom: 0;
+  }
+
+  .statusLabel {
+    opacity: .72;
+  }
+
+  .statusValue {
+    font-weight: bold;
+    text-align: right;
+  }
+
+  .statusNotice {
+    margin-top: 10px;
+    padding: 9px;
+    border-radius: 10px;
+    background: rgba(255,230,107,.12);
+    border: 1px solid rgba(255,230,107,.35);
+    color: #ffe66b;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .mobileHudLayer {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    pointer-events: none;
+  }
+
+  .mobileCornerPlayer {
+    position: fixed;
+    z-index: 1200;
+    pointer-events: none;
+    width: 82px;
+    min-height: 72px;
+    padding: 6px 5px;
+    border-radius: 14px;
+    background: rgba(4, 8, 16, .74);
+    border: 1px solid rgba(255,255,255,.16);
+    color: white;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 8px 22px rgba(0,0,0,.35);
+  }
+
+  .mobileCornerPlayer.hidden {
+    display: none;
+  }
+
+  .mobileCornerPlayer.activeTurn {
+    border-color: rgba(255, 214, 80, .95);
+    box-shadow:
+      0 0 0 2px rgba(255, 214, 80, .22),
+      0 8px 22px rgba(0,0,0,.45);
+  }
+
+  .mobileCornerPlayer.me {
+    background: rgba(19, 69, 54, .84);
+  }
+
+  .mobileCornerAvatar {
+    width: 42px;
+    height: 42px;
+    margin: 0 auto 4px;
+    border-radius: 13px;
+    border: 2px solid rgba(255,255,255,.24);
+    background:
+      radial-gradient(circle at 35% 28%, rgba(255,255,255,.35), transparent 28%),
+      linear-gradient(135deg, #27364f, #111827);
+  }
+
+  .mobileCornerName {
+    width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .mobileCornerScore {
+    margin-top: 2px;
+    font-size: 10px;
+    opacity: .78;
+  }
+
+  .mobileTopLeft {
+    left: 10px;
+    top: 10px;
+  }
+
+  .mobileTopRight {
+    right: 10px;
+    top: 10px;
+  }
+
+  .mobileBottomLeft {
+    left: 10px;
+    bottom: 10px;
+  }
+
+  .mobileBottomRight {
+    right: 10px;
+    bottom: 10px;
+  }
+
+  .mobileCenterTurn {
+    position: fixed;
+    left: 50%;
+    top: 12px;
+    z-index: 1200;
+    transform: translateX(-50%);
+    pointer-events: none;
+    min-width: 118px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: rgba(4, 8, 16, .78);
+    border: 1px solid rgba(255,255,255,.16);
+    color: white;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 800;
+    backdrop-filter: blur(8px);
+  }
+
+  .mobileCenterTurn span {
+    color: #ffd650;
+  }
+
+  .mobileBottomActions {
+    position: fixed;
+    left: 50%;
+    bottom: 12px;
+    z-index: 1200;
+    transform: translateX(-50%);
+    display: none;
+    gap: 10px;
+    pointer-events: auto;
+  }
+
+  .mobileActionBtn {
+    width: 42px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.22);
+    color: white;
+    font-size: 20px;
+    font-weight: 900;
+  }
+
+.pocketRailHud {
+  position: fixed;
+  left: 50%;
+  top: 74px;
+  z-index: 900;
+  transform: translateX(-50%);
+  width: min(520px, 82vw);
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 4px 12px;
+  overflow: hidden;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.18);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.03)),
+    rgba(5, 8, 15, .72);
+  backdrop-filter: blur(8px);
+  box-shadow:
+    inset 0 0 0 1px rgba(0,0,0,.35),
+    0 8px 20px rgba(0,0,0,.35);
+}
+
+  .pocketRailHud::before,
+  .pocketRailHud::before,
+.pocketRailHud::after {
+  display: none;
+}
+
+.pocketRailBalls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: auto;
+  min-width: 0;
+}
+
+  .pocketRailBall,
+  .pocketRailFlyingBall {
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.9);
+    color: #111;
+    font-size: 10px;
+    font-weight: 900;
+    background: #ddd;
+    box-shadow:
+      inset -3px -4px 6px rgba(0,0,0,.28),
+      inset 2px 2px 4px rgba(255,255,255,.45),
+      0 2px 5px rgba(0,0,0,.45);
+  }
+
+  .pocketRailBall.stripe,
+  .pocketRailFlyingBall.stripe {
+    background:
+      linear-gradient(
+        180deg,
+        #f8f8f8 0%,
+        #f8f8f8 24%,
+        var(--ball-color) 25%,
+        var(--ball-color) 75%,
+        #f8f8f8 76%,
+        #f8f8f8 100%
+      );
+  }
+
+  .pocketRailBall.solid,
+  .pocketRailFlyingBall.solid {
+    background: var(--ball-color);
+  }
+
+  .pocketRailBall .number,
+  .pocketRailFlyingBall .number {
+    width: 11px;
+    height: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: white;
+    font-size: 7px;
+    font-weight: 900;
+  }
+
+  .pocketRailFlyingBall {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 1100;
+    pointer-events: none;
+    transform: translate(-50%, -50%) scale(1);
+    box-shadow:
+      inset -3px -4px 6px rgba(0,0,0,.28),
+      inset 2px 2px 4px rgba(255,255,255,.45),
+      0 8px 18px rgba(0,0,0,.55);
+    transition:
+      left .62s cubic-bezier(.18,.84,.28,1),
+      top .62s cubic-bezier(.18,.84,.28,1),
+      transform .62s cubic-bezier(.18,.84,.28,1),
+      opacity .62s ease;
+  }
+
+
+.pocketRailGroupLabel {
+  display: flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .06em;
+  white-space: nowrap;
+  background: rgba(255,255,255,.12);
+  color: #f9fafb;
+}
+
+.pocketRailGroupLabel.solid {
+  color: #fbbf24;
+}
+
+.pocketRailGroupLabel.stripe {
+  color: #93c5fd;
+}
+
+.pocketRailOpenTable {
+  height: 22px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  color: #e5e7eb;
+  background: rgba(255,255,255,.12);
+}
+
+.pocketRailBall.targetBall.pocketed,
+.pocketRailBall.eightBallTarget.pocketed {
+  opacity: .25;
+  filter: grayscale(1);
+}
+
+.pocketRailBall.eightBallTarget.locked {
+  opacity: .35;
+  filter: grayscale(.8);
+}
+
+.pocketRailBall.eightBallTarget.available {
+  box-shadow: 0 0 0 2px rgba(34,197,94,.75), 0 0 12px rgba(34,197,94,.45);
+}
+
+
+
+  .gameOverHtmlOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,.58);
+    pointer-events: auto;
+  }
+
+  .gameOverHtmlOverlay.hidden {
+    display: none;
+  }
+
+  .gameOverCard {
+    width: min(420px, 86vw);
+    padding: 26px 24px;
+    border-radius: 22px;
+    background: rgba(5,8,15,.94);
+    border: 3px solid rgba(255,214,80,.95);
+    text-align: center;
+    box-shadow: 0 18px 44px rgba(0,0,0,.55);
+  }
+
+  .gameOverTitle {
+    color: #ffd650;
+    font-size: 30px;
+    font-weight: 900;
+    margin-bottom: 14px;
+  }
+
+  .gameOverWinnerText {
+    color: white;
+    font-size: 22px;
+    font-weight: 900;
+    margin-bottom: 10px;
+  }
+
+  .gameOverSubText {
+    color: rgba(255,255,255,.72);
+    font-size: 15px;
+    margin-bottom: 20px;
+  }
+
+  .gameOverRematchBtn,
+  .gameOverPrimaryBtn {
+    width: 100%;
+    max-width: 260px;
+    margin: 0 auto;
+    padding: 12px 18px;
+    border-radius: 999px;
+    border: 0;
+    background: linear-gradient(135deg, #ffe16a, #ffad32);
+    color: #111;
+    font-size: 16px;
+    font-weight: 900;
+    cursor: pointer;
+  }
+
+  .gameOverSecondaryBtn {
+    width: 100%;
+    max-width: 260px;
+    margin-top: 10px;
+    padding: 12px 18px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,.22);
+    background: rgba(255,255,255,.08);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 900;
+    cursor: pointer;
+  }
+
+  .mobileMenuOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1400;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,.48);
+    pointer-events: auto;
+  }
+
+  .mobileMenuOverlay.hidden {
+    display: none;
+  }
+
+  .mobileMenuCard {
+    width: min(340px, 82vw);
+    padding: 16px;
+    border-radius: 18px;
+    background: rgba(5, 8, 15, .96);
+    border: 1px solid rgba(255,255,255,.18);
+    box-shadow: 0 18px 44px rgba(0,0,0,.55);
+  }
+
+  .mobileMenuHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    font-size: 18px;
+  }
+
+  .mobileMenuHeader button {
+    width: 34px;
+    height: 34px;
+    margin: 0;
+    padding: 0;
+    border-radius: 10px;
+    background: rgba(255,255,255,.12);
+    color: white;
+  }
+
+  .mobileMenuContent {
+    margin-bottom: 12px;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .mobileMenuRow {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+
+  .mobileMenuRow:last-child {
+    border-bottom: 0;
+  }
+
+  .mobileMenuLabel {
+    opacity: .68;
+  }
+
+  .mobileMenuValue {
+    font-weight: 800;
+    text-align: right;
+  }
+
+  
+
+  /* ===============================
+   MOBILE PORTRAIT
+================================ */
+@media (orientation: portrait) {
+  #rotateOverlay {
+    display: none;
+  }
+
+  body {
+    overflow: hidden;
+    background: #0b101b;
+  }
+
+  #app {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    padding: 0;
+    position: relative;
+    background: #0b101b;
+  }
+
+  .panel {
+    display: none;
+  }
+
+  .tableWrap {
+    position: fixed;
+    left: 0;
+    top: 88px;
+    z-index: 10;
+    width: 100vw;
+    height: calc(100vh - 150px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: visible;
+  }
+
+  .tableFrame {
+    position: relative;
+    overflow: visible;
+    width: min(84vh, 168vw);
+    max-width: none;
+    aspect-ratio: 16 / 9;
+    padding: 0;
+    background: transparent;
+    border-radius: 26px;
+    transform: rotate(90deg) scale(1.08);
+    transform-origin: center center;
+    box-shadow: 0 18px 42px rgba(0,0,0,.65);
+  }
+
+  canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    border-radius: 26px;
+  }
+
+  .mobileHudLayer {
+    display: block;
+  }
+
+  .mobileBottomActions {
+    display: flex;
+  }
+
+  .pocketRailHud {
+    display: flex;
+    top: 128px;
+    width: min(620px, 74vw);
+    z-index: 900;
+  }
+
+  .gameOverCard {
+    width: min(340px, 78vw);
+    padding: 20px 16px;
+  }
+
+  .gameOverTitle {
+    font-size: 26px;
+  }
+
+  .gameOverWinnerText {
+    font-size: 19px;
+  }
+
+  .htmlCueStick {
+    z-index: 80;
+  }
+}
+
+
+/* ===============================
+   DESKTOP / LAPTOP LANDSCAPE
+================================ */
+@media (orientation: landscape) {
+  .mobileHudLayer {
+    display: none;
+  }
+
+  .mobileBottomActions {
+    display: none;
+  }
+
+  #app {
+    display: grid;
+    grid-template-columns: 210px 1fr 210px;
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .panel {
+    display: block;
+  }
+
+  .tableWrap {
+    position: static;
+    z-index: 10;
+    width: auto;
+    height: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: visible;
+  }
+
+  .tableFrame {
+    position: relative;
+    overflow: visible;
+    width: 100%;
+    max-width: 980px;
+    aspect-ratio: 16 / 9;
+    padding: 0;
+    background: transparent;
+    border-radius: 30px;
+    transform: none;
+  }
+
+  canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    border-radius: 30px;
+  }
+
+  .pocketRailHud {
+    display: flex;
+    position: fixed;
+    left: 50%;
+    top: 96px;
+    z-index: 900;
+    transform: translateX(-50%);
+    width: min(560px, 42vw);
+  }
+
+  .htmlCueStick {
+    z-index: 80;
+  }
+}
+
+
+/* ===============================
+   GLOBAL OVERLAY / BUTTON FIX
+================================ */
+#gameOverHtmlOverlay,
+.gameOverHtmlOverlay {
+  pointer-events: auto !important;
+  z-index: 3000 !important;
+}
+
+#gameOverHtmlOverlay.hidden,
+.gameOverHtmlOverlay.hidden {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+.gameOverCard,
+.gameOverRematchBtn,
+.gameOverPrimaryBtn,
+.gameOverSecondaryBtn {
+  pointer-events: auto !important;
+  touch-action: manipulation;
+  position: relative;
+  z-index: 3001 !important;
+}
+
+#htmlCueStick,
+.htmlCueStick {
+  pointer-events: none !important;
+}
+
+.mobileBottomActions {
+  pointer-events: auto !important;
+  z-index: 2600 !important;
+}
+
+.mobileActionBtn,
+#mobileMenuToggleBtn,
+#mobileBackBtn {
+  pointer-events: auto !important;
+  touch-action: manipulation;
+  position: relative;
+  z-index: 2601 !important;
+}
+
+#mobileMenuOverlay,
+.mobileMenuOverlay {
+  pointer-events: auto !important;
+  z-index: 2800 !important;
+}
+
+#mobileMenuOverlay.hidden,
+.mobileMenuOverlay.hidden {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+.mobileMenuCard {
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 2801 !important;
+}
+
+
+/* ===============================
+   REAL MOBILE PORTRAIT
+================================ */
+@media (orientation: portrait) and (pointer: coarse) {
+  .tableWrap {
+    top: 104px !important;
+    height: calc(100vh - 190px) !important;
+  }
+
+  .tableFrame {
+    width: min(84vh, 168vw) !important;
+    max-width: none !important;
+    transform: rotate(90deg) scale(1.3) !important;
+    transform-origin: center center !important;
+  }
+
+  .pocketRailHud {
+    top: 92px !important;
+    width: min(700px, 88vw) !important;
+    height: 36px !important;
+    z-index: 1600 !important;
+  }
+
+  .pocketRailBalls {
+    gap: 4px !important;
+  }
+
+  .pocketRailBall,
+  .pocketRailFlyingBall {
+    width: 21px !important;
+    height: 21px !important;
+    flex: 0 0 21px !important;
+  }
+
+  .pocketRailBall .number,
+  .pocketRailFlyingBall .number {
+    width: 10px !important;
+    height: 10px !important;
+    font-size: 7px !important;
+  }
+
+  .mobileCornerPlayer {
+    width: 66px !important;
+    min-height: 58px !important;
+    padding: 5px 4px !important;
+    border-radius: 12px !important;
+    font-size: 9px !important;
+  }
+
+  .mobileCornerAvatar {
+    width: 32px !important;
+    height: 32px !important;
+    margin-bottom: 3px !important;
+    border-radius: 10px !important;
+  }
+
+  .mobileCornerName {
+    font-size: 9px !important;
+  }
+
+  .mobileCornerScore {
+    font-size: 8px !important;
+  }
+
+  .mobileTopLeft {
+    left: 8px !important;
+    top: 8px !important;
+  }
+
+  .mobileTopRight {
+    right: 8px !important;
+    top: 8px !important;
+  }
+
+  .mobileBottomLeft {
+    left: 12px !important;
+    bottom: calc(env(safe-area-inset-bottom) + 10px) !important;
+  }
+
+  .mobileBottomRight {
+    right: 12px !important;
+    bottom: calc(env(safe-area-inset-bottom) + 10px) !important;
+  }
+
+  .mobileBottomActions {
+    bottom: calc(env(safe-area-inset-bottom) + 10px) !important;
+    z-index: 2600 !important;
+  }
+
+  .mobileActionBtn {
+    width: 40px !important;
+    height: 36px !important;
+  }
+}
+
+
+
+
+
+@media (max-width: 768px) {
+  .pocketRailHud {
+
+    top: 68px;
+
+    width: fit-content;
+
+    max-width: min(300px, 88vw);
+
+    min-height: 30px;
+
+    padding: 4px 8px;
+
+  }
+
+ .pocketRailHud::before,
+
+.pocketRailHud::after {
+
+  content: "";
+
+  position: absolute;
+
+  top: 50%;
+
+  width: 24%;
+
+  height: 4px;
+
+  transform: translateY(-50%);
+
+  border-radius: 999px;
+
+  background: rgba(255,255,255,.20);
+
+  box-shadow:
+
+    0 8px 0 rgba(255,255,255,.10),
+
+    0 -8px 0 rgba(255,255,255,.10);
+
+  pointer-events: none;
+
+}
+
+.pocketRailHud::before {
+
+  left: 12px;
+
+}
+
+.pocketRailHud::after {
+
+  right: 12px;
+
+}
+.pocketRailBalls {
+
+  position: relative;
+
+  z-index: 2;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 5px;
+
+  width: auto;
+
+  max-width: calc(100% - 120px);
+
+  min-width: 0;
+
+  padding: 0 8px;
+
+  border-radius: 999px;
+
+  background: rgba(5, 8, 15, .55);
+
+}
+
+  .pocketRailBalls::-webkit-scrollbar {
+    display: none;
+  }
+
+  .pocketRailGroupLabel,
+  .pocketRailOpenTable {
+    height: 20px;
+    font-size: 9px;
+    padding: 0 7px;
+    flex: 0 0 auto;
+  }
+
+  .pocketRailBall,
+  .pocketRailFlyingBall {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 auto;
+  }
+
+  .pocketRailBall .number,
+  .pocketRailFlyingBall .number {
+    width: 10px;
+    height: 10px;
+    font-size: 6.5px;
+  }
+}
+
+
+/* ===============================
+   REAL MOBILE LANDSCAPE
+================================ */
+@media (orientation: landscape) and (pointer: coarse) {
+  html,
+  body {
+    width: 100vw !important;
+    height: 100dvh !important;
+    overflow: hidden !important;
+    background: #07120f !important;
+  }
+
+  #app {
+    display: block !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    background: #07120f !important;
+  }
+
+  aside.panel,
+  .panel {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  .mobileHudLayer {
+    display: block !important;
+    visibility: visible !important;
+    pointer-events: none !important;
+    z-index: 1200 !important;
+  }
+
+  main.tableWrap,
+  .tableWrap {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    z-index: 10 !important;
+  }
+
+  .tableFrame {
+    width: min(100vw, 178vh) !important;
+    max-width: none !important;
+    aspect-ratio: 16 / 9 !important;
+    border-radius: 26px !important;
+    transform: scale(1.08) !important;
+    transform-origin: center center !important;
+  }
+
+  canvas {
+    border-radius: 26px !important;
+    touch-action: pinch-zoom !important;
+  }
+
+.pocketRailHud {
+
+  position: fixed;
+
+  left: 50%;
+
+  top: 74px;
+
+  z-index: 900;
+
+  transform: translateX(-50%);
+
+  width: var(--pocket-rail-width, min(560px, 68vw));
+
+  height: 34px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  padding: 4px 12px;
+
+  overflow: hidden;
+
+  border-radius: 999px;
+
+  border: 1px solid rgba(255,255,255,.18);
+
+  background:
+
+    linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.03)),
+
+    rgba(5, 8, 15, .72);
+
+  backdrop-filter: blur(8px);
+
+  box-shadow:
+
+    inset 0 0 0 1px rgba(0,0,0,.35),
+
+    0 8px 20px rgba(0,0,0,.35);
+
+}
+
+  .mobileCornerPlayer {
+    display: flex !important;
+    visibility: visible !important;
+    width: 66px !important;
+    min-height: 58px !important;
+    padding: 5px 4px !important;
+    border-radius: 12px !important;
+    font-size: 9px !important;
+    transform: rotate(90deg) !important;
+    transform-origin: center center !important;
+    z-index: 1700 !important;
+  }
+
+  .mobileCornerAvatar {
+    width: 32px !important;
+    height: 32px !important;
+    margin-bottom: 3px !important;
+    border-radius: 10px !important;
+  }
+
+  .mobileCornerName {
+    font-size: 9px !important;
+  }
+
+  .mobileCornerScore {
+    font-size: 8px !important;
+  }
+
+  .mobileTopLeft {
+    left: 18px !important;
+    top: 76px !important;
+  }
+
+  .mobileBottomLeft {
+    left: 18px !important;
+    bottom: 76px !important;
+  }
+
+  .mobileTopRight {
+    right: 18px !important;
+    top: 76px !important;
+  }
+
+  .mobileBottomRight {
+    right: 18px !important;
+    bottom: 76px !important;
+  }
+
+  .mobileBottomActions {
+    display: flex !important;
+    visibility: visible !important;
+    bottom: calc(env(safe-area-inset-bottom) + 10px) !important;
+    z-index: 2600 !important;
+  }
+
+  .mobileActionBtn {
+    width: 40px !important;
+    height: 36px !important;
+  }
+}
+
+
+
+/* FINAL OVERRIDE - Pocket rail tidak terlalu panjang */
+.pocketRailHud {
+  width: var(--pocket-rail-width, 420px) !important;
+  max-width: 88vw !important;
+  min-width: 260px !important;
+  justify-content: center !important;
+}
+
+.pocketRailBalls {
+  justify-content: center !important;
+  margin: 0 auto !important;
+}
+
+.pocketRailBall.rotationTargetBall {
+  box-shadow: 0 0 0 2px rgba(34,197,94,.85), 0 0 12px rgba(34,197,94,.45);
+}
+
+.pocketRailBall.rotationFinalBall.locked {
+  opacity: .38;
+  filter: grayscale(.85);
+}
+
+@media (max-width: 768px) {
+  .pocketRailHud {
+    width: var(--pocket-rail-width, 360px) !important;
+    max-width: 88vw !important;
+    min-width: 250px !important;
+  }
+}
+
+
+</style>
+
+
+</head>
+
+<body>
+  <div id="rotateOverlay">
+    <div>
+      <h1>Putar ke Landscape</h1>
+      <p>Game billiard membutuhkan mode landscape agar meja terlihat proporsional.</p>
+    </div>
+  </div>
+
+  <div id="app">
+      
+     <div class="mobileHudLayer">
+
+    <div id="mobileSlotTopLeft" class="mobileCornerPlayer mobileTopLeft hidden">
+
+      <div class="mobileCornerAvatar"></div>
+
+      <div class="mobileCornerName">Player</div>
+
+      <div class="mobileCornerScore">Score 0</div>
+
+    </div>
+  
+  
+
+  <div id="mobileSlotTopRight" class="mobileCornerPlayer mobileTopRight hidden">
+    <div class="mobileCornerAvatar"></div>
+    <div class="mobileCornerName">Player</div>
+    <div class="mobileCornerScore">Score 0</div>
+  </div>
+
+  <div id="mobileSlotBottomLeft" class="mobileCornerPlayer mobileBottomLeft hidden">
+    <div class="mobileCornerAvatar"></div>
+    <div class="mobileCornerName">Player</div>
+    <div class="mobileCornerScore">Score 0</div>
+  </div>
+
+  <div id="mobileSlotBottomRight" class="mobileCornerPlayer mobileBottomRight hidden">
+    <div class="mobileCornerAvatar"></div>
+    <div class="mobileCornerName">Player</div>
+    <div class="mobileCornerScore">Score 0</div>
+  </div>
+
+  <div class="mobileCenterTurn">
+  Turn: <span id="mobileTurnName">-</span>
+</div>
+
+<div class="mobileBottomActions">
+  <div id="mobileBackBtn" class="mobileActionBtn" onclick="mobileBackToLobby(event)">‹</div>
+<div id="mobileMenuToggleBtn" class="mobileActionBtn" onclick="toggleMobileMenu(event)">☰</div>
+</div>
+
+<div id="mobileMenuOverlay" class="mobileMenuOverlay hidden">
+  <div class="mobileMenuCard">
+    <div class="mobileMenuHeader">
+      <strong>Match Info</strong>
+      <button type="button" onclick="toggleMobileMenu(event)">×</button>
+    </div>
+
+    <div id="mobileMenuContent" class="mobileMenuContent">
+      Memuat data...
+    </div>
+
+    <button type="button" onclick="loadMatch()">Refresh Match</button>
+    <button type="button" class="secondary" onclick="mobileBackToLobby(event)">
+      Back to Lobby
+    </button>
+  </div>
+</div>
+</div>
+      
+      <div id="pocketRailHud" class="pocketRailHud">
+  <div id="pocketRailBalls" class="pocketRailBalls"></div>
+</div>
+      
+    <aside class="panel">
+      <h2>Match</h2>
+
+      <div class="small">
+        Room: <b id="roomCodeText">-</b><br>
+        Mode: <b id="modeText">-</b><br>
+        Status: <b id="matchStatusText">-</b><br>
+        Socket: <b id="socketStatusText">OFF</b>
+      </div>
+
+      <button onclick="loadMatch()">Refresh Match</button>
+      <button class="secondary" onclick="backToLobby()">Back to Lobby</button>
+
+      <div id="statusBox">Menunggu data...</div>
+    </aside>
+
+   <main class="tableWrap">
+  <div class="tableFrame">
+    <canvas id="gameCanvas" width="900" height="500"></canvas>
+  </div>
+</main>
+
+<div id="htmlCueStick" class="htmlCueStick"></div>
+
+<div id="gameOverHtmlOverlay" class="gameOverHtmlOverlay hidden">
+  <div class="gameOverCard">
+    <div class="gameOverTitle">Game Selesai</div>
+    <div id="gameOverWinnerText" class="gameOverWinnerText">Pemenang: -</div>
+    <div id="gameOverSubText" class="gameOverSubText">Semua bola sudah masuk</div>
+    <button id="gameOverRematchBtn" class="gameOverRematchBtn" onclick="voteRematch()">
+      Rematch
+    </button>
+    <button class="gameOverSecondaryBtn" onclick="backToLobby()">Kembali ke Lobby</button>
+<button class="gameOverSecondaryBtn" onclick="backToMainMenu()">Menu Utama</button>
+  </div>
+</div>
+
+    <aside class="panel">
+      <h2>Players</h2>
+      <div id="playersList"></div>
+
+      <h2>Turn</h2>
+      <div class="small">
+        Player aktif:<br>
+        <b id="currentTurnText">-</b>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+   const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+const W = canvas.width;
+const H = canvas.height;
+
+let matchData = null;
+let localPlayer = null;
+
+let heartbeatTimer = null;
+let matchTimer = null;
+
+// Realtime socket
+let socket = null;
+let socketConnected = false;
+let socketJoinedRoom = false;
+let socketReconnectTimer = null;
+
+const REALTIME_URL = "wss://billiard-realtime-server-production.up.railway.app/";
+
+// Audio
+let audioContext = null;
+let soundEnabled = true;
+let lastRailSoundAt = 0;
+let lastCollisionSoundAt = 0;
+
+// Game over
+let gameOverLocal = false;
+let gameWinnerName = "-";
+let finishMatchSubmitting = false;
+
+// Rematch waiting
+let rematchWaiting = false;
+let rematchReadyCount = 0;
+let rematchTotalPlayers = 0;
+let rematchStatusTimer = null;
+let rematchCreating = false;
+
+// Pocket rail
+let pocketRailVisibleNumbers = new Set();
+let pocketRailAnimatingNumbers = new Set();
+
+// Balls
+let localBalls = [];
+let pocketedBallTray = [];
+
+// Aim / shot
+let isAiming = false;
+let aimStart = null;
+let aimCurrent = null;
+let power = 0;
+
+// Mobile touch mode
+let touchStartPoint = null;
+let touchLastPoint = null;
+let touchPowerTimer = null;
+let touchPowerArmed = false;
+let touchIsDraggingAim = false;
+let touchBallInHandMode = false;
+
+const TOUCH_LONG_PRESS_TIME = 300;
+const TOUCH_MOVE_TOLERANCE = 10;
+const TOUCH_AIM_DRAG_DISTANCE = 12;
+
+// Touch aim guard
+
+let touchAimStartPoint = null;
+
+let touchAimMoved = false;
+
+let touchAimStartTime = 0;
+
+const TOUCH_SHOT_MIN_DISTANCE = 18;
+
+const TOUCH_SHOT_MIN_TIME = 120;
+
+
+let animationRunning = false;
+let physicsMode = null;
+let isSubmittingShot = false;
+let lastShotResult = null;
+
+// Tahan polling supaya bola tidak langsung balik ke state lama setelah shot
+let recentLocalShotUntil = 0;
+
+// Old canvas pocket tray
+const POCKET_TRAY_START_X = 86;
+const POCKET_TRAY_Y = 28;
+const POCKET_TRAY_GAP = 23;
+const POCKET_TRAY_RADIUS = 8;
+
+// Remote aim / shot
+let remoteAim = null;
+let lastAimSendAt = 0;
+
+let remoteShotOwnerId = null;
+let pendingRemoteFinalBalls = null;
+
+// Ball in hand
+let ballInHandLocalPlaced = false;
+let ballInHandLastOwnerId = null;
+let ballInHandDragging = false;
+
+let lastBallInHandSyncAt = 0;
+
+// Foul tracking
+let cueHitObjectBall = false;
+let anyBallHitRail = false;
+let firstHitBallNumber = null;
+
+// Physics constants
+const BALL_RADIUS = 13;
+const BALL_DIAMETER = BALL_RADIUS * 2;
+
+const PLAY_EDGE = 52;
+const PLAY_LEFT = PLAY_EDGE + BALL_RADIUS;
+const PLAY_RIGHT = W - PLAY_EDGE - BALL_RADIUS;
+const PLAY_TOP = PLAY_EDGE + BALL_RADIUS;
+const PLAY_BOTTOM = H - PLAY_EDGE - BALL_RADIUS;
+
+const FRICTION = 0.985;
+const MIN_SPEED = 0.04;
+const WALL_BOUNCE = 0.86;
+const COLLISION_DAMPING = 0.96;
+
+const POCKET_SINK_SPEED = 0.11;
+const POCKET_MIN_SCALE = 0.18;
+
+    const pockets = [
+  { name: "top_left", x: 44, y: 44, r: 24, type: "corner" },
+  { name: "top_middle", x: W / 2, y: 35, r: 22, type: "middle" },
+  { name: "top_right", x: W - 44, y: 44, r: 24, type: "corner" },
+
+  { name: "bottom_left", x: 44, y: H - 44, r: 24, type: "corner" },
+  { name: "bottom_middle", x: W / 2, y: H - 35, r: 22, type: "middle" },
+  { name: "bottom_right", x: W - 44, y: H - 44, r: 24, type: "corner" }
+];
+
+    function getPlayerKey() {
+  const params = new URLSearchParams(window.location.search);
+  const playerKeyFromUrl = params.get("player_key") || "";
+
+  if (playerKeyFromUrl) {
+    localStorage.setItem("pocket_clash_player_key", playerKeyFromUrl);
+    localStorage.setItem("billiard_player_key", playerKeyFromUrl);
+    return playerKeyFromUrl;
+  }
+
+  return (
+    localStorage.getItem("pocket_clash_player_key") ||
+    localStorage.getItem("billiard_player_key") ||
+    ""
+  );
+}
+
+    function getRoomCode() {
+      const params = new URLSearchParams(window.location.search);
+      return (params.get("room_code") || "").trim().toUpperCase();
+    }
+
+    function modeLabel(mode) {
+      const labels = {
+        "8ball_classic": "8 Ball Classic",
+        "8ball_party": "8 Ball Party",
+        "9ball": "9 Ball",
+        "10ball": "10 Ball",
+        "straight_pool": "Straight Pool"
+      };
+
+      return labels[mode] || mode || "-";
+    }
+
+    function getCurrentPlayerName() {
+      if (!matchData || !matchData.match || !matchData.players) return "-";
+
+      const currentId = Number(matchData.match.current_turn_player_id);
+      const player = matchData.players.find(p => Number(p.player_id) === currentId);
+
+      return player ? player.username : "-";
+    }
+
+    function isMyTurn() {
+      if (!matchData || !matchData.match || !localPlayer) return false;
+
+      return Number(matchData.match.current_turn_player_id) === Number(localPlayer.id);
+    }
+
+    function getBallInHandState() {
+      if (!matchData || !matchData.state) {
+        return {
+          active: false,
+          player_id: null,
+          reason: null
+        };
+      }
+
+      return matchData.state.ball_in_hand || {
+        active: false,
+        player_id: null,
+        reason: null
+      };
+    }
+
+    function isBallInHandActiveForMe() {
+      const bih = getBallInHandState();
+
+      if (!bih || !bih.active || !localPlayer) return false;
+
+      return Number(bih.player_id) === Number(localPlayer.id);
+    }
+    
+    function isBallInHandModeForMe() {
+        return isBallInHandActiveForMe() && isMyTurn();
+    }
+
+    function isBallInHandBlockingShot() {
+        return isBallInHandModeForMe() && !ballInHandLocalPlaced;
+    }
+
+    function resetBallInHandLocalStateIfNeeded() {
+      const bih = getBallInHandState();
+
+      if (!bih.active) {
+        ballInHandLocalPlaced = false;
+        ballInHandLastOwnerId = null;
+        return;
+      }
+
+      if (ballInHandLastOwnerId !== Number(bih.player_id)) {
+        ballInHandLocalPlaced = false;
+        ballInHandLastOwnerId = Number(bih.player_id);
+      }
+    }
+
+    async function loadLocalPlayer() {
+      const playerKey = getPlayerKey();
+
+      if (!playerKey) return null;
+
+      try {
+        const res = await fetch("api/player_me.php", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            player_key: playerKey
+          })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          localPlayer = data.player;
+          return localPlayer;
+        }
+
+        return null;
+      } catch (err) {
+        return null;
+      }
+    }
+
+    async function sendHeartbeat() {
+      const playerKey = getPlayerKey();
+
+      if (!playerKey) return;
+
+      try {
+        await fetch("api/heartbeat.php", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            player_key: playerKey
+          })
+        });
+      } catch (err) {
+        console.log("Heartbeat gagal", err);
+      }
+    }
+
+    function startHeartbeat() {
+      if (heartbeatTimer) clearInterval(heartbeatTimer);
+
+      sendHeartbeat();
+      heartbeatTimer = setInterval(sendHeartbeat, 5000);
+    }
+
+    async function cleanupRooms() {
+      try {
+        await fetch("api/cleanup_rooms.php");
+      } catch (err) {
+        console.log("Cleanup gagal", err);
+      }
+    }
+
+    async function loadMatch() {
+      const roomCode = getRoomCode();
+
+      if (!roomCode) {
+        document.getElementById("statusBox").textContent =
+          "Room code tidak ada di URL.";
+        return;
+      }
+
+      try {
+        await cleanupRooms();
+
+        const res = await fetch(
+  "api/match_detail.php?room_code=" + encodeURIComponent(roomCode) + "&t=" + Date.now(),
+  {
+    cache: "no-store"
+  }
+);
+
+        const data = await res.json();
+
+        if (!data.success) {
+          document.getElementById("statusBox").textContent =
+            JSON.stringify(data, null, 2);
+          return;
+        }
+
+        matchData = data;
+
+const loadedMatch = matchData.match || matchData;
+
+if (loadedMatch.status === "finished") {
+
+  gameOverLocal = true;
+
+  const players = matchData.players || loadedMatch.players || [];
+
+  const winner = players.find(player => {
+
+    return Number(player.player_id) === Number(loadedMatch.winner_player_id);
+
+  });
+
+  gameWinnerName = winner ? winner.username : "Pemenang";
+
+  lastShotResult = {
+
+    success: true,
+
+    message: "Game selesai. Pemenang: " + gameWinnerName
+
+  };
+
+} else {
+
+  gameOverLocal = false;
+
+  gameWinnerName = "-";
+
+}
+
+resetBallInHandLocalStateIfNeeded();
+
+        const shouldKeepLocalBalls =
+          animationRunning ||
+          isAiming ||
+          isSubmittingShot ||
+          (isBallInHandActiveForMe() && ballInHandLocalPlaced);
+
+        if (!shouldKeepLocalBalls) {
+          localBalls = JSON.parse(JSON.stringify(matchData.state?.balls || []));
+        }
+
+        updateUI();
+        draw();
+
+        if (localPlayer && !socketJoinedRoom) {
+          connectRealtime();
+        }
+
+      } catch (err) {
+        document.getElementById("statusBox").textContent =
+          "Gagal mengambil match: " + err.message;
+      }
+    }
+
+    function startMatchPolling() {
+      if (matchTimer) clearInterval(matchTimer);
+
+      loadMatch();
+      matchTimer = setInterval(loadMatch, 3000);
+    }
+    
+    
+    function mobileBackToLobby(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  backToLobby();
+}
+
+function toggleMobileMenu(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  const overlay = document.getElementById("mobileMenuOverlay");
+
+  if (!overlay) {
+    console.warn("mobileMenuOverlay tidak ditemukan");
+    return;
+  }
+
+  updateMobileMenuContent();
+
+  if (overlay.classList.contains("hidden")) {
+    overlay.classList.remove("hidden");
+  } else {
+    overlay.classList.add("hidden");
+  }
+}
+
+function closeMobileMenu() {
+  const overlay = document.getElementById("mobileMenuOverlay");
+  if (!overlay) return;
+
+  overlay.classList.add("hidden");
+}
+
+function updateMobileMenuContent() {
+  const content = document.getElementById("mobileMenuContent");
+  if (!content) return;
+
+  if (!matchData) {
+    content.innerHTML = "Data match belum tersedia.";
+    return;
+  }
+
+  const room = matchData.room || {};
+  const match = matchData.match || {};
+  const bih = getBallInHandState ? getBallInHandState() : { active: false, player_id: null };
+
+  const roomCode = room.room_code || getRoomCode() || "-";
+  const matchId = match.id || getCurrentMatchId() || "-";
+  const meName = localPlayer ? (localPlayer.username || ("Player #" + localPlayer.id)) : "-";
+  const turnName = getCurrentPlayerName ? getCurrentPlayerName() : "-";
+  const status = match.status || "-";
+  const socketText = socketConnected ? "Joined" : "OFF";
+
+  content.innerHTML = `
+    <div class="mobileMenuRow">
+      <span class="mobileMenuLabel">Room</span>
+      <span class="mobileMenuValue">${roomCode}</span>
+    </div>
+    <div class="mobileMenuRow">
+      <span class="mobileMenuLabel">Match</span>
+      <span class="mobileMenuValue">#${matchId}</span>
+    </div>
+    <div class="mobileMenuRow">
+      <span class="mobileMenuLabel">Kamu</span>
+      <span class="mobileMenuValue">${meName}</span>
+    </div>
+    <div class="mobileMenuRow">
+      <span class="mobileMenuLabel">Turn</span>
+      <span class="mobileMenuValue">${turnName}</span>
+    </div>
+    <div class="mobileMenuRow">
+      <span class="mobileMenuLabel">Status</span>
+      <span class="mobileMenuValue">${status}</span>
+    </div>
+    <div class="mobileMenuRow">
+      <span class="mobileMenuLabel">Ball in hand</span>
+      <span class="mobileMenuValue">${bih.active ? "Player #" + bih.player_id : "Tidak aktif"}</span>
+    </div>
+    <div class="mobileMenuRow">
+      <span class="mobileMenuLabel">Socket</span>
+      <span class="mobileMenuValue">${socketText}</span>
+    </div>
+  `;
+}
+    
+    
+    function updateMobileHud() {
+        const slotBottomLeft = document.getElementById("mobileSlotBottomLeft");
+        const slotTopLeft = document.getElementById("mobileSlotTopLeft");
+        const slotTopRight = document.getElementById("mobileSlotTopRight");
+        const slotBottomRight = document.getElementById("mobileSlotBottomRight");
+
+        let slots = [
+            slotBottomLeft,
+            slotTopLeft,
+            slotTopRight,
+            slotBottomRight
+        ];
+
+        const mobileTurnName = document.getElementById("mobileTurnName");
+
+  if (!matchData || !Array.isArray(matchData.players)) {
+    slots.forEach(slot => {
+      if (slot) slot.classList.add("hidden");
+    });
+
+    if (mobileTurnName) {
+      mobileTurnName.textContent = "-";
+    }
+
+    return;
+  }
+
+  const players = [...matchData.players];
+
+  let orderedPlayers = players;
+
+  if (localPlayer) {
+    const meIndex = players.findIndex(player => {
+      return Number(player.player_id) === Number(localPlayer.id);
+    });
+
+    if (meIndex >= 0) {
+      orderedPlayers = [
+        players[meIndex],
+        ...players.slice(meIndex + 1),
+        ...players.slice(0, meIndex)
+      ];
+    }
+  }
+  
+  if (orderedPlayers.length === 2) {
+  slots = [
+    slotBottomLeft,
+    slotTopRight
+  ];
+} else if (orderedPlayers.length === 3) {
+  slots = [
+    slotBottomLeft,
+    slotTopLeft,
+    slotTopRight
+  ];
+} else {
+  slots = [
+    slotBottomLeft,
+    slotTopLeft,
+    slotTopRight,
+    slotBottomRight
+  ];
+}
+
+[
+  slotBottomLeft,
+  slotTopLeft,
+  slotTopRight,
+  slotBottomRight
+].forEach(slot => {
+  if (!slot) return;
+  slot.classList.add("hidden");
+  slot.classList.remove("me");
+  slot.classList.remove("activeTurn");
+});
+
+  slots.forEach((slot, index) => {
+    if (!slot) return;
+
+    const player = orderedPlayers[index];
+
+    if (!player) {
+      slot.classList.add("hidden");
+      slot.classList.remove("me");
+      slot.classList.remove("activeTurn");
+      return;
+    }
+
+    const isMe = localPlayer &&
+      Number(player.player_id) === Number(localPlayer.id);
+
+    const isTurn = matchData.current_turn_player_id &&
+      Number(player.player_id) === Number(matchData.current_turn_player_id);
+
+    slot.classList.remove("hidden");
+    slot.classList.toggle("me", !!isMe);
+    slot.classList.toggle("activeTurn", !!isTurn);
+
+    const nameEl = slot.querySelector(".mobileCornerName");
+    const scoreEl = slot.querySelector(".mobileCornerScore");
+
+    if (nameEl) {
+      nameEl.textContent = isMe
+        ? "You"
+        : (player.username || ("P" + (index + 1)));
+    }
+
+    if (scoreEl) {
+      const score = Number(player.score || player.pocketed_count || 0);
+      scoreEl.textContent = "Score " + score;
+    }
+  });
+
+  if (mobileTurnName) {
+    mobileTurnName.textContent = getCurrentPlayerName();
+  }
+}
+
+function canvasPointToScreen(point) {
+  const rect = canvas.getBoundingClientRect();
+  const isPortrait = window.matchMedia("(orientation: portrait)").matches;
+
+  if (isPortrait) {
+    const localX = (canvas.height - point.y) * (rect.width / canvas.height);
+    const localY = point.x * (rect.height / canvas.width);
+
+    return {
+      x: rect.left + localX,
+      y: rect.top + localY
+    };
+  }
+
+  return {
+    x: rect.left + point.x * (rect.width / canvas.width),
+    y: rect.top + point.y * (rect.height / canvas.height)
+  };
+}
+
+function createPocketRailBallElement(ball, className) {
+  const number = Number(ball.number);
+  const type = ball.type === "stripe" ? "stripe" : "solid";
+  const color = ball.color || "#ddd";
+
+  const div = document.createElement("div");
+  div.className = className + " " + type;
+  div.style.setProperty("--ball-color", color);
+
+  div.innerHTML = `
+    <span class="number">${number}</span>
+  `;
+
+  return div;
+}
+    
+    
+    function isEightBallMode() {
+  const mode =
+    matchData?.room?.game_mode ||
+    matchData?.room?.mode ||
+    matchData?.game_mode ||
+    matchData?.mode;
+
+  return mode === "8ball_classic" || mode === "8ball_party";
+}
+
+function getEightBallRules() {
+  return (
+    matchData?.state?.rules?.eight_ball ||
+    matchData?.match_state?.rules?.eight_ball ||
+    matchData?.rules?.eight_ball ||
+    null
+  );
+}
+
+function getPlayerEightBallGroup(playerId) {
+  const rules = getEightBallRules();
+  const groups = rules?.player_groups || {};
+
+  return groups[String(playerId)] || null;
+}
+
+function getLocalEightBallGroup() {
+  if (!localPlayer || !localPlayer.id) return null;
+  return getPlayerEightBallGroup(localPlayer.id);
+}
+
+function getBallByNumber(number) {
+  return localBalls.find(ball => Number(ball.number) === Number(number));
+}
+
+function getEightBallTargetNumbersByGroup(group) {
+  if (group === "solid") return [1, 2, 3, 4, 5, 6, 7];
+  if (group === "stripe") return [9, 10, 11, 12, 13, 14, 15];
+  return [];
+}
+
+function createEightBallTargetRailElement(number, group) {
+  const ball = getBallByNumber(number);
+
+  const div = createPocketRailBallElement(
+    ball || {
+      number,
+      type: group,
+      color: group === "solid" ? "#fbbf24" : "#60a5fa"
+    },
+    "pocketRailBall"
+  );
+
+  div.classList.add("targetBall");
+
+  if (ball && ball.pocketed) {
+    div.classList.add("pocketed");
+  }
+
+  return div;
+}
+    
+    
+    function getGameMode() {
+  return (
+    matchData?.room?.game_mode ||
+    matchData?.room?.mode ||
+    matchData?.game_mode ||
+    matchData?.mode ||
+    ""
+  );
+}
+
+function isNineBallMode() {
+  return getGameMode() === "9ball";
+}
+
+function isTenBallMode() {
+  return getGameMode() === "10ball";
+}
+
+function isRotationMode() {
+  const mode = getGameMode();
+  return mode === "9ball" || mode === "10ball";
+}
+
+function getRotationFinalBallNumber() {
+  const mode = getGameMode();
+
+  if (mode === "9ball") return 9;
+  if (mode === "10ball") return 10;
+
+  return null;
+}
+
+function getLowestUnpocketedRotationBallNumber() {
+  const finalNumber = getRotationFinalBallNumber();
+
+  if (!finalNumber || !Array.isArray(localBalls)) return null;
+
+  for (let number = 1; number <= finalNumber; number++) {
+    const ball = getBallByNumber(number);
+
+    if (ball && !ball.pocketed) {
+      return number;
+    }
+  }
+
+  return null;
+}
+    
+function renderPocketRailHud() {
+  const wrap = document.getElementById("pocketRailBalls");
+  if (!wrap) return;
+
+  if (!Array.isArray(localBalls)) {
+    wrap.innerHTML = "";
+    return;
+  }
+
+  // 9 Ball / 10 Ball: target angka terendah + final ball
+  if (isRotationMode()) {
+    wrap.innerHTML = "";
+
+    const targetNumber = getLowestUnpocketedRotationBallNumber();
+    const finalNumber = getRotationFinalBallNumber();
+
+    if (targetNumber) {
+      const targetBall = getBallByNumber(targetNumber);
+
+      if (targetBall) {
+        const targetDiv = createPocketRailBallElement(targetBall, "pocketRailBall");
+        targetDiv.classList.add("rotationTargetBall");
+        wrap.appendChild(targetDiv);
+      }
+    }
+
+    if (finalNumber && finalNumber !== targetNumber) {
+      const finalBall = getBallByNumber(finalNumber);
+
+      if (finalBall) {
+        const finalDiv = createPocketRailBallElement(finalBall, "pocketRailBall");
+        finalDiv.classList.add("rotationFinalBall", "locked");
+        wrap.appendChild(finalDiv);
+      }
+    }
+
+    return;
+  }
+
+  // 8 Ball: tampilkan target bola player lokal
+  if (isEightBallMode()) {
+    const rules = getEightBallRules();
+    const localGroup = getLocalEightBallGroup();
+
+    wrap.innerHTML = "";
+
+    if (!rules || rules.table_open || !localGroup) {
+      [1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15].forEach(number => {
+        const ball = getBallByNumber(number);
+        if (!ball) return;
+
+        const div = createPocketRailBallElement(ball, "pocketRailBall");
+        div.classList.add("targetBall");
+
+        if (ball.pocketed) {
+          div.classList.add("pocketed");
+        }
+
+        wrap.appendChild(div);
+      });
+
+      return;
+    }
+
+    const targetNumbers = getEightBallTargetNumbersByGroup(localGroup);
+
+    targetNumbers.forEach(number => {
+      const div = createEightBallTargetRailElement(number, localGroup);
+      wrap.appendChild(div);
+    });
+
+    const hasRemainingGroupBall = targetNumbers.some(number => {
+      const ball = getBallByNumber(number);
+      return ball && !ball.pocketed;
+    });
+
+    const eightBall = getBallByNumber(8);
+    const eightDiv = createPocketRailBallElement(
+      eightBall || {
+        number: 8,
+        type: "solid",
+        color: "#111827"
+      },
+      "pocketRailBall"
+    );
+
+    eightDiv.classList.add("eightBallTarget");
+
+    if (hasRemainingGroupBall) {
+      eightDiv.classList.add("locked");
+      eightDiv.title = "Bola 8 belum boleh dipukul";
+    } else {
+      eightDiv.classList.add("available");
+      eightDiv.title = "Bola 8 sudah boleh dipukul";
+    }
+
+    if (eightBall && eightBall.pocketed) {
+      eightDiv.classList.add("pocketed");
+    }
+
+    wrap.appendChild(eightDiv);
+    return;
+  }
+
+  // Straight Pool / mode lain: tampilkan bola yang sudah pocketed
+  const pocketedBalls = localBalls
+    .filter(ball => {
+      return ball.pocketed && Number(ball.number) !== 0;
+    })
+    .sort((a, b) => Number(a.number) - Number(b.number));
+
+  if (
+    pocketRailVisibleNumbers.size === 0 &&
+    pocketRailAnimatingNumbers.size === 0 &&
+    pocketedBalls.length > 0 &&
+    !animationRunning
+  ) {
+    pocketedBalls.forEach(ball => {
+      pocketRailVisibleNumbers.add(Number(ball.number));
+    });
+  }
+
+  wrap.innerHTML = "";
+
+  pocketedBalls.forEach(ball => {
+    const number = Number(ball.number);
+
+    if (!pocketRailVisibleNumbers.has(number)) return;
+
+    const div = createPocketRailBallElement(ball, "pocketRailBall");
+    wrap.appendChild(div);
+  });
+}
+
+function animatePocketBallToRail(ball) {
+  const number = Number(ball.number);
+
+  if (number === 0) return;
+  if (pocketRailVisibleNumbers.has(number)) return;
+  if (pocketRailAnimatingNumbers.has(number)) return;
+
+  const rail = document.getElementById("pocketRailHud");
+  const wrap = document.getElementById("pocketRailBalls");
+
+  if (!rail || !wrap) {
+    pocketRailVisibleNumbers.add(number);
+    renderPocketRailHud();
+    return;
+  }
+
+  pocketRailAnimatingNumbers.add(number);
+
+  const start = canvasPointToScreen({
+    x: Number(ball.x),
+    y: Number(ball.y)
+  });
+
+  const railRect = rail.getBoundingClientRect();
+
+  const targetIndex = pocketRailVisibleNumbers.size;
+  const targetX = railRect.left + 36 + targetIndex * 27;
+  const targetY = railRect.top + railRect.height / 2;
+
+  const flyingBall = createPocketRailBallElement(ball, "pocketRailFlyingBall");
+
+  flyingBall.style.left = start.x + "px";
+  flyingBall.style.top = start.y + "px";
+  flyingBall.style.opacity = "1";
+
+  document.body.appendChild(flyingBall);
+
+  requestAnimationFrame(() => {
+    flyingBall.style.left = targetX + "px";
+    flyingBall.style.top = targetY + "px";
+    flyingBall.style.transform = "translate(-50%, -50%) scale(.72)";
+    flyingBall.style.opacity = ".95";
+  });
+
+  setTimeout(() => {
+    pocketRailAnimatingNumbers.delete(number);
+    pocketRailVisibleNumbers.add(number);
+
+    if (flyingBall.parentNode) {
+      flyingBall.parentNode.removeChild(flyingBall);
+    }
+
+    renderPocketRailHud();
+  }, 680);
+}
+    
+
+    function updateUI() {
+  if (!matchData) return;
+
+  const room = matchData.room;
+  const match = matchData.match;
+  const bih = getBallInHandState();
+  const isMatchFinished = match.status === "finished";
+
+  document.getElementById("roomCodeText").textContent = room.room_code;
+  document.getElementById("modeText").textContent = modeLabel(room.mode);
+
+  document.getElementById("matchStatusText").textContent =
+    isMatchFinished ? "Game selesai" : match.status;
+
+  document.getElementById("currentTurnText").textContent =
+    isMatchFinished ? "-" : getCurrentPlayerName();
+
+  document.getElementById("socketStatusText").textContent =
+    socketConnected ? (socketJoinedRoom ? "JOINED" : "CONNECTED") : "OFF";
+    
+    
+
+  const playersWrap = document.getElementById("playersList");
+  playersWrap.innerHTML = "";
+
+  const currentId = isMatchFinished ? 0 : Number(match.current_turn_player_id);
+
+  matchData.players.forEach(player => {
+    const div = document.createElement("div");
+    div.className = "player" + (Number(player.player_id) === currentId ? " active" : "");
+
+    div.innerHTML = `
+      <div class="name">${player.username}</div>
+      <div class="small">
+        Score: ${player.score}<br>
+        Foul: ${player.fouls}<br>
+        Turn Order: ${player.turn_order}
+      </div>
+      ${Number(player.is_host) === 1 ? '<span class="badge">Host</span>' : ''}
+      ${Number(player.player_id) === currentId ? '<span class="badge">Current Turn</span>' : ''}
+      ${localPlayer && Number(player.player_id) === Number(localPlayer.id) ? '<span class="badge">You</span>' : ''}
+      ${bih.active && Number(bih.player_id) === Number(player.player_id) ? '<span class="badge">Ball In Hand</span>' : ''}
+    `;
+
+    playersWrap.appendChild(div);
+  });
+
+  let lastShotText = "-";
+
+  if (lastShotResult) {
+    if (!lastShotResult.success) {
+      lastShotText = lastShotResult.message || "Error";
+    } else if (lastShotResult.message === "Bola putih diletakkan. Masih boleh dipindah sebelum dipukul.") {
+      lastShotText = "Ball in hand placed";
+    } else if (lastShotResult.foul) {
+      if (lastShotResult.foul_reason === "cue_ball_pocketed") {
+        lastShotText = "Foul: cue ball masuk";
+      } else if (lastShotResult.foul_reason === "cue_ball_no_contact") {
+        lastShotText = "Foul: cue ball tidak kena bola";
+      } else if (lastShotResult.foul_reason === "no_ball_hit_rail_after_contact") {
+        lastShotText = "Foul: tidak kena rail";
+      } else {
+        lastShotText = "Foul";
+      }
+    } else if ((lastShotResult.score_added || 0) > 0) {
+      lastShotText = "Score +" + lastShotResult.score_added;
+    } else if (lastShotResult.message === "Shot tersimpan") {
+      lastShotText = "Shot legal";
+    } else {
+      lastShotText = lastShotResult.message || "OK";
+    }
+  }
+
+  let noticeText = "";
+
+if (isMatchFinished) {
+  noticeText = "Game selesai. Pemenang: " + gameWinnerName;
+} else if (isSubmittingShot) {
+  noticeText = "Menyimpan hasil pukulan...";
+} else if (animationRunning) {
+  noticeText = "Bola sedang bergerak...";
+} else if (bih.active && isBallInHandActiveForMe()) {
+ if (ballInHandLocalPlaced) {
+  noticeText = "Ball in hand: bola putih sudah diletakkan. Tarik dari bola putih untuk memukul, atau tap area kosong untuk pindah posisi.";
+} else {
+  noticeText = "Ball in hand: tap/drag area meja kosong untuk menaruh bola putih.";
+}
+} else if (bih.active && !isBallInHandActiveForMe()) {
+  noticeText = "Lawan mendapat ball in hand.";
+} else if (isMyTurn()) {
+  noticeText = "Giliran kamu. Tarik dari bola putih untuk memukul.";
+} else {
+  noticeText = "Menunggu giliran lawan.";
+}
+
+ const ballInHandText = isMatchFinished
+  ? "-"
+  : (bih.active ? "Aktif untuk Player #" + bih.player_id : "Tidak aktif");;
+
+  const socketText = socketConnected
+    ? (socketJoinedRoom ? "Joined" : "Connected")
+    : "Offline";
+
+  const myName = localPlayer ? localPlayer.username + " #" + localPlayer.id : "-";
+
+  document.getElementById("statusBox").innerHTML = `
+  <div class="statusRow">
+    <span class="statusLabel">Room</span>
+    <span class="statusValue">${room.room_code}</span>
+  </div>
+
+  <div class="statusRow">
+    <span class="statusLabel">Match</span>
+    <span class="statusValue">#${match.id}</span>
+  </div>
+
+  <div class="statusRow">
+    <span class="statusLabel">Kamu</span>
+    <span class="statusValue">${myName}</span>
+  </div>
+
+  <div class="statusRow">
+    <span class="statusLabel">Turn</span>
+    <span class="statusValue">${isMatchFinished ? "-" : getCurrentPlayerName()}</span>
+  </div>
+
+  <div class="statusRow">
+    <span class="statusLabel">Status</span>
+    <span class="statusValue">${isMatchFinished ? "Game selesai" : (isMyTurn() ? "Giliran kamu" : "Menunggu")}</span>
+  </div>
+
+  <div class="statusRow">
+    <span class="statusLabel">Ball in hand</span>
+    <span class="statusValue">${ballInHandText}</span>
+  </div>
+
+  <div class="statusRow">
+    <span class="statusLabel">Socket</span>
+    <span class="statusValue">${socketText}</span>
+  </div>
+
+  <div class="statusRow">
+    <span class="statusLabel">Last shot</span>
+    <span class="statusValue">${lastShotText}</span>
+  </div>
+
+  <div class="statusNotice">
+    ${noticeText}
+  </div>
+`;
+  updateMobileHud();
+  renderPocketRailHud();
+}
+
+    function connectRealtime() {
+      if (!matchData || !localPlayer) return;
+
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        joinRealtimeRoom();
+        return;
+      }
+
+      socket = new WebSocket(REALTIME_URL);
+
+      socket.onopen = function () {
+        socketConnected = true;
+        socketJoinedRoom = false;
+        updateUI();
+        joinRealtimeRoom();
+      };
+
+      socket.onmessage = function (event) {
+        handleRealtimeMessage(event.data);
+      };
+
+      socket.onerror = function (error) {
+        console.log("Realtime socket error", error);
+      };
+
+      socket.onclose = function () {
+        socketConnected = false;
+        socketJoinedRoom = false;
+        remoteAim = null;
+        updateUI();
+        draw();
+
+        if (socketReconnectTimer) clearTimeout(socketReconnectTimer);
+
+        socketReconnectTimer = setTimeout(() => {
+          connectRealtime();
+        }, 3000);
+      };
+    }
+
+    function joinRealtimeRoom() {
+      if (!socket || socket.readyState !== WebSocket.OPEN) return;
+      if (!matchData || !localPlayer) return;
+
+      socket.send(JSON.stringify({
+        type: "join_room",
+        room_code: matchData.room.room_code,
+        player_id: localPlayer.id,
+        username: localPlayer.username
+      }));
+    }
+
+    function handleRealtimeMessage(raw) {
+      let data;
+
+      try {
+        data = JSON.parse(raw);
+      } catch (err) {
+        return;
+      }
+
+      if (data.type === "joined_room") {
+        socketJoinedRoom = true;
+        updateUI();
+        return;
+      }
+
+      if (data.type === "player_joined" || data.type === "player_left") {
+        updateUI();
+        return;
+      }
+
+      if (data.type === "aim_update") {
+        if (localPlayer && Number(data.player_id) === Number(localPlayer.id)) return;
+
+        if (data.aim && data.aim.ball_in_hand_move) {
+          let cueBall = localBalls.find(ball => Number(ball.number) === 0);
+
+          if (!cueBall) {
+            cueBall = {
+              id: 0,
+              number: 0,
+              type: "cue",
+              color: "#ffffff",
+              x: Number(data.aim.cue_x || 220),
+              y: Number(data.aim.cue_y || 250),
+              vx: 0,
+              vy: 0,
+              pocketed: false
+            };
+
+            localBalls.unshift(cueBall);
+          }
+
+          cueBall.x = Number(Number(data.aim.cue_x).toFixed(2));
+          cueBall.y = Number(Number(data.aim.cue_y).toFixed(2));
+          cueBall.vx = 0;
+          cueBall.vy = 0;
+          cueBall.pocketed = false;
+
+          // Supaya polling loadMatch berikutnya tidak langsung mengembalikan
+          // bola putih ke posisi lama sebelum DB selesai tersinkron.
+          if (matchData && matchData.state && Array.isArray(matchData.state.balls)) {
+            const stateCueBall = matchData.state.balls.find(ball => Number(ball.number) === 0);
+
+            if (stateCueBall) {
+              stateCueBall.x = cueBall.x;
+              stateCueBall.y = cueBall.y;
+              stateCueBall.vx = 0;
+              stateCueBall.vy = 0;
+              stateCueBall.pocketed = false;
+            }
+          }
+
+          remoteAim = null;
+
+          draw();
+          updateUI();
+          return;
+        }
+
+        remoteAim = data;
+        draw();
+        updateUI();
+        return;
+      }
+
+      if (data.type === "aim_end") {
+        if (remoteAim && Number(remoteAim.player_id) === Number(data.player_id)) {
+          remoteAim = null;
+          draw();
+          updateUI();
+        }
+        return;
+      }
+
+      if (data.type === "ball_in_hand_move") {
+  if (localPlayer && Number(data.player_id) === Number(localPlayer.id)) return;
+
+  let cueBall = localBalls.find(ball => Number(ball.number) === 0);
+
+  if (!cueBall) {
+    cueBall = {
+      id: 0,
+      number: 0,
+      type: "cue",
+      color: "#ffffff",
+      x: Number(data.x || 220),
+      y: Number(data.y || 250),
+      vx: 0,
+      vy: 0,
+      pocketed: false
+    };
+
+    localBalls.unshift(cueBall);
+  }
+
+  cueBall.x = Number(Number(data.x).toFixed(2));
+  cueBall.y = Number(Number(data.y).toFixed(2));
+  cueBall.vx = 0;
+  cueBall.vy = 0;
+  cueBall.pocketed = false;
+
+  draw();
+  updateUI();
+  return;
+}
+
+      if (data.type === "shot_start") {
+        if (localPlayer && Number(data.player_id) === Number(localPlayer.id)) return;
+
+        remoteAim = null;
+        remoteShotOwnerId = data.player_id;
+        pendingRemoteFinalBalls = null;
+
+        if (data.balls && Array.isArray(data.balls)) {
+          localBalls = JSON.parse(JSON.stringify(data.balls));
+        }
+
+        if (data.shot) {
+          applyRemoteShot(data.shot);
+        }
+
+        updateUI();
+        return;
+      }
+
+      if (data.type === "shot_end") {
+        if (localPlayer && Number(data.player_id) === Number(localPlayer.id)) return;
+
+        if (data.balls && Array.isArray(data.balls)) {
+          pendingRemoteFinalBalls = JSON.parse(JSON.stringify(data.balls));
+        }
+
+        if (!animationRunning || physicsMode !== "remote") {
+          applyPendingRemoteFinal();
+        }
+
+        return;
+      }
+    }
+
+    function sendRealtime(data) {
+      if (!socket || socket.readyState !== WebSocket.OPEN || !socketJoinedRoom) return;
+
+      socket.send(JSON.stringify(data));
+    }
+
+    function sendRealtimeAim() {
+      if (!isAiming || !aimCurrent) return;
+      if (!isMyTurn()) return;
+      if (isBallInHandBlockingShot()) return;
+
+      const now = Date.now();
+
+      if (now - lastAimSendAt < 45) return;
+
+      lastAimSendAt = now;
+
+      const cueBall = getCueBall();
+
+      if (!cueBall) return;
+
+      sendRealtime({
+        type: "aim_update",
+        aim: {
+          cue_x: Number(cueBall.x),
+          cue_y: Number(cueBall.y),
+          pointer_x: Number(aimCurrent.x),
+          pointer_y: Number(aimCurrent.y)
+        },
+        power: power
+      });
+    }
+
+    function sendRealtimeAimEnd() {
+      sendRealtime({
+        type: "aim_end"
+      });
+    }
+
+    function sendRealtimeShotStart(cueBall, dirX, dirY, shotPower) {
+      sendRealtime({
+        type: "shot_start",
+        shot: {
+          cue_ball_id: 0,
+          vx: -dirX * shotPower,
+          vy: -dirY * shotPower,
+          power: power
+        },
+        balls: cleanBallsForSubmit()
+      });
+    }
+
+    function sendRealtimeShotEnd() {
+      sendRealtime({
+        type: "shot_end",
+        balls: cleanBallsForSubmit()
+      });
+    }
+
+    function sendRealtimeBallInHandMove() {
+  const cueBall = getCueBall();
+
+  if (!cueBall) return;
+  if (!isBallInHandModeForMe()) return;
+
+  const now = Date.now();
+
+  // Pakai jalur aim_update karena type ini sudah pasti dibroadcast
+  // oleh realtime server yang dipakai game.
+  if (now - lastAimSendAt < 45) return;
+
+  lastAimSendAt = now;
+
+  sendRealtime({
+    type: "aim_update",
+    aim: {
+      ball_in_hand_move: true,
+      cue_x: Number(Number(cueBall.x).toFixed(2)),
+      cue_y: Number(Number(cueBall.y).toFixed(2)),
+      pointer_x: Number(Number(cueBall.x).toFixed(2)),
+      pointer_y: Number(Number(cueBall.y).toFixed(2))
+    },
+    power: 0
+  });
+}
+
+function canShowStandbyStick() {
+    if (gameOverLocal) return false;
+  if (!matchData || !localPlayer) return false;
+  if (!isMyTurn()) return false;
+  if (animationRunning || isSubmittingShot) return false;
+  if (isAiming || ballInHandDragging) return false;
+  if (isBallInHandBlockingShot()) return false;
+
+  const cueBall = getCueBall();
+  if (!cueBall) return false;
+
+  return true;
+}
+
+function getStandbyAimPoint(cueBall) {
+  if (standbyAimPoint) {
+    return standbyAimPoint;
+  }
+
+  return {
+    x: cueBall.x + 120,
+    y: cueBall.y
+  };
+}
+
+function drawStandbyStick() {
+  if (!canShowStandbyStick()) return;
+
+  const cueBall = getCueBall();
+  if (!cueBall) return;
+
+  const pointer = getStandbyAimPoint(cueBall);
+
+  const dx = pointer.x - cueBall.x;
+  const dy = pointer.y - cueBall.y;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+
+  if (distance < 5) return;
+
+  const dirX = dx / distance;
+  const dirY = dy / distance;
+
+  const prediction = getAimPrediction(cueBall, -dirX, -dirY);
+
+  ctx.save();
+
+  // Garis utama arah cue ball
+  ctx.strokeStyle = "rgba(255,255,255,.42)";
+  ctx.lineWidth = 2;
+  ctx.setLineDash([8, 8]);
+
+  ctx.beginPath();
+  ctx.moveTo(cueBall.x, cueBall.y);
+
+  if (prediction) {
+    ctx.lineTo(prediction.hitX, prediction.hitY);
+  } else {
+    ctx.lineTo(cueBall.x - dirX * 240, cueBall.y - dirY * 240);
+  }
+
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Prediction line object ball
+  if (prediction) {
+    const objectLineLength = 170;
+
+    ctx.strokeStyle = "rgba(255, 214, 80, .72)";
+    ctx.lineWidth = 3;
+    ctx.setLineDash([8, 7]);
+
+    ctx.beginPath();
+    ctx.moveTo(prediction.targetBall.x, prediction.targetBall.y);
+    ctx.lineTo(
+      prediction.targetBall.x + prediction.objectDirX * objectLineLength,
+      prediction.targetBall.y + prediction.objectDirY * objectLineLength
+    );
+    ctx.stroke();
+
+    ctx.setLineDash([]);
+
+    ctx.beginPath();
+    ctx.arc(prediction.hitX, prediction.hitY, 3.8, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(255,255,255,.75)";
+    ctx.fill();
+  }
+
+  drawStick(cueBall.x, cueBall.y, pointer.x, pointer.y, "rgba(255,220,90,.75)");
+
+  ctx.restore();
+}
+
+function getAudioContext() {
+  if (!soundEnabled) return null;
+
+  if (!audioContext) {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  }
+
+  if (audioContext.state === "suspended") {
+    audioContext.resume();
+  }
+
+  return audioContext;
+}
+
+function playTone(frequency, duration, volume, type = "sine") {
+  const ctxAudio = getAudioContext();
+  if (!ctxAudio) return;
+
+  const oscillator = ctxAudio.createOscillator();
+  const gain = ctxAudio.createGain();
+
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(frequency, ctxAudio.currentTime);
+
+  gain.gain.setValueAtTime(volume, ctxAudio.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctxAudio.currentTime + duration);
+
+  oscillator.connect(gain);
+  gain.connect(ctxAudio.destination);
+
+  oscillator.start();
+  oscillator.stop(ctxAudio.currentTime + duration);
+}
+
+function playHitSound(strength = 1) {
+  const volume = Math.min(0.18, 0.04 + strength * 0.08);
+  playTone(180, 0.035, volume, "square");
+}
+
+function playRailSound(strength = 1) {
+  const now = Date.now();
+  if (now - lastRailSoundAt < 80) return;
+  lastRailSoundAt = now;
+
+  const volume = Math.min(0.14, 0.035 + strength * 0.06);
+  playTone(320, 0.045, volume, "triangle");
+}
+
+function playPocketSound() {
+  playTone(95, 0.11, 0.16, "sine");
+
+  setTimeout(() => {
+    playTone(65, 0.13, 0.11, "sine");
+  }, 45);
+}
+
+function playFoulSound() {
+  playTone(220, 0.09, 0.14, "sawtooth");
+
+  setTimeout(() => {
+    playTone(160, 0.12, 0.12, "sawtooth");
+  }, 100);
+}
+
+
+function drawBallInHandHint() {
+  if (!isBallInHandActiveForMe()) return;
+  if (animationRunning || isSubmittingShot) return;
+
+  const cueBall = getCueBall();
+  if (!cueBall) return;
+
+  const t = Date.now() / 1000;
+  const floatY = Math.sin(t * 4) * 4;
+
+  const x = cueBall.x + 28;
+  const y = cueBall.y - 30 + floatY;
+
+  ctx.save();
+
+  ctx.beginPath();
+  ctx.arc(
+    cueBall.x,
+    cueBall.y,
+    BALL_RADIUS + 11 + Math.sin(t * 5) * 2,
+    0,
+    Math.PI * 2
+  );
+  ctx.strokeStyle = "rgba(255, 214, 80, .75)";
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  ctx.font = "26px Arial";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("🤚", x, y);
+
+  ctx.beginPath();
+  ctx.moveTo(x - 6, y + 14);
+  ctx.lineTo(cueBall.x + 8, cueBall.y - 8);
+  ctx.strokeStyle = "rgba(255, 255, 255, .65)";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function getPocketTraySlot(index) {
+  return {
+    x: POCKET_TRAY_START_X + index * POCKET_TRAY_GAP,
+    y: POCKET_TRAY_Y
+  };
+}
+
+function addPocketedBallToTray(ball) {
+  const number = Number(ball.number);
+
+  // Bola putih tidak dimasukkan ke container score.
+  if (number === 0) return;
+
+  const alreadyExists = pocketedBallTray.some(item => {
+    return Number(item.number) === number;
+  });
+
+  if (alreadyExists) return;
+
+  const index = pocketedBallTray.length;
+  const target = getPocketTraySlot(index);
+
+  pocketedBallTray.push({
+    id: Number(ball.id),
+    number: number,
+    type: ball.type,
+    color: ball.color,
+    fromX: Number(ball.x),
+    fromY: Number(ball.y),
+    x: Number(ball.x),
+    y: Number(ball.y),
+    targetX: target.x,
+    targetY: target.y,
+    progress: 0
+  });
+}
+
+function syncPocketedBallTrayFromBalls() {
+  if (!Array.isArray(localBalls)) return;
+
+  localBalls.forEach(ball => {
+    if (!ball.pocketed) return;
+    if (ball.sinking) return;
+    addPocketedBallToTray(ball);
+  });
+}
+
+function updatePocketedBallTray() {
+  pocketedBallTray.forEach((item, index) => {
+    const target = getPocketTraySlot(index);
+
+    item.targetX = target.x;
+    item.targetY = target.y;
+
+    if (item.progress < 1) {
+      item.progress = Math.min(1, item.progress + 0.075);
+
+      const t = item.progress;
+      const ease = 1 - Math.pow(1 - t, 3);
+
+      item.x = item.fromX + (item.targetX - item.fromX) * ease;
+      item.y = item.fromY + (item.targetY - item.fromY) * ease;
+    } else {
+      item.x = item.targetX;
+      item.y = item.targetY;
+    }
+  });
+}
+
+function drawMiniPocketBall(item, x, y, r) {
+  ctx.save();
+
+  ctx.beginPath();
+  ctx.arc(x, y, r + 2, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(0,0,0,.35)";
+  ctx.fill();
+
+  if (item.type === "stripe") {
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = "#f7f7f7";
+    ctx.fill();
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.clip();
+
+    ctx.fillStyle = item.color || "#d33";
+    ctx.fillRect(x - r, y - r * 0.45, r * 2, r * 0.9);
+
+    ctx.restore();
+  } else {
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = item.color || "#ddd";
+    ctx.fill();
+  }
+
+  ctx.beginPath();
+  ctx.arc(x, y, Math.max(3.2, r * 0.48), 0, Math.PI * 2);
+  ctx.fillStyle = "#ffffff";
+  ctx.fill();
+
+  ctx.fillStyle = "#111";
+  ctx.font = "bold " + Math.max(6, r * 0.72) + "px Arial";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(String(item.number), x, y + 0.5);
+
+  ctx.restore();
+}
+
+function drawPocketedBallTray() {
+  syncPocketedBallTrayFromBalls();
+  updatePocketedBallTray();
+
+  if (pocketedBallTray.length === 0) return;
+
+  const count = pocketedBallTray.length;
+  const trayWidth = Math.max(64, count * POCKET_TRAY_GAP + 24);
+  const trayHeight = 30;
+  const trayX = POCKET_TRAY_START_X - 18;
+  const trayY = POCKET_TRAY_Y - 15;
+
+  ctx.save();
+
+  // Container kecil di rail atas.
+  ctx.beginPath();
+  ctx.roundRect(trayX, trayY, trayWidth, trayHeight, 13);
+  ctx.fillStyle = "rgba(0,0,0,.38)";
+  ctx.fill();
+
+  ctx.strokeStyle = "rgba(255,255,255,.22)";
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  pocketedBallTray.forEach(item => {
+    const r = POCKET_TRAY_RADIUS;
+    drawMiniPocketBall(item, item.x, item.y, r);
+  });
+
+  ctx.restore();
+}
+
+function getRemainingObjectBalls() {
+  if (!Array.isArray(localBalls)) return [];
+
+  return localBalls.filter(ball => {
+    return Number(ball.number) !== 0 && !ball.pocketed && !ball.sinking;
+  });
+}
+
+function getWinnerByScore() {
+  if (!matchData || !Array.isArray(matchData.players)) return null;
+
+  let winner = null;
+  let highestScore = -1;
+
+  matchData.players.forEach(player => {
+    const score = Number(
+      player.score ??
+      player.pocketed_count ??
+      player.pocketedCount ??
+      0
+    );
+
+    if (score > highestScore) {
+      highestScore = score;
+      winner = player;
+    }
+  });
+
+  return winner;
+}
+
+function getCurrentMatchId() {
+  if (matchData && matchData.match) {
+    return Number(matchData.match.id || 0);
+  }
+
+  if (matchData) {
+    const id = Number(
+      matchData.match_id ||
+      matchData.id ||
+      matchData.matchId ||
+      0
+    );
+
+    if (id > 0) {
+      return id;
+    }
+  }
+
+  const text = document.body.innerText || "";
+  const found = text.match(/Match\s*#\s*(\d+)/i);
+
+  if (found && found[1]) {
+    return Number(found[1]);
+  }
+
+  return 0;
+}
+
+async function submitFinishMatch(winner) {
+  if (finishMatchSubmitting) return;
+  if (!matchData || !winner) return;
+
+  const matchId = getCurrentMatchId();
+  const winnerPlayerId = winner.player_id || winner.id;
+
+  console.log("finish match payload", {
+    matchId,
+    winnerPlayerId,
+    winner,
+    matchData
+  });
+
+  if (!matchId || !winnerPlayerId) {
+    console.warn("finish match missing id", {
+      matchId,
+      winnerPlayerId,
+      winner,
+      matchData
+    });
+    return;
+  }
+
+  finishMatchSubmitting = true;
+
+  try {
+    const response = await fetch("api/finish_match.php", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        match_id: matchId,
+        winner_player_id: winnerPlayerId
+      })
+    });
+
+    const result = await response.json();
+
+    console.log("finish match result", result);
+
+    if (result.success) {
+      matchData.status = "finished";
+      matchData.winner_player_id = winnerPlayerId;
+      matchData.ended_at = new Date().toISOString();
+    } else {
+      finishMatchSubmitting = false;
+      console.warn("finish match failed", result);
+    }
+  } catch (error) {
+    finishMatchSubmitting = false;
+    console.error("finish match error", error);
+  }
+}
+
+function checkLocalGameOver() {
+  const remainingBalls = getRemainingObjectBalls();
+
+  if (remainingBalls.length > 0) return;
+
+  const winner = getWinnerByScore();
+
+  if (!winner) return;
+
+  if (!gameOverLocal) {
+    gameOverLocal = true;
+    gameWinnerName = winner.username || "Pemenang";
+
+    lastShotResult = {
+      success: true,
+      message: "Game selesai. Pemenang: " + gameWinnerName
+    };
+
+    updateUI();
+  }
+
+  if (matchData && matchData.status !== "finished") {
+    submitFinishMatch(winner);
+  }
+}
+
+function drawGameOverOverlay() {
+  if (!gameOverLocal) return;
+
+  ctx.save();
+
+  ctx.fillStyle = "rgba(0,0,0,.58)";
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = "rgba(5,8,15,.92)";
+  ctx.strokeStyle = "rgba(255,214,80,.95)";
+  ctx.lineWidth = 3;
+
+  const boxW = 420;
+  const boxH = 190;
+  const boxX = W / 2 - boxW / 2;
+  const boxY = H / 2 - boxH / 2;
+
+  ctx.beginPath();
+  ctx.roundRect(boxX, boxY, boxW, boxH, 22);
+  ctx.fill();
+  ctx.stroke();
+
+  if (rematchWaiting) {
+    ctx.fillStyle = "#ffd650";
+    ctx.font = "bold 28px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("Pocket Clash", W / 2, boxY + 48);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 20px Arial";
+
+    if (rematchCreating) {
+      ctx.fillText("Membuat rematch...", W / 2, boxY + 92);
+    } else {
+      ctx.fillText("Menunggu pemain lain...", W / 2, boxY + 92);
+    }
+
+    ctx.fillStyle = "rgba(255,255,255,.78)";
+    ctx.font = "16px Arial";
+    ctx.fillText(
+      rematchReadyCount + " / " + rematchTotalPlayers + " pemain siap",
+      W / 2,
+      boxY + 125
+    );
+
+    ctx.fillStyle = "rgba(255,255,255,.45)";
+    ctx.font = "13px Arial";
+    ctx.fillText("Jangan tutup halaman ini", W / 2, boxY + 154);
+
+    ctx.restore();
+    return;
+  }
+
+  ctx.fillStyle = "#ffd650";
+  ctx.font = "bold 30px Arial";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("Game Selesai", W / 2, boxY + 45);
+
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "bold 24px Arial";
+  ctx.fillText("Pemenang: " + gameWinnerName, W / 2, boxY + 88);
+
+  ctx.fillStyle = "rgba(255,255,255,.72)";
+  ctx.font = "15px Arial";
+  ctx.fillText("Semua bola sudah masuk", W / 2, boxY + 122);
+
+  ctx.fillStyle = "rgba(255, 214, 80, .95)";
+  ctx.beginPath();
+  ctx.roundRect(W / 2 - 82, boxY + 142, 164, 34, 14);
+  ctx.fill();
+
+  ctx.fillStyle = "#111";
+  ctx.font = "bold 15px Arial";
+  ctx.fillText("Rematch", W / 2, boxY + 159);
+
+  ctx.restore();
+}
+
+
+
+function updateGameOverHtmlOverlay() {
+  const overlay = document.getElementById("gameOverHtmlOverlay");
+  const winnerText = document.getElementById("gameOverWinnerText");
+  const subText = document.getElementById("gameOverSubText");
+  const rematchBtn = document.getElementById("gameOverRematchBtn");
+
+  if (!overlay) return;
+
+  if (!gameOverLocal) {
+    overlay.classList.add("hidden");
+    return;
+  }
+
+  overlay.classList.remove("hidden");
+
+  if (winnerText) {
+    winnerText.textContent = "Pemenang: " + gameWinnerName;
+  }
+
+  if (subText) {
+    if (rematchWaiting) {
+      subText.textContent =
+        rematchCreating
+          ? "Membuat rematch..."
+          : "Menunggu pemain lain... " + rematchReadyCount + " / " + rematchTotalPlayers;
+    } else {
+      subText.textContent = "Semua bola sudah masuk";
+    }
+  }
+
+  if (rematchBtn) {
+    rematchBtn.style.display = rematchWaiting ? "none" : "inline-block";
+  }
+}
+
+
+    function draw() {
+  ctx.clearRect(0, 0, W, H);
+
+  // 1. meja
+  drawTableDetails();
+  drawPockets();
+
+  // 2. bola
+  localBalls.forEach(drawBall);
+
+  // 3. remote aim
+  if (remoteAim) {
+    drawRemoteAim();
+  }
+
+  // 4. ball in hand hint
+  drawBallInHandHint();
+
+  // 5. aim line dulu, lalu stick paling atas
+  if (isAiming && aimStart && aimCurrent) {
+    drawAimLine();
+
+    const cueBall = getCueBall();
+
+    if (cueBall) {
+      drawStick(
+        cueBall.x,
+        cueBall.y,
+        aimCurrent.x,
+        aimCurrent.y,
+        "rgba(255,220,90,.95)"
+      );
+    }
+  } else if (!remoteAim) {
+    drawStandbyStick();
+  }
+
+  // 6. power bar
+  if (isAiming && aimStart && aimCurrent) {
+    drawPowerBar();
+  }
+
+  // 7. submitting text
+  if (isSubmittingShot) {
+    drawSubmittingText();
+  }
+
+if (
+  gameOverLocal ||
+  isSubmittingShot ||
+  animationRunning ||
+  (!isAiming && !canShowStandbyStick())
+) {
+  hideHtmlCueStick();
+}
+
+  // 8. game over paling atas
+  checkLocalGameOver();
+  //drawGameOverOverlay();//
+  updateGameOverHtmlOverlay();
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  const radius = Math.min(r, w / 2, h / 2);
+
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + w - radius, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+  ctx.lineTo(x + w, y + h - radius);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+  ctx.lineTo(x + radius, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+}
+
+function drawTableDiamonds() {
+  ctx.save();
+
+  ctx.fillStyle = "rgba(255,230,170,.45)";
+
+  const topY = 24;
+  const bottomY = H - 24;
+  const leftX = 24;
+  const rightX = W - 24;
+
+  const topDiamonds = [150, 300, 600, 750];
+  const sideDiamonds = [150, 250, 350];
+
+  for (const x of topDiamonds) {
+    drawDiamond(x, topY, 5);
+    drawDiamond(x, bottomY, 5);
+  }
+
+  for (const y of sideDiamonds) {
+    drawDiamond(leftX, y, 5);
+    drawDiamond(rightX, y, 5);
+  }
+
+  ctx.restore();
+}
+
+function drawDiamond(x, y, size) {
+  ctx.beginPath();
+  ctx.moveTo(x, y - size);
+  ctx.lineTo(x + size, y);
+  ctx.lineTo(x, y + size);
+  ctx.lineTo(x - size, y);
+  ctx.closePath();
+  ctx.fill();
+}
+
+    function drawTableDetails() {
+  ctx.save();
+
+  // ===== 1. OUTER WOOD FRAME =====
+  const woodGrad = ctx.createLinearGradient(0, 0, W, H);
+  woodGrad.addColorStop(0, "#9a5a28");
+  woodGrad.addColorStop(0.25, "#5a2a0e");
+  woodGrad.addColorStop(0.55, "#2c1206");
+  woodGrad.addColorStop(0.78, "#7a3d18");
+  woodGrad.addColorStop(1, "#b06a2d");
+
+  ctx.fillStyle = woodGrad;
+  roundRect(ctx, 0, 0, W, H, 30);
+  ctx.fill();
+
+  // Wood highlight luar
+  ctx.strokeStyle = "rgba(255,220,150,.30)";
+  ctx.lineWidth = 4;
+  roundRect(ctx, 4, 4, W - 8, H - 8, 26);
+  ctx.stroke();
+
+  // Wood shadow dalam
+  ctx.strokeStyle = "rgba(0,0,0,.55)";
+  ctx.lineWidth = 8;
+  roundRect(ctx, 20, 20, W - 40, H - 40, 22);
+  ctx.stroke();
+
+  // ===== 2. INNER RAIL / CUSHION =====
+  const cushionGrad = ctx.createLinearGradient(0, 0, 0, H);
+  cushionGrad.addColorStop(0, "#0d5b3c");
+  cushionGrad.addColorStop(0.5, "#073b29");
+  cushionGrad.addColorStop(1, "#0b5739");
+
+  ctx.fillStyle = cushionGrad;
+  roundRect(ctx, 28, 28, W - 56, H - 56, 20);
+  ctx.fill();
+
+  // garis batas kayu ke cushion
+  ctx.strokeStyle = "rgba(255,255,255,.12)";
+  ctx.lineWidth = 2;
+  roundRect(ctx, 28, 28, W - 56, H - 56, 20);
+  ctx.stroke();
+
+  // ===== 3. CLOTH / KARPET HIJAU =====
+  // Karpet menempel ke cushion, tidak ada jarak visual seperti sebelumnya.
+  const clothX = 52;
+  const clothY = 52;
+  const clothW = W - 104;
+  const clothH = H - 104;
+
+  const clothGrad = ctx.createRadialGradient(
+    W / 2, H / 2, 80,
+    W / 2, H / 2, 520
+  );
+  clothGrad.addColorStop(0, "#168a5e");
+  clothGrad.addColorStop(1, "#075033");
+
+  ctx.fillStyle = clothGrad;
+  roundRect(ctx, clothX, clothY, clothW, clothH, 12);
+  ctx.fill();
+
+  // Bayangan halus dari cushion ke cloth
+  ctx.strokeStyle = "rgba(0,0,0,.32)";
+  ctx.lineWidth = 10;
+  roundRect(ctx, clothX - 3, clothY - 3, clothW + 6, clothH + 6, 14);
+  ctx.stroke();
+
+  // garis tipis batas cloth
+  ctx.strokeStyle = "rgba(255,255,255,.10)";
+  ctx.lineWidth = 1;
+  roundRect(ctx, clothX, clothY, clothW, clothH, 12);
+  ctx.stroke();
+
+  // ===== 4. DIAMOND / MARKER =====
+  drawTableDiamonds();
+
+  // Spot marker
+  ctx.fillStyle = "rgba(255,255,255,.22)";
+
+  ctx.beginPath();
+  ctx.arc(220, 250, 4, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(620, 250, 4, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawPocketCutShadow(pocket) {
+  ctx.save();
+
+  const p = pocket;
+  const r = p.r;
+
+  ctx.fillStyle = "rgba(0,0,0,.48)";
+
+  if (p.type === "corner") {
+    ctx.beginPath();
+
+    if (p.name === "top_left") {
+      ctx.moveTo(0, 0);
+      ctx.lineTo(84, 0);
+      ctx.quadraticCurveTo(48, 20, p.x + r, p.y + r);
+      ctx.quadraticCurveTo(20, 48, 0, 84);
+      ctx.closePath();
+    }
+
+    if (p.name === "top_right") {
+      ctx.moveTo(W, 0);
+      ctx.lineTo(W - 84, 0);
+      ctx.quadraticCurveTo(W - 48, 20, p.x - r, p.y + r);
+      ctx.quadraticCurveTo(W - 20, 48, W, 84);
+      ctx.closePath();
+    }
+
+    if (p.name === "bottom_left") {
+      ctx.moveTo(0, H);
+      ctx.lineTo(84, H);
+      ctx.quadraticCurveTo(48, H - 20, p.x + r, p.y - r);
+      ctx.quadraticCurveTo(20, H - 48, 0, H - 84);
+      ctx.closePath();
+    }
+
+    if (p.name === "bottom_right") {
+      ctx.moveTo(W, H);
+      ctx.lineTo(W - 84, H);
+      ctx.quadraticCurveTo(W - 48, H - 20, p.x - r, p.y - r);
+      ctx.quadraticCurveTo(W - 20, H - 48, W, H - 84);
+      ctx.closePath();
+    }
+
+    ctx.fill();
+  }
+
+  if (p.type === "middle") {
+    ctx.beginPath();
+
+    if (p.name === "top_middle") {
+      ctx.roundRect(p.x - 58, 0, 116, 48, 20);
+    }
+
+    if (p.name === "bottom_middle") {
+      ctx.roundRect(p.x - 58, H - 48, 116, 48, 20);
+    }
+
+    ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+function drawPocketLeatherRing(pocket) {
+  ctx.save();
+
+  const p = pocket;
+  const r = p.r;
+
+  const ringGrad = ctx.createRadialGradient(
+    p.x - 5,
+    p.y - 5,
+    4,
+    p.x,
+    p.y,
+    r + 9
+  );
+
+  ringGrad.addColorStop(0, "#1a0a03");
+  ringGrad.addColorStop(0.55, "#050201");
+  ringGrad.addColorStop(0.78, "#3b1b08");
+  ringGrad.addColorStop(1, "#8a5528");
+
+  ctx.fillStyle = ringGrad;
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, r + 8, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = "rgba(255,210,140,.28)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, r + 7, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.strokeStyle = "rgba(0,0,0,.55)";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, r + 2, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawPocketHole(pocket) {
+  ctx.save();
+
+  const p = pocket;
+  const r = p.r;
+
+  const holeGrad = ctx.createRadialGradient(
+    p.x - 5,
+    p.y - 5,
+    2,
+    p.x,
+    p.y,
+    r
+  );
+
+  holeGrad.addColorStop(0, "#000000");
+  holeGrad.addColorStop(0.6, "#010101");
+  holeGrad.addColorStop(1, "#090909");
+
+  ctx.fillStyle = holeGrad;
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Bagian dalam lubang, biar ada efek kedalaman
+  ctx.fillStyle = "rgba(255,255,255,.06)";
+  ctx.beginPath();
+  ctx.ellipse(
+    p.x - 6,
+    p.y - 8,
+    r * 0.28,
+    r * 0.12,
+    -0.45,
+    0,
+    Math.PI * 2
+  );
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawPocketJaw(pocket) {
+  ctx.save();
+
+  const p = pocket;
+  const r = p.r;
+
+  ctx.lineCap = "round";
+  ctx.lineWidth = 8;
+
+  const jawStroke = ctx.createLinearGradient(0, 0, W, H);
+  jawStroke.addColorStop(0, "rgba(255,220,150,.52)");
+  jawStroke.addColorStop(0.5, "rgba(80,35,10,.95)");
+  jawStroke.addColorStop(1, "rgba(255,220,150,.42)");
+
+  ctx.strokeStyle = jawStroke;
+
+  if (p.name === "top_left") {
+    ctx.beginPath();
+    ctx.moveTo(68, 25);
+    ctx.quadraticCurveTo(50, 28, 41, 43);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(25, 68);
+    ctx.quadraticCurveTo(28, 50, 43, 41);
+    ctx.stroke();
+  }
+
+  if (p.name === "top_right") {
+    ctx.beginPath();
+    ctx.moveTo(W - 68, 25);
+    ctx.quadraticCurveTo(W - 50, 28, W - 41, 43);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(W - 25, 68);
+    ctx.quadraticCurveTo(W - 28, 50, W - 43, 41);
+    ctx.stroke();
+  }
+
+  if (p.name === "bottom_left") {
+    ctx.beginPath();
+    ctx.moveTo(68, H - 25);
+    ctx.quadraticCurveTo(50, H - 28, 41, H - 43);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(25, H - 68);
+    ctx.quadraticCurveTo(28, H - 50, 43, H - 41);
+    ctx.stroke();
+  }
+
+  if (p.name === "bottom_right") {
+    ctx.beginPath();
+    ctx.moveTo(W - 68, H - 25);
+    ctx.quadraticCurveTo(W - 50, H - 28, W - 41, H - 43);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(W - 25, H - 68);
+    ctx.quadraticCurveTo(W - 28, H - 50, W - 43, H - 41);
+    ctx.stroke();
+  }
+
+  if (p.name === "top_middle") {
+    ctx.beginPath();
+    ctx.moveTo(p.x - 54, 28);
+    ctx.quadraticCurveTo(p.x - 35, 42, p.x - 20, 34);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(p.x + 54, 28);
+    ctx.quadraticCurveTo(p.x + 35, 42, p.x + 20, 34);
+    ctx.stroke();
+  }
+
+  if (p.name === "bottom_middle") {
+    ctx.beginPath();
+    ctx.moveTo(p.x - 54, H - 28);
+    ctx.quadraticCurveTo(p.x - 35, H - 42, p.x - 20, H - 34);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(p.x + 54, H - 28);
+    ctx.quadraticCurveTo(p.x + 35, H - 42, p.x + 20, H - 34);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+function drawPocketNetHint(pocket) {
+  ctx.save();
+
+  const p = pocket;
+
+  ctx.strokeStyle = "rgba(255,255,255,.08)";
+  ctx.lineWidth = 1;
+
+  for (let i = -2; i <= 2; i++) {
+    ctx.beginPath();
+
+    if (p.type === "middle") {
+      ctx.moveTo(p.x + i * 8, p.y - 10);
+      ctx.lineTo(p.x + i * 5, p.y + 16);
+    } else {
+      ctx.moveTo(p.x + i * 6, p.y - 12);
+      ctx.lineTo(p.x + i * 3, p.y + 14);
+    }
+
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+function drawPocketCutout(p) {
+  ctx.save();
+
+  ctx.fillStyle = "rgba(0,0,0,.48)";
+
+  if (p.type === "corner") {
+    ctx.beginPath();
+
+    if (p.name === "top_left") {
+      ctx.moveTo(22, 22);
+      ctx.lineTo(82, 22);
+      ctx.quadraticCurveTo(64, 34, p.x + p.r + 5, p.y + p.r + 5);
+      ctx.quadraticCurveTo(34, 64, 22, 82);
+      ctx.closePath();
+    }
+
+    if (p.name === "top_right") {
+      ctx.moveTo(W - 22, 22);
+      ctx.lineTo(W - 82, 22);
+      ctx.quadraticCurveTo(W - 64, 34, p.x - p.r - 5, p.y + p.r + 5);
+      ctx.quadraticCurveTo(W - 34, 64, W - 22, 82);
+      ctx.closePath();
+    }
+
+    if (p.name === "bottom_left") {
+      ctx.moveTo(22, H - 22);
+      ctx.lineTo(82, H - 22);
+      ctx.quadraticCurveTo(64, H - 34, p.x + p.r + 5, p.y - p.r - 5);
+      ctx.quadraticCurveTo(34, H - 64, 22, H - 82);
+      ctx.closePath();
+    }
+
+    if (p.name === "bottom_right") {
+      ctx.moveTo(W - 22, H - 22);
+      ctx.lineTo(W - 82, H - 22);
+      ctx.quadraticCurveTo(W - 64, H - 34, p.x - p.r - 5, p.y - p.r - 5);
+      ctx.quadraticCurveTo(W - 34, H - 64, W - 22, H - 82);
+      ctx.closePath();
+    }
+
+    ctx.fill();
+  }
+
+  if (p.type === "middle") {
+    ctx.beginPath();
+
+    if (p.name === "top_middle") {
+      roundRect(ctx, p.x - 45, 18, 90, 42, 18);
+    }
+
+    if (p.name === "bottom_middle") {
+      roundRect(ctx, p.x - 45, H - 60, 90, 42, 18);
+    }
+
+    ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+function drawPocketLip(p) {
+  ctx.save();
+
+  const lipGrad = ctx.createLinearGradient(0, 0, W, H);
+  lipGrad.addColorStop(0, "#4a210c");
+  lipGrad.addColorStop(0.45, "#120603");
+  lipGrad.addColorStop(1, "#5a2b10");
+
+  ctx.fillStyle = lipGrad;
+
+  if (p.name === "top_left") {
+    ctx.beginPath();
+    ctx.moveTo(30, 30);
+    ctx.quadraticCurveTo(50, 24, 68, 34);
+    ctx.quadraticCurveTo(55, 48, 48, 62);
+    ctx.quadraticCurveTo(36, 52, 30, 30);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  if (p.name === "top_right") {
+    ctx.beginPath();
+    ctx.moveTo(W - 30, 30);
+    ctx.quadraticCurveTo(W - 50, 24, W - 68, 34);
+    ctx.quadraticCurveTo(W - 55, 48, W - 48, 62);
+    ctx.quadraticCurveTo(W - 36, 52, W - 30, 30);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  if (p.name === "bottom_left") {
+    ctx.beginPath();
+    ctx.moveTo(30, H - 30);
+    ctx.quadraticCurveTo(50, H - 24, 68, H - 34);
+    ctx.quadraticCurveTo(55, H - 48, 48, H - 62);
+    ctx.quadraticCurveTo(36, H - 52, 30, H - 30);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  if (p.name === "bottom_right") {
+    ctx.beginPath();
+    ctx.moveTo(W - 30, H - 30);
+    ctx.quadraticCurveTo(W - 50, H - 24, W - 68, H - 34);
+    ctx.quadraticCurveTo(W - 55, H - 48, W - 48, H - 62);
+    ctx.quadraticCurveTo(W - 36, H - 52, W - 30, H - 30);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  if (p.name === "top_middle") {
+    ctx.beginPath();
+    ctx.moveTo(p.x - 34, 30);
+    ctx.quadraticCurveTo(p.x, 16, p.x + 34, 30);
+    ctx.quadraticCurveTo(p.x + 22, 46, p.x, 44);
+    ctx.quadraticCurveTo(p.x - 22, 46, p.x - 34, 30);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  if (p.name === "bottom_middle") {
+    ctx.beginPath();
+    ctx.moveTo(p.x - 34, H - 30);
+    ctx.quadraticCurveTo(p.x, H - 16, p.x + 34, H - 30);
+    ctx.quadraticCurveTo(p.x + 22, H - 46, p.x, H - 44);
+    ctx.quadraticCurveTo(p.x - 22, H - 46, p.x - 34, H - 30);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+function drawPocketHole(p) {
+  ctx.save();
+
+  ctx.fillStyle = "#000000";
+
+  if (p.name === "top_left") {
+    ctx.beginPath();
+    ctx.moveTo(34, 34);
+    ctx.quadraticCurveTo(50, 29, 63, 38);
+    ctx.quadraticCurveTo(54, 47, 47, 59);
+    ctx.quadraticCurveTo(38, 52, 34, 34);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  if (p.name === "top_right") {
+    ctx.beginPath();
+    ctx.moveTo(W - 34, 34);
+    ctx.quadraticCurveTo(W - 50, 29, W - 63, 38);
+    ctx.quadraticCurveTo(W - 54, 47, W - 47, 59);
+    ctx.quadraticCurveTo(W - 38, 52, W - 34, 34);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  if (p.name === "bottom_left") {
+    ctx.beginPath();
+    ctx.moveTo(34, H - 34);
+    ctx.quadraticCurveTo(50, H - 29, 63, H - 38);
+    ctx.quadraticCurveTo(54, H - 47, 47, H - 59);
+    ctx.quadraticCurveTo(38, H - 52, 34, H - 34);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  if (p.name === "bottom_right") {
+    ctx.beginPath();
+    ctx.moveTo(W - 34, H - 34);
+    ctx.quadraticCurveTo(W - 50, H - 29, W - 63, H - 38);
+    ctx.quadraticCurveTo(W - 54, H - 47, W - 47, H - 59);
+    ctx.quadraticCurveTo(W - 38, H - 52, W - 34, H - 34);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  if (p.name === "top_middle") {
+    ctx.beginPath();
+    ctx.moveTo(p.x - 26, 31);
+    ctx.quadraticCurveTo(p.x, 22, p.x + 26, 31);
+    ctx.quadraticCurveTo(p.x + 17, 40, p.x, 39);
+    ctx.quadraticCurveTo(p.x - 17, 40, p.x - 26, 31);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  if (p.name === "bottom_middle") {
+    ctx.beginPath();
+    ctx.moveTo(p.x - 26, H - 31);
+    ctx.quadraticCurveTo(p.x, H - 22, p.x + 26, H - 31);
+    ctx.quadraticCurveTo(p.x + 17, H - 40, p.x, H - 39);
+    ctx.quadraticCurveTo(p.x - 17, H - 40, p.x - 26, H - 31);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+function drawPocketInnerShadow(p) {
+  // Sengaja dikosongkan agar lubang pocket bersih tanpa garis-garis.
+}
+
+function drawPocketJawRealistic(p) {
+  // Bentuk pocket sudah dibuat oleh drawPocketLip() dan drawPocketHole().
+}
+
+function drawPocketTopLayer(p) {
+  ctx.save();
+
+  if (p.name === "top_left") {
+    drawCornerPocketTopLayer(24, 24, 78, 78, "tl");
+  }
+
+  if (p.name === "top_right") {
+    drawCornerPocketTopLayer(W - 24, 24, W - 78, 78, "tr");
+  }
+
+  if (p.name === "bottom_left") {
+    drawCornerPocketTopLayer(24, H - 24, 78, H - 78, "bl");
+  }
+
+  if (p.name === "bottom_right") {
+    drawCornerPocketTopLayer(W - 24, H - 24, W - 78, H - 78, "br");
+  }
+
+  if (p.name === "top_middle") {
+    drawMiddlePocketTopLayer(p.x, 25, "top");
+  }
+
+  if (p.name === "bottom_middle") {
+    drawMiddlePocketTopLayer(p.x, H - 25, "bottom");
+  }
+
+  ctx.restore();
+}
+
+
+
+function drawCornerPocketTopLayer(edgeX, edgeY, innerX, innerY, corner) {
+  ctx.save();
+
+  // ===== Lip gelap pocket, menutup rail =====
+  ctx.fillStyle = "#1b0b04";
+  ctx.beginPath();
+
+  if (corner === "tl") {
+    ctx.moveTo(20, 20);
+    ctx.lineTo(86, 20);
+    ctx.quadraticCurveTo(70, 34, 58, 52);
+    ctx.quadraticCurveTo(44, 68, 20, 86);
+    ctx.closePath();
+  }
+
+  if (corner === "tr") {
+    ctx.moveTo(W - 20, 20);
+    ctx.lineTo(W - 86, 20);
+    ctx.quadraticCurveTo(W - 70, 34, W - 58, 52);
+    ctx.quadraticCurveTo(W - 44, 68, W - 20, 86);
+    ctx.closePath();
+  }
+
+  if (corner === "bl") {
+    ctx.moveTo(20, H - 20);
+    ctx.lineTo(86, H - 20);
+    ctx.quadraticCurveTo(70, H - 34, 58, H - 52);
+    ctx.quadraticCurveTo(44, H - 68, 20, H - 86);
+    ctx.closePath();
+  }
+
+  if (corner === "br") {
+    ctx.moveTo(W - 20, H - 20);
+    ctx.lineTo(W - 86, H - 20);
+    ctx.quadraticCurveTo(W - 70, H - 34, W - 58, H - 52);
+    ctx.quadraticCurveTo(W - 44, H - 68, W - 20, H - 86);
+    ctx.closePath();
+  }
+
+  ctx.fill();
+
+  // ===== Lubang hitam utama, tetap top layer =====
+  ctx.fillStyle = "#000000";
+  ctx.beginPath();
+
+  if (corner === "tl") {
+    ctx.moveTo(28, 28);
+    ctx.lineTo(69, 28);
+    ctx.quadraticCurveTo(58, 38, 50, 50);
+    ctx.quadraticCurveTo(39, 58, 28, 69);
+    ctx.closePath();
+  }
+
+  if (corner === "tr") {
+    ctx.moveTo(W - 28, 28);
+    ctx.lineTo(W - 69, 28);
+    ctx.quadraticCurveTo(W - 58, 38, W - 50, 50);
+    ctx.quadraticCurveTo(W - 39, 58, W - 28, 69);
+    ctx.closePath();
+  }
+
+  if (corner === "bl") {
+    ctx.moveTo(28, H - 28);
+    ctx.lineTo(69, H - 28);
+    ctx.quadraticCurveTo(58, H - 38, 50, H - 50);
+    ctx.quadraticCurveTo(39, H - 58, 28, H - 69);
+    ctx.closePath();
+  }
+
+  if (corner === "br") {
+    ctx.moveTo(W - 28, H - 28);
+    ctx.lineTo(W - 69, H - 28);
+    ctx.quadraticCurveTo(W - 58, H - 38, W - 50, H - 50);
+    ctx.quadraticCurveTo(W - 39, H - 58, W - 28, H - 69);
+    ctx.closePath();
+  }
+
+  ctx.fill();
+
+  ctx.restore();
+}
+
+
+
+
+function drawMiddlePocketTopLayer(x, y, side) {
+  ctx.save();
+
+  // ===== Lip pocket =====
+  ctx.fillStyle = "#1b0b04";
+  ctx.beginPath();
+
+  if (side === "top") {
+    ctx.moveTo(x - 48, 20);
+    ctx.quadraticCurveTo(x, 10, x + 48, 20);
+    ctx.quadraticCurveTo(x + 35, 52, x, 54);
+    ctx.quadraticCurveTo(x - 35, 52, x - 48, 20);
+  }
+
+  if (side === "bottom") {
+    ctx.moveTo(x - 48, H - 20);
+    ctx.quadraticCurveTo(x, H - 10, x + 48, H - 20);
+    ctx.quadraticCurveTo(x + 35, H - 52, x, H - 54);
+    ctx.quadraticCurveTo(x - 35, H - 52, x - 48, H - 20);
+  }
+
+  ctx.closePath();
+  ctx.fill();
+
+  // ===== Lubang utama =====
+  ctx.fillStyle = "#000000";
+  ctx.beginPath();
+
+  if (side === "top") {
+    ctx.moveTo(x - 32, 25);
+    ctx.quadraticCurveTo(x, 18, x + 32, 25);
+    ctx.quadraticCurveTo(x + 23, 42, x, 43);
+    ctx.quadraticCurveTo(x - 23, 42, x - 32, 25);
+  }
+
+  if (side === "bottom") {
+    ctx.moveTo(x - 32, H - 25);
+    ctx.quadraticCurveTo(x, H - 18, x + 32, H - 25);
+    ctx.quadraticCurveTo(x + 23, H - 42, x, H - 43);
+    ctx.quadraticCurveTo(x - 23, H - 42, x - 32, H - 25);
+  }
+
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.restore();
+}
+
+
+function drawCleanGamePocket(p) {
+  ctx.save();
+
+  const isMiddle = p.type === "middle";
+
+let scaleX = isMiddle ? 1.22 : 1.15;
+let scaleY = isMiddle ? 0.92 : 1.05;
+
+  // Corner pocket dibuat sedikit oval ke arah dalam supaya tidak terlihat bulat full.
+  if (p.name === "top_left" || p.name === "top_right" || p.name === "bottom_left" || p.name === "bottom_right") {
+    scaleX = 1.08;
+    scaleY = 1.08;
+  }
+
+  // Shadow/cut kecil di rail, top layer.
+  ctx.fillStyle = "rgba(0,0,0,.42)";
+  ctx.beginPath();
+  ctx.ellipse(
+    p.x,
+    p.y,
+    p.r * scaleX + 5,
+    p.r * scaleY + 5,
+    0,
+    0,
+    Math.PI * 2
+  );
+  ctx.fill();
+
+  // Lip gelap tipis, tanpa garis dobel.
+  const lipGrad = ctx.createRadialGradient(
+    p.x - 4,
+    p.y - 5,
+    2,
+    p.x,
+    p.y,
+    p.r + 7
+  );
+
+  lipGrad.addColorStop(0, "#050505");
+  lipGrad.addColorStop(0.65, "#090401");
+  lipGrad.addColorStop(1, "#3a1a08");
+
+  ctx.fillStyle = lipGrad;
+  ctx.beginPath();
+  ctx.ellipse(
+    p.x,
+    p.y,
+    p.r * scaleX + 3,
+    p.r * scaleY + 3,
+    0,
+    0,
+    Math.PI * 2
+  );
+  ctx.fill();
+
+  // Lubang utama.
+  const holeGrad = ctx.createRadialGradient(
+    p.x - 4,
+    p.y - 5,
+    2,
+    p.x,
+    p.y,
+    p.r
+  );
+
+  holeGrad.addColorStop(0, "#111111");
+  holeGrad.addColorStop(0.32, "#030303");
+  holeGrad.addColorStop(1, "#000000");
+
+  ctx.fillStyle = holeGrad;
+  ctx.beginPath();
+  ctx.ellipse(
+    p.x,
+    p.y,
+    p.r * scaleX,
+    p.r * scaleY,
+    0,
+    0,
+    Math.PI * 2
+  );
+  ctx.fill();
+
+  // Inner dark overlay agar terlihat masuk ke meja, bukan stiker hitam.
+  ctx.fillStyle = "rgba(0,0,0,.35)";
+  ctx.beginPath();
+  ctx.ellipse(
+    p.x,
+    p.y + 2,
+    p.r * scaleX * 0.78,
+    p.r * scaleY * 0.62,
+    0,
+    0,
+    Math.PI * 2
+  );
+  ctx.fill();
+
+  ctx.restore();
+}
+
+   function drawPockets() {
+  for (const p of pockets) {
+    drawCleanGamePocket(p);
+  }
+}
+
+
+
+function isPointerOnCueBall(worldX, worldY) {
+  const cueBall = getCueBall();
+
+  if (!cueBall || cueBall.pocketed) return false;
+
+  const dx = worldX - cueBall.x;
+  const dy = worldY - cueBall.y;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+
+  return distance <= BALL_RADIUS * 1.8;
+}
+
+
+
+    function drawBallInHandHint() {
+  if (!isBallInHandActiveForMe()) return;
+  if (animationRunning || isSubmittingShot) return;
+
+  const cueBall = getCueBall();
+  if (!cueBall) return;
+
+  const t = Date.now() / 1000;
+  const pulse = Math.sin(t * 5) * 2;
+  const floatY = Math.sin(t * 4) * 4;
+
+  const handX = cueBall.x + 30;
+  const handY = cueBall.y - 32 + floatY;
+
+  ctx.save();
+
+  // Lingkaran highlight di bola putih
+  ctx.beginPath();
+  ctx.arc(
+    cueBall.x,
+    cueBall.y,
+    BALL_RADIUS + 11 + pulse,
+    0,
+    Math.PI * 2
+  );
+  ctx.strokeStyle = "rgba(255, 214, 80, .85)";
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  // Bayangan icon tangan
+  ctx.font = "28px Arial";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "rgba(0,0,0,.35)";
+  ctx.fillText("🤚", handX + 2, handY + 2);
+
+  // Icon tangan
+  ctx.fillStyle = "white";
+  ctx.fillText("🤚", handX, handY);
+
+  // Garis kecil menuju bola putih
+  ctx.beginPath();
+  ctx.moveTo(handX - 7, handY + 15);
+  ctx.lineTo(cueBall.x + 8, cueBall.y - 8);
+  ctx.strokeStyle = "rgba(255,255,255,.65)";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+   function drawBall(ball) {
+  if (ball.pocketed) return;
+
+  let r = BALL_RADIUS;
+
+  if (ball.sinking) {
+    const t = Math.max(0, Math.min(1, Number(ball.sinkProgress || 0)));
+    r = BALL_RADIUS * (1 - t * (1 - POCKET_MIN_SCALE));
+  }
+
+  const x = Number(ball.x);
+  const y = Number(ball.y);
+  const number = Number(ball.number);
+  const ballColor = ball.color || "#cccccc";
+
+  ctx.save();
+
+  // Shadow luar
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(0,0,0,.25)";
+  ctx.fill();
+
+  if (number === 0) {
+    // Cue ball putih
+    const grad = ctx.createRadialGradient(
+      x - r * 0.35, y - r * 0.35, r * 0.12,
+      x, y, r
+    );
+
+    grad.addColorStop(0, "#ffffff");
+    grad.addColorStop(0.55, "#eeeeee");
+    grad.addColorStop(1, "#777777");
+
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+
+  } else if (number >= 9 && number <= 15) {
+    // Stripe ball: dasar putih
+    const whiteGrad = ctx.createRadialGradient(
+      x - r * 0.35, y - r * 0.35, r * 0.12,
+      x, y, r
+    );
+
+    whiteGrad.addColorStop(0, "#ffffff");
+    whiteGrad.addColorStop(0.65, "#f3f3f3");
+    whiteGrad.addColorStop(1, "#8a8a8a");
+
+    ctx.fillStyle = whiteGrad;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Stripe warna besar di tengah
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x, y, r * 0.96, 0, Math.PI * 2);
+    ctx.clip();
+
+    const stripeGrad = ctx.createLinearGradient(x - r, y, x + r, y);
+    stripeGrad.addColorStop(0, "#111111");
+    stripeGrad.addColorStop(0.2, ballColor);
+    stripeGrad.addColorStop(0.75, ballColor);
+    stripeGrad.addColorStop(1, "#111111");
+
+    ctx.fillStyle = stripeGrad;
+    const stripeHeight = r < BALL_RADIUS * 0.85 ? 1.45 : 1.1;
+ctx.fillRect(x - r, y - r * (stripeHeight / 2), r * 2, r * stripeHeight);
+
+    ctx.restore();
+
+  } else {
+    // Solid ball: full warna
+    const grad = ctx.createRadialGradient(
+      x - r * 0.35, y - r * 0.35, r * 0.12,
+      x, y, r
+    );
+
+    grad.addColorStop(0, "#ffffff");
+    grad.addColorStop(0.22, ballColor);
+    grad.addColorStop(0.78, ballColor);
+    grad.addColorStop(1, "#111111");
+
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Border bola
+  ctx.strokeStyle = "rgba(0,0,0,.55)";
+  ctx.lineWidth = Math.max(1, r * 0.12);
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Nomor bola
+  if (number !== 0) {
+  const isMiniBall = r < BALL_RADIUS * 0.85;
+
+  const labelRadius = isMiniBall
+    ? Math.max(1.6, r * 0.24)
+    : Math.max(2.2, r * 0.36);
+
+  const fontSize = isMiniBall
+    ? Math.max(4.2, r * 0.45)
+    : Math.max(5, r * 0.62);
+
+  ctx.fillStyle = "rgba(255,255,255,.94)";
+  ctx.beginPath();
+  ctx.arc(x, y, labelRadius, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = "rgba(0,0,0,.25)";
+  ctx.lineWidth = Math.max(0.35, r * 0.035);
+  ctx.stroke();
+
+  ctx.fillStyle = "#111";
+  ctx.font = "bold " + fontSize + "px Arial";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(number, x, y + (isMiniBall ? 0.25 : 0.4));
+}
+
+  // Highlight kecil
+  ctx.fillStyle = "rgba(255,255,255,.45)";
+  ctx.beginPath();
+  ctx.arc(x - r * 0.33, y - r * 0.35, r * 0.18, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+    function drawSubmittingText() {
+      ctx.save();
+
+      ctx.fillStyle = "rgba(0,0,0,.55)";
+      ctx.fillRect(W / 2 - 110, 20, 220, 34);
+
+      ctx.fillStyle = "white";
+      ctx.font = "bold 14px Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("Menyimpan shot...", W / 2, 37);
+
+      ctx.restore();
+    }
+
+    function getCueBall() {
+      return localBalls.find(ball => Number(ball.number) === 0 && !ball.pocketed);
+    }
+
+    function getCanvasPoint(event) {
+  const rect = canvas.getBoundingClientRect();
+
+  let clientX;
+  let clientY;
+
+  if (event.touches && event.touches.length > 0) {
+    clientX = event.touches[0].clientX;
+    clientY = event.touches[0].clientY;
+  } else if (event.changedTouches && event.changedTouches.length > 0) {
+    clientX = event.changedTouches[0].clientX;
+    clientY = event.changedTouches[0].clientY;
+  } else {
+    clientX = event.clientX;
+    clientY = event.clientY;
+  }
+
+  const isPortrait = window.matchMedia("(orientation: portrait)").matches;
+
+  if (isPortrait) {
+    const localX = clientX - rect.left;
+    const localY = clientY - rect.top;
+
+    return {
+      x: localY * (canvas.width / rect.height),
+      y: canvas.height - (localX * (canvas.height / rect.width))
+    };
+  }
+
+  return {
+    x: (clientX - rect.left) * (canvas.width / rect.width),
+    y: (clientY - rect.top) * (canvas.height / rect.height)
+  };
+}
+
+    function isPointNearBall(point, ball) {
+      const dx = point.x - ball.x;
+      const dy = point.y - ball.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      return distance <= BALL_RADIUS * 2;
+    }
+
+    function isValidCuePlacement(point) {
+      const minX = PLAY_LEFT;
+const maxX = PLAY_RIGHT;
+const minY = PLAY_TOP;
+const maxY = PLAY_BOTTOM;
+
+      if (point.x < minX || point.x > maxX || point.y < minY || point.y > maxY) {
+        return false;
+      }
+
+      for (const ball of localBalls) {
+        if (Number(ball.number) === 0 || ball.pocketed) continue;
+
+        const dx = point.x - ball.x;
+        const dy = point.y - ball.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance < BALL_DIAMETER + 3) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+ function placeCueBallForBallInHand(point) {
+  if (!isBallInHandModeForMe()) return false;
+
+  if (!isValidCuePlacement(point)) {
+    lastShotResult = {
+      success: false,
+      message: "Posisi bola putih tidak valid. Jangan terlalu dekat dinding/lubang/bola lain."
+    };
+    updateUI();
+    draw();
+    return true;
+  }
+
+  let cueBall = localBalls.find(ball => Number(ball.number) === 0);
+
+  if (!cueBall) {
+    cueBall = {
+      id: 0,
+      number: 0,
+      type: "cue",
+      color: "#ffffff",
+      x: 220,
+      y: 250,
+      vx: 0,
+      vy: 0,
+      pocketed: false
+    };
+
+    localBalls.unshift(cueBall);
+  }
+
+  cueBall.x = Number(point.x.toFixed(2));
+  cueBall.y = Number(point.y.toFixed(2));
+  cueBall.vx = 0;
+  cueBall.vy = 0;
+  cueBall.pocketed = false;
+
+  ballInHandLocalPlaced = true;
+
+  lastShotResult = {
+    success: true,
+    message: "Bola putih diletakkan. Masih boleh dipindah sebelum dipukul."
+  };
+
+  updateUI();
+  draw();
+
+  return true;
+}
+
+function getAimPrediction(cueBall, dirX, dirY) {
+  let nearestHit = null;
+
+  for (const ball of localBalls) {
+    if (ball.pocketed || ball.sinking) continue;
+    if (Number(ball.number) === 0) continue;
+
+    const ox = ball.x - cueBall.x;
+    const oy = ball.y - cueBall.y;
+
+    const projection = ox * dirX + oy * dirY;
+
+    if (projection <= BALL_RADIUS) continue;
+
+    const closestX = cueBall.x + dirX * projection;
+    const closestY = cueBall.y + dirY * projection;
+
+    const sideX = ball.x - closestX;
+    const sideY = ball.y - closestY;
+    const sideDistance = Math.sqrt(sideX * sideX + sideY * sideY);
+
+    if (sideDistance > BALL_DIAMETER) continue;
+
+    const offset = Math.sqrt(
+      Math.max(0, BALL_DIAMETER * BALL_DIAMETER - sideDistance * sideDistance)
+    );
+
+    const hitDistance = projection - offset;
+
+    if (hitDistance <= 0) continue;
+
+    if (!nearestHit || hitDistance < nearestHit.hitDistance) {
+      nearestHit = {
+        ball,
+        hitX: cueBall.x + dirX * hitDistance,
+        hitY: cueBall.y + dirY * hitDistance,
+        hitDistance
+      };
+    }
+  }
+
+  if (!nearestHit) return null;
+
+  const targetBall = nearestHit.ball;
+
+  const impactX = targetBall.x - nearestHit.hitX;
+  const impactY = targetBall.y - nearestHit.hitY;
+  const impactDistance = Math.sqrt(impactX * impactX + impactY * impactY);
+
+  if (impactDistance <= 0) return null;
+
+  const objectDirX = impactX / impactDistance;
+  const objectDirY = impactY / impactDistance;
+
+  return {
+    targetBall,
+    hitX: nearestHit.hitX,
+    hitY: nearestHit.hitY,
+    objectDirX,
+    objectDirY
+  };
+}
+
+    function drawAimLine() {
+  const cueBall = getCueBall();
+  if (!cueBall) return;
+
+  const pointer = aimCurrent || standbyAimPoint;
+  if (!pointer) return;
+
+  const dx = pointer.x - cueBall.x;
+  const dy = pointer.y - cueBall.y;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+
+  if (distance < 5) return;
+
+  const dirX = dx / distance;
+  const dirY = dy / distance;
+
+  const prediction = getAimPrediction(cueBall, -dirX, -dirY);
+
+  ctx.save();
+
+  // Garis utama arah cue ball
+  ctx.strokeStyle = "rgba(255,255,255,.72)";
+  ctx.lineWidth = 2;
+  ctx.setLineDash([10, 8]);
+
+  ctx.beginPath();
+  ctx.moveTo(cueBall.x, cueBall.y);
+
+  if (prediction) {
+    ctx.lineTo(prediction.hitX, prediction.hitY);
+  } else {
+    ctx.lineTo(cueBall.x - dirX * 260, cueBall.y - dirY * 260);
+  }
+
+  ctx.stroke();
+
+  ctx.setLineDash([]);
+
+  // Kalau kena bola target, gambar prediction line object ball
+  if (prediction) {
+    const objectLineLength = 180;
+
+    ctx.strokeStyle = "rgba(255, 214, 80, .85)";
+    ctx.lineWidth = 3;
+    ctx.setLineDash([8, 7]);
+
+    ctx.beginPath();
+    ctx.moveTo(prediction.targetBall.x, prediction.targetBall.y);
+    ctx.lineTo(
+      prediction.targetBall.x + prediction.objectDirX * objectLineLength,
+      prediction.targetBall.y + prediction.objectDirY * objectLineLength
+    );
+    ctx.stroke();
+
+    ctx.setLineDash([]);
+
+    // Titik impact kecil
+    ctx.beginPath();
+    ctx.arc(prediction.hitX, prediction.hitY, 4, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(255,255,255,.85)";
+    ctx.fill();
+  }
+
+  //drawStick(cueBall.x, cueBall.y, pointer.x, pointer.y, "rgba(255,220,90,.95)");//
+
+  ctx.restore();
+}
+
+    function drawRemoteAim() {
+      const aim = remoteAim.aim;
+
+      if (!aim) return;
+
+      const cueX = Number(aim.cue_x);
+      const cueY = Number(aim.cue_y);
+      const pointerX = Number(aim.pointer_x);
+      const pointerY = Number(aim.pointer_y);
+
+      const dx = pointerX - cueX;
+      const dy = pointerY - cueY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance < 5) return;
+
+      const dirX = dx / distance;
+      const dirY = dy / distance;
+
+      const lineLength = Math.min(distance * 1.8, 260);
+
+      ctx.save();
+
+      ctx.strokeStyle = "rgba(80,190,255,.78)";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([10, 8]);
+
+      ctx.beginPath();
+      ctx.moveTo(cueX, cueY);
+      ctx.lineTo(
+        cueX - dirX * lineLength,
+        cueY - dirY * lineLength
+      );
+      ctx.stroke();
+
+      ctx.setLineDash([]);
+
+      drawStick(cueX, cueY, pointerX, pointerY, "rgba(80,190,255,.95)");
+
+      ctx.fillStyle = "rgba(80,190,255,.95)";
+      ctx.font = "bold 13px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText(remoteAim.username || "Opponent", cueX, cueY - 26);
+
+      drawRemotePower(remoteAim.power || 0);
+
+      ctx.restore();
+    }
+
+
+function showHtmlCueStick(cueX, cueY, pointerX, pointerY) {
+  const stickEl = document.getElementById("htmlCueStick");
+  if (!stickEl) return;
+
+  const cueScreen = canvasPointToScreen({
+    x: cueX,
+    y: cueY
+  });
+
+  const pointerScreen = canvasPointToScreen({
+    x: pointerX,
+    y: pointerY
+  });
+
+  const dx = pointerScreen.x - cueScreen.x;
+  const dy = pointerScreen.y - cueScreen.y;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+
+  if (distance < 5) {
+    stickEl.style.display = "none";
+    return;
+  }
+
+  const dirX = dx / distance;
+  const dirY = dy / distance;
+
+  const angle = Math.atan2(dirY, dirX);
+  const isPortrait = window.matchMedia("(orientation: portrait)").matches;
+  const isDraggingShot = isAiming && aimStart && aimCurrent;
+
+  const stickLength = isPortrait ? 180 : 260;
+
+  const gap = isDraggingShot
+    ? (isPortrait ? 24 + power * 38 : 30 + power * 55)
+    : (isPortrait ? 30 : 34);
+
+  stickEl.style.width = stickLength + "px";
+
+  const startX = cueScreen.x + dirX * gap;
+  const startY = cueScreen.y + dirY * gap;
+
+  stickEl.style.display = "block";
+  stickEl.style.left = startX + "px";
+  stickEl.style.top = startY + "px";
+  stickEl.style.transform = "translateY(-50%) rotate(" + angle + "rad)";
+}
+
+function hideHtmlCueStick() {
+  const stickEl = document.getElementById("htmlCueStick");
+  if (!stickEl) return;
+
+  stickEl.style.display = "none";
+}
+
+
+    function drawStick(cueX, cueY, pointerX, pointerY, color = "rgba(255,220,90,.9)") {
+  showHtmlCueStick(cueX, cueY, pointerX, pointerY);
+}
+  
+
+    function drawRemotePower(remotePower) {
+      ctx.save();
+
+      const barX = W - 270;
+      const barY = H - 34;
+      const barW = 220;
+      const barH = 14;
+
+      ctx.fillStyle = "rgba(0,0,0,.45)";
+      ctx.fillRect(barX, barY, barW, barH);
+
+      ctx.fillStyle = "rgba(80,190,255,.95)";
+      ctx.fillRect(barX, barY, barW * Math.max(0, Math.min(1, remotePower)), barH);
+
+      ctx.strokeStyle = "rgba(255,255,255,.35)";
+      ctx.strokeRect(barX, barY, barW, barH);
+
+      ctx.fillStyle = "rgba(255,255,255,.9)";
+      ctx.font = "12px Arial";
+      ctx.fillText("Opponent Power", barX, barY - 7);
+
+      ctx.restore();
+    }
+
+    function drawPowerBar() {
+      ctx.save();
+
+      const barX = 40;
+      const barY = H - 34;
+      const barW = 220;
+      const barH = 14;
+
+      ctx.fillStyle = "rgba(0,0,0,.45)";
+      ctx.fillRect(barX, barY, barW, barH);
+
+      ctx.fillStyle = "rgba(255,210,80,.95)";
+      ctx.fillRect(barX, barY, barW * power, barH);
+
+      ctx.strokeStyle = "rgba(255,255,255,.35)";
+      ctx.strokeRect(barX, barY, barW, barH);
+
+      ctx.fillStyle = "rgba(255,255,255,.9)";
+      ctx.font = "12px Arial";
+      ctx.fillText("Power", barX, barY - 7);
+
+      ctx.restore();
+    }
+    
+    function isPointInsideGameOverRematch(point) {
+  if (!gameOverLocal) return false;
+
+  const boxW = 420;
+  const boxH = 190;
+  const boxX = W / 2 - boxW / 2;
+  const boxY = H / 2 - boxH / 2;
+
+  const btnX = W / 2 - 82;
+  const btnY = boxY + 136;
+  const btnW = 164;
+  const btnH = 34;
+
+  return (
+    point.x >= btnX &&
+    point.x <= btnX + btnW &&
+    point.y >= btnY &&
+    point.y <= btnY + btnH
+  );
+}
+
+async function voteRematch() {
+  if (rematchWaiting || rematchCreating) return;
+
+  const roomCode = getRoomCode();
+  const matchId = getCurrentMatchId();
+  const playerId = localPlayer ? Number(localPlayer.id) : 0;
+
+  if (!roomCode || !matchId || !playerId) {
+    alert("Data rematch belum lengkap.");
+    return;
+  }
+
+  rematchWaiting = true;
+  rematchReadyCount = 1;
+  rematchTotalPlayers = matchData?.players?.length || 0;
+
+  updateUI();
+  draw();
+
+  try {
+    const response = await fetch("api/rematch_vote.php", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        room_code: roomCode,
+        match_id: matchId,
+        player_id: playerId
+      })
+    });
+
+    const result = await response.json();
+
+    debugLog("rematch vote result", result);
+
+    if (!result.success) {
+      rematchWaiting = false;
+      alert(result.message || "Gagal vote rematch.");
+      updateUI();
+      draw();
+      return;
+    }
+
+    rematchReadyCount = Number(result.ready_count || 0);
+    rematchTotalPlayers = Number(result.total_players || 0);
+
+    if (result.all_ready) {
+      await createRematchNow();
+      return;
+    }
+
+    startRematchStatusPolling();
+    updateUI();
+    draw();
+  } catch (error) {
+    rematchWaiting = false;
+    console.error("rematch vote error", error);
+    alert("Gagal vote rematch: " + error.message);
+    updateUI();
+    draw();
+  }
+}
+
+function backToLobby() {
+  const params = new URLSearchParams(window.location.search);
+  const playerKey = getPlayerKey();
+
+  window.location.href =
+    "lobby.html?player_key=" +
+    encodeURIComponent(playerKey) +
+    "&v=" +
+    Date.now();
+}
+
+function backToMainMenu() {
+  window.location.href = "/";
+}
+
+function bindGameOverButtonsTouch() {
+  const rematchBtn = document.getElementById("gameOverRematchBtn");
+  const lobbyBtn = document.querySelector("#gameOverHtmlOverlay .gameOverSecondaryBtn:nth-of-type(2)");
+  const menuBtn = document.querySelector("#gameOverHtmlOverlay .gameOverSecondaryBtn:nth-of-type(3)");
+
+  if (rematchBtn) {
+    rematchBtn.addEventListener("touchend", function(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      voteRematch();
+    }, { passive: false });
+  }
+
+  if (lobbyBtn) {
+    lobbyBtn.addEventListener("touchend", function(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      backToLobby();
+    }, { passive: false });
+  }
+
+  if (menuBtn) {
+    menuBtn.addEventListener("touchend", function(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      backToMainMenu();
+    }, { passive: false });
+  }
+}
+
+function startRematchStatusPolling() {
+  if (rematchStatusTimer) {
+    clearInterval(rematchStatusTimer);
+  }
+
+  rematchStatusTimer = setInterval(checkRematchStatus, 2500);
+}
+
+
+function stopRematchStatusPolling() {
+  if (rematchStatusTimer) {
+    clearInterval(rematchStatusTimer);
+    rematchStatusTimer = null;
+  }
+}
+
+async function checkRematchStatus() {
+  if (!rematchWaiting || rematchCreating) return;
+
+  const roomCode = getRoomCode();
+  const matchId = getCurrentMatchId();
+
+  if (!roomCode || !matchId) return;
+
+  try {
+    const response = await fetch(
+      "api/rematch_status.php?room_code=" +
+        encodeURIComponent(roomCode) +
+        "&match_id=" +
+        encodeURIComponent(matchId) +
+        "&t=" +
+        Date.now(),
+      {
+        cache: "no-store"
+      }
+    );
+
+    const result = await response.json();
+
+    console.log("rematch status result", result);
+
+    if (!result.success) {
+      return;
+    }
+
+    rematchReadyCount = Number(result.ready_count || 0);
+    rematchTotalPlayers = Number(result.total_players || 0);
+
+    if (result.all_ready) {
+      await createRematchNow();
+      return;
+    }
+
+    updateUI();
+    draw();
+  } catch (error) {
+    console.error("rematch status error", error);
+  }
+}
+
+
+async function createRematchNow() {
+  if (rematchCreating) return;
+
+  rematchCreating = true;
+  stopRematchStatusPolling();
+
+  updateUI();
+  draw();
+
+  const roomCode = getRoomCode();
+
+  try {
+    const response = await fetch("api/create_rematch.php", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        room_code: roomCode,
+        mode: matchData?.room?.mode || "straight_pool"
+      })
+    });
+
+    const result = await response.json();
+
+    console.log("create rematch result", result);
+
+    if (!result.success) {
+      rematchWaiting = false;
+      rematchCreating = false;
+      alert(result.message || "Gagal membuat rematch.");
+      updateUI();
+      draw();
+      return;
+    }
+
+    window.location.href =
+      "game.html?room_code=" +
+      encodeURIComponent(result.room_code) +
+      "&v=" +
+      Date.now();
+  } catch (error) {
+    rematchWaiting = false;
+    rematchCreating = false;
+    console.error("create rematch error", error);
+    alert("Gagal membuat rematch: " + error.message);
+    updateUI();
+    draw();
+  }
+}
+
+    
+    function onAimStart(event) {
+  if (
+    event.target &&
+    event.target.closest &&
+    (
+      event.target.closest(".mobileActionBtn") ||
+      event.target.closest("button") ||
+      event.target.closest("a") ||
+      event.target.closest("input") ||
+      event.target.closest("#mobileMenuOverlay") ||
+      event.target.closest(".mobileMenuOverlay") ||
+      event.target.closest("#gameOverHtmlOverlay") ||
+      event.target.closest(".gameOverHtmlOverlay")
+    )
+  ) {
+    return;
+  }
+
+  if (!isMyTurn()) {
+    isAiming = false;
+    power = 0;
+    aimStart = null;
+    aimCurrent = null;
+    updateUI();
+    draw();
+    return;
+  }
+
+  event.preventDefault();
+  getAudioContext();
+
+  const point = getCanvasPoint(event);
+  const cueBall = getCueBall();
+
+  if (isPointInsideGameOverRematch(point)) {
+    voteRematch();
+    return;
+  }
+
+  if (animationRunning || isSubmittingShot) return;
+  if (gameOverLocal) return;
+
+if (isBallInHandModeForMe()) {
+  const touchingCueBall = isPointerOnCueBall(point.x, point.y);
+
+  /*
+    Ball in hand:
+    - klik/drag tepat di bola putih = pindah bola
+    - klik stick / area kosong = aim normal, tidak pindah bola
+  */
+  if (touchingCueBall && !isAiming) {
+    ballInHandDragging = true;
+    return;
+  }
+
+  // Klik bukan di bola putih: lanjut aim/stick normal.
+}
+
+  if (!cueBall) return;
+
+  // Tidak wajib klik tepat di bola putih.
+  // Klik/tahan di mana saja pada meja = mulai power dari arah stick standby.
+  if (!canShowStandbyStick()) return;
+
+  const lockedPoint = standbyAimPoint || point;
+
+  isAiming = true;
+  aimStart = point;
+  aimCurrent = lockedPoint;
+  power = 0;
+  lastShotResult = null;
+
+  sendRealtimeAim();
+  draw();
+}
+
+  function onAimMove(event) {
+  const point = getCanvasPoint(event);
+
+  if (ballInHandDragging) {
+    event.preventDefault();
+
+    const placed = placeCueBallForBallInHand(point);
+
+    if (placed) {
+      ballInHandLocalPlaced = true;
+      updateUI();
+      draw();
+      sendRealtimeBallInHandMove();
+      submitBallInHandPositionThrottled();
+    }
+
+    return;
+  }
+
+  // Mode standby: belum klik/tahan, stick bebas bergerak ikut pointer.
+  if (!isAiming && canShowStandbyStick()) {
+    standbyAimPoint = point;
+    draw();
+    return;
+  }
+
+  if (!isAiming) return;
+
+  event.preventDefault();
+
+  const cueBall = getCueBall();
+
+  if (!cueBall) return;
+
+  const lockedPoint = standbyAimPoint || aimCurrent || point;
+
+  const dx = lockedPoint.x - cueBall.x;
+  const dy = lockedPoint.y - cueBall.y;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+
+  if (distance < 5) return;
+
+  const dirX = dx / distance;
+  const dirY = dy / distance;
+
+  const start = aimStart || point;
+
+  const dragX = point.x - start.x;
+  const dragY = point.y - start.y;
+
+  const pullBack = Math.max(0, dragX * dirX + dragY * dirY);
+
+  const isPortrait = window.matchMedia("(orientation: portrait)").matches;
+
+  const minPull = isPortrait ? 6 : 12;
+  const maxPull = isPortrait ? 95 : 240;
+
+  const rawPower = Math.max(
+    0,
+    Math.min((pullBack - minPull) / maxPull, 1)
+  );
+
+  power = Math.pow(rawPower, isPortrait ? 1.15 : 1.45);
+
+  const visualPull = Math.min(
+    pullBack,
+    isPortrait ? 120 : 260
+  );
+
+  aimCurrent = {
+    x: cueBall.x + dirX * Math.max(20, visualPull),
+    y: cueBall.y + dirY * Math.max(20, visualPull)
+  };
+
+  sendRealtimeAim();
+  draw();
+}
+
+
+async function submitBallInHandPosition(options = {}) {
+  const playerKey = getPlayerKey();
+  const roomCode = getRoomCode();
+  const cueBall = getCueBall();
+
+  const reloadAfter = options.reloadAfter !== false;
+
+  if (!playerKey || !roomCode || !cueBall) return;
+
+  try {
+    const response = await fetch("api/update_ball_in_hand.php", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        player_key: playerKey,
+        room_code: roomCode,
+        cue_x: Number(Number(cueBall.x).toFixed(2)),
+        cue_y: Number(Number(cueBall.y).toFixed(2))
+      })
+    });
+
+    const result = await response.json();
+
+    if (!result.success) {
+      console.warn("update ball in hand failed", result);
+      return;
+    }
+
+    if (reloadAfter) {
+      setTimeout(() => {
+        loadMatch();
+      }, 250);
+    }
+  } catch (err) {
+    console.error("submit ball in hand position error", err);
+  }
+}
+
+function submitBallInHandPositionThrottled() {
+  const now = Date.now();
+
+  if (now - lastBallInHandSyncAt < 120) {
+    return;
+  }
+
+  lastBallInHandSyncAt = now;
+
+  submitBallInHandPosition({
+    reloadAfter: false
+  });
+}
+
+
+    function onAimEnd(event) {
+  if (event) {
+    event.preventDefault();
+  }
+
+    if (ballInHandDragging) {
+    ballInHandDragging = false;
+    ballInHandLocalPlaced = true;
+
+    updateUI();
+    draw();
+
+    sendRealtimeBallInHandMove();
+    submitBallInHandPosition();
+
+    return;
+  }
+
+  if (!isAiming) return;
+
+  const cueBall = getCueBall();
+  const pointer = aimCurrent || standbyAimPoint;
+
+  if (!cueBall || !pointer) {
+    isAiming = false;
+    sendRealtimeAimEnd();
+    return;
+  }
+
+  const dx = pointer.x - cueBall.x;
+  const dy = pointer.y - cueBall.y;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+
+  if (distance > 5 && power > 0.05) {
+    const dirX = dx / distance;
+    const dirY = dy / distance;
+
+    const shotPower = power * 24;
+
+    cueHitObjectBall = false;
+    anyBallHitRail = false;
+    firstHitBallNumber = null;
+
+    sendRealtimeShotStart(cueBall, dirX, dirY, shotPower);
+
+    cueBall.vx = -dirX * shotPower;
+    cueBall.vy = -dirY * shotPower;
+
+    startPhysicsLocal();
+  } else {
+    sendRealtimeAimEnd();
+  }
+
+  isAiming = false;
+  aimStart = null;
+  aimCurrent = null;
+  power = 0;
+  standbyAimPoint = null;
+
+  draw();
+}
+
+    function startPhysicsLocal() {
+      if (animationRunning) return;
+
+      animationRunning = true;
+      physicsMode = "local";
+      requestAnimationFrame(physicsLoopLocal);
+    }
+
+    function physicsLoopLocal() {
+      updateBalls();
+      draw();
+
+      if (areBallsMoving()) {
+        requestAnimationFrame(physicsLoopLocal);
+      } else {
+        stopAllBalls();
+        animationRunning = false;
+        physicsMode = null;
+        draw();
+
+        sendRealtimeShotEnd();
+        submitShot();
+      }
+    }
+
+    function applyRemoteShot(shot) {
+      const cueBall = getCueBall();
+
+      if (!cueBall) return;
+
+      cueBall.vx = Number(shot.vx || 0);
+      cueBall.vy = Number(shot.vy || 0);
+
+      startPhysicsRemote();
+    }
+
+    function startPhysicsRemote() {
+      if (animationRunning) return;
+
+      animationRunning = true;
+      physicsMode = "remote";
+      requestAnimationFrame(physicsLoopRemote);
+    }
+
+    function physicsLoopRemote() {
+      updateBalls();
+      draw();
+
+      if (areBallsMoving()) {
+        requestAnimationFrame(physicsLoopRemote);
+      } else {
+        stopAllBalls();
+        animationRunning = false;
+        physicsMode = null;
+        draw();
+
+        applyPendingRemoteFinal();
+      }
+    }
+
+    function applyPendingRemoteFinal() {
+      if (pendingRemoteFinalBalls && Array.isArray(pendingRemoteFinalBalls)) {
+        localBalls = JSON.parse(JSON.stringify(pendingRemoteFinalBalls));
+        pendingRemoteFinalBalls = null;
+        draw();
+      }
+
+      remoteShotOwnerId = null;
+
+      setTimeout(() => {
+        loadMatch();
+      }, 250);
+
+      updateUI();
+    }
+    
+    
+    function updateSinkingBall(ball) {
+  if (!ball.sinking) return;
+
+  ball.sinkProgress = Math.min(
+    1,
+    Number(ball.sinkProgress || 0) + POCKET_SINK_SPEED
+  );
+
+  const t = ball.sinkProgress;
+  const ease = 1 - Math.pow(1 - t, 3);
+
+  ball.x = ball.sinkStartX + (ball.sinkTargetX - ball.sinkStartX) * ease;
+  ball.y = ball.sinkStartY + (ball.sinkTargetY - ball.sinkStartY) * ease;
+
+  ball.vx = 0;
+  ball.vy = 0;
+
+  if (ball.sinkProgress >= 1) {
+    ball.sinking = false;
+    ball.pocketed = true;
+    ball.x = ball.sinkTargetX;
+    ball.y = ball.sinkTargetY;
+    ball.vx = 0;
+    ball.vy = 0;
+
+  // addPocketedBallToTray(ball);
+  animatePocketBallToRail(ball);
+  }
+}
+
+    function updateBalls() {
+  const steps = 5;
+
+  for (let step = 0; step < steps; step++) {
+    localBalls.forEach(ball => {
+      if (ball.pocketed) return;
+
+      if (ball.sinking) {
+        updateSinkingBall(ball);
+        return;
+      }
+
+      ball.x += (ball.vx || 0) / steps;
+      ball.y += (ball.vy || 0) / steps;
+
+      handlePocket(ball);
+
+      if (!ball.pocketed && !ball.sinking) {
+        handleWallBounce(ball);
+      }
+    });
+
+    handleBallCollisions();
+  }
+
+  localBalls.forEach(ball => {
+    if (ball.pocketed || ball.sinking) return;
+
+    ball.vx = (ball.vx || 0) * FRICTION;
+    ball.vy = (ball.vy || 0) * FRICTION;
+
+    if (Math.abs(ball.vx) < MIN_SPEED) ball.vx = 0;
+    if (Math.abs(ball.vy) < MIN_SPEED) ball.vy = 0;
+  });
+}
+
+function handleBallCollisions() {
+  for (let i = 0; i < localBalls.length; i++) {
+    for (let j = i + 1; j < localBalls.length; j++) {
+      const a = localBalls[i];
+      const b = localBalls[j];
+
+      if (a.pocketed || b.pocketed || a.sinking || b.sinking) continue;
+
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance === 0 || distance >= BALL_DIAMETER) continue;
+
+      const aNumber = Number(a.number);
+      const bNumber = Number(b.number);
+
+      if (
+        physicsMode === "local" &&
+        (
+            (aNumber === 0 && bNumber > 0) ||
+            (bNumber === 0 && aNumber > 0)
+        )
+       ) {
+            cueHitObjectBall = true;
+
+            if (firstHitBallNumber === null) {
+              firstHitBallNumber = aNumber === 0 ? bNumber : aNumber;
+        }
+       }
+
+      const nx = dx / distance;
+      const ny = dy / distance;
+
+      const overlap = BALL_DIAMETER - distance;
+
+      a.x -= nx * overlap / 2;
+      a.y -= ny * overlap / 2;
+      b.x += nx * overlap / 2;
+      b.y += ny * overlap / 2;
+
+      const avx = a.vx || 0;
+      const avy = a.vy || 0;
+      const bvx = b.vx || 0;
+      const bvy = b.vy || 0;
+
+      const relativeVx = avx - bvx;
+      const relativeVy = avy - bvy;
+
+      const speedAlongNormal = relativeVx * nx + relativeVy * ny;
+
+      if (speedAlongNormal < 0) continue;
+
+      const impulse = speedAlongNormal;
+
+      a.vx = (avx - impulse * nx) * COLLISION_DAMPING;
+      a.vy = (avy - impulse * ny) * COLLISION_DAMPING;
+      b.vx = (bvx + impulse * nx) * COLLISION_DAMPING;
+      b.vy = (bvy + impulse * ny) * COLLISION_DAMPING;
+
+      const now = Date.now();
+
+      if (now - lastCollisionSoundAt > 60) {
+        lastCollisionSoundAt = now;
+        playHitSound(Math.min(1, Math.abs(impulse) / 12));
+      }
+    }
+  }
+}
+
+   function handlePocket(ball) {
+  if (ball.pocketed || ball.sinking) return;
+
+  const x = Number(ball.x);
+  const y = Number(ball.y);
+
+  for (const pocket of pockets) {
+    const dx = x - pocket.x;
+    const dy = y - pocket.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    let pocketCatchRadius;
+
+    if (pocket.type === "corner") {
+      pocketCatchRadius = pocket.r + 12;
+    } else {
+      pocketCatchRadius = pocket.r + 12;
+    }
+
+    if (distance <= pocketCatchRadius) {
+      startPocketSink(ball, pocket);
+      return;
+    }
+
+    if (pocket.type === "corner") {
+      const cornerMouthSize = 48;
+
+      if (
+        pocket.name === "top_left" &&
+        x < cornerMouthSize + 20 &&
+        y < cornerMouthSize + 20
+      ) {
+        startPocketSink(ball, pocket);
+        return;
+      }
+
+      if (
+        pocket.name === "top_right" &&
+        x > W - cornerMouthSize - 20 &&
+        y < cornerMouthSize + 20
+      ) {
+        startPocketSink(ball, pocket);
+        return;
+      }
+
+      if (
+        pocket.name === "bottom_left" &&
+        x < cornerMouthSize + 20 &&
+        y > H - cornerMouthSize - 20
+      ) {
+        startPocketSink(ball, pocket);
+        return;
+      }
+
+      if (
+        pocket.name === "bottom_right" &&
+        x > W - cornerMouthSize - 20 &&
+        y > H - cornerMouthSize - 20
+      ) {
+        startPocketSink(ball, pocket);
+        return;
+      }
+    }
+  }
+}
+
+
+function startPocketSink(ball, pocket) {
+  ball.sinking = true;
+  ball.sinkProgress = 0;
+  ball.sinkTargetX = Number(pocket.x);
+  ball.sinkTargetY = Number(pocket.y);
+  ball.sinkStartX = Number(ball.x);
+  ball.sinkStartY = Number(ball.y);
+
+  ball.vx = (ball.vx || 0) * 0.25;
+  ball.vy = (ball.vy || 0) * 0.25;
+
+  playPocketSound();
+}
+
+    function handleWallBounce(ball) {
+  const left = PLAY_LEFT;
+  const right = PLAY_RIGHT;
+  const top = PLAY_TOP;
+  const bottom = PLAY_BOTTOM;
+
+  // Cek apakah bola benar-benar berada di mulut pocket.
+  // Hanya kondisi ini yang boleh melewati batas cushion.
+  let insidePocketMouth = false;
+
+  for (const pocket of pockets) {
+    const dx = ball.x - pocket.x;
+    const dy = ball.y - pocket.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance <= pocket.r + 7) {
+      insidePocketMouth = true;
+      break;
+    }
+  }
+
+  if (insidePocketMouth) return;
+
+  if (ball.x < left) {
+    ball.x = left;
+    ball.vx = Math.abs(ball.vx || 0) * WALL_BOUNCE;
+    if (physicsMode === "local") anyBallHitRail = true;
+    playRailSound(Math.abs(ball.vx || 0) / 12);
+  }
+
+  if (ball.x > right) {
+    ball.x = right;
+    ball.vx = -Math.abs(ball.vx || 0) * WALL_BOUNCE;
+    if (physicsMode === "local") anyBallHitRail = true;
+    playRailSound(Math.abs(ball.vx || 0) / 12);
+  }
+
+  if (ball.y < top) {
+    ball.y = top;
+    ball.vy = Math.abs(ball.vy || 0) * WALL_BOUNCE;
+    if (physicsMode === "local") anyBallHitRail = true;
+    playRailSound(Math.abs(ball.vy || 0) / 12);
+  }
+
+  if (ball.y > bottom) {
+    ball.y = bottom;
+    ball.vy = -Math.abs(ball.vy || 0) * WALL_BOUNCE;
+    if (physicsMode === "local") anyBallHitRail = true;
+    playRailSound(Math.abs(ball.vy || 0) / 12);
+  }
+}
+
+
+    function areBallsMoving() {
+  return localBalls.some(ball => {
+    if (ball.sinking) return true;
+
+    return Math.abs(ball.vx || 0) > 0 || Math.abs(ball.vy || 0) > 0;
+  });
+}
+
+    function stopAllBalls() {
+      localBalls.forEach(ball => {
+        ball.vx = 0;
+        ball.vy = 0;
+      });
+    }
+
+    function cleanBallsForSubmit() {
+      return localBalls.map(ball => {
+        return {
+          id: Number(ball.id),
+          number: Number(ball.number),
+          type: ball.type,
+          color: ball.color,
+          x: Number(Number(ball.x).toFixed(2)),
+          y: Number(Number(ball.y).toFixed(2)),
+          vx: 0,
+          vy: 0,
+          pocketed: !!ball.pocketed
+        };
+      });
+    }
+
+    async function submitShot() {
+      const playerKey = getPlayerKey();
+      const roomCode = getRoomCode();
+
+      if (!playerKey || !roomCode) {
+        lastShotResult = {
+          success: false,
+          message: "Player key atau room code kosong"
+        };
+        updateUI();
+        return;
+      }
+
+      if (!isMyTurn()) {
+        lastShotResult = {
+          success: false,
+          message: "Submit dibatalkan: bukan giliran player lokal"
+        };
+        updateUI();
+        return;
+      }
+
+      isSubmittingShot = true;
+      updateUI();
+      draw();
+
+      try {
+        const res = await fetch("api/submit_shot.php", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+  player_key: playerKey,
+  room_code: roomCode,
+  balls: cleanBallsForSubmit(),
+  cue_hit_object_ball: cueHitObjectBall,
+  any_ball_hit_rail: anyBallHitRail,
+  first_hit_ball_number: firstHitBallNumber
+})
+        });
+
+        const text = await res.text();
+        let data;
+
+        try {
+          data = JSON.parse(text);
+        } catch (err) {
+          data = {
+            success: false,
+            message: "Response submit_shot bukan JSON",
+            raw: text
+          };
+        }
+
+        lastShotResult = data;
+
+        if (data.success) {
+  ballInHandLocalPlaced = false;
+
+  if (matchData && matchData.match && data.next_turn_player_id) {
+    matchData.match.current_turn_player_id = Number(data.next_turn_player_id);
+  }
+
+  if (matchData && matchData.state && data.ball_in_hand) {
+    matchData.state.ball_in_hand = data.ball_in_hand;
+  }
+
+  updateUI();
+
+  setTimeout(() => {
+    loadMatch();
+  }, 300);
+} else {
+  updateUI();
+}
+
+      } catch (err) {
+        lastShotResult = {
+          success: false,
+          message: "Gagal submit shot: " + err.message
+        };
+        updateUI();
+      }
+
+      isSubmittingShot = false;
+      draw();
+    }
+
+    function backToLobby() {
+  window.location.href = "lobby.html?v=" + Date.now();
+}
+
+    window.addEventListener("mousedown", onAimStart);
+window.addEventListener("mousemove", onAimMove);
+window.addEventListener("mouseup", onAimEnd);
+
+//window.addEventListener("touchstart", onAimStart, { passive: false });
+//window.addEventListener("touchmove", onAimMove, { passive: false });
+//window.addEventListener("touchend", onAimEnd, { passive: false });
+//window.addEventListener("touchcancel", onAimEnd, { passive: false });
+
+function clearTouchPowerTimer() {
+  if (touchPowerTimer) {
+    clearTimeout(touchPowerTimer);
+    touchPowerTimer = null;
+  }
+}
+
+function startMobileAimPreview(point) {
+  const cueBall = getCueBall();
+  if (!cueBall) return;
+
+  isAiming = true;
+  aimStart = {
+    x: Number(cueBall.x),
+    y: Number(cueBall.y)
+  };
+
+  aimCurrent = {
+    x: point.x,
+    y: point.y
+  };
+
+  power = 0;
+
+  updateUI();
+  draw();
+}
+
+function updateMobileAimPreview(point) {
+  if (!isAiming) {
+    startMobileAimPreview(point);
+    return;
+  }
+
+  aimCurrent = {
+    x: point.x,
+    y: point.y
+  };
+
+  power = 0;
+
+  updateUI();
+  draw();
+}
+
+function resetTouchState() {
+  clearTouchPowerTimer();
+
+  touchStartPoint = null;
+  touchLastPoint = null;
+  touchPowerArmed = false;
+  touchIsDraggingAim = false;
+  touchBallInHandMode = false;
+}
+
+function distanceBetween(a, b) {
+  const dx = Number(a.x) - Number(b.x);
+  const dy = Number(a.y) - Number(b.y);
+
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+function isTouchOnCueBall(point) {
+  return isPointerOnCueBall(point.x, point.y);
+}
+
+function isMobileBallInHandActive() {
+  const ownerId = Number(ballInHandLastOwnerId || 0);
+  const myId = localPlayer ? Number(localPlayer.id) : 0;
+
+  return Boolean(
+    ballInHandDragging ||
+    (
+      ownerId &&
+      myId &&
+      ownerId === myId &&
+      ballInHandLocalPlaced === false
+    )
+  );
+}
+
+function shouldIgnoreTouchAim(event) {
+  const target = event.target;
+
+  if (!target) return false;
+
+  return Boolean(
+    gameOverLocal ||
+    target.closest("#gameOverHtmlOverlay") ||
+    target.closest(".gameOverCard") ||
+    target.closest(".gameOverRematchBtn") ||
+    target.closest(".gameOverPrimaryBtn") ||
+    target.closest(".gameOverSecondaryBtn") ||
+    target.closest(".mobileBottomActions") ||
+    target.closest(".mobileActionBtn") ||
+    target.closest("#mobileMenuOverlay") ||
+    target.closest(".mobileMenuOverlay") ||
+    target.closest(".mobileMenuCard") ||
+    target.closest("button")
+  );
+}
+
+function onTouchAimStart(event) {
+  // Izinkan pinch / zoom 2 jari
+  if (event.touches && event.touches.length > 1) {
+    resetTouchState();
+    isAiming = false;
+    power = 0;
+    updateUI();
+    draw();
+    return;
+  }
+
+  if (!isMyTurn()) {
+    isAiming = false;
+    power = 0;
+    aimStart = null;
+    aimCurrent = null;
+    updateUI();
+    draw();
+    return;
+  }
+
+  if (shouldIgnoreTouchAim(event)) {
+    return;
+  }
+
+  event.preventDefault();
+
+  const point = getCanvasPoint(event);
+
+  touchStartPoint = point;
+  touchLastPoint = point;
+  touchPowerArmed = false;
+  touchIsDraggingAim = false;
+  touchBallInHandMode = false;
+
+  clearTouchPowerTimer();
+
+      const bihActiveForMe =
+    typeof isBallInHandModeForMe === "function" && isBallInHandModeForMe();
+
+  const touchingCueBall = isPointerOnCueBall(point.x, point.y);
+
+/*
+  Mobile ball in hand:
+  - touch/drag tepat di bola putih = pindah bola putih
+  - touch stick / area kosong = aim normal, tidak pindah bola
+*/
+if (bihActiveForMe && touchingCueBall) {
+  touchBallInHandMode = true;
+  ballInHandDragging = true;
+  return;
+}
+
+// Sentuh bola putih tanpa ball-in-hand = power / pukul
+if (touchingCueBall) {
+  touchPowerArmed = true;
+  onAimStart(event);
+  return;
+}
+
+// Sentuh area lain = aim arah saja
+startMobileAimPreview(point);
+}
+
+function onTouchAimMove(event) {
+  // Izinkan pinch / zoom 2 jari
+  if (event.touches && event.touches.length > 1) {
+    resetTouchState();
+    isAiming = false;
+    power = 0;
+    updateUI();
+    draw();
+    return;
+  }
+
+  if (!isMyTurn()) {
+  isAiming = false;
+  power = 0;
+  aimStart = null;
+  aimCurrent = null;
+  resetTouchState();
+  updateUI();
+  draw();
+  return;
+}
+
+  if (shouldIgnoreTouchAim(event)) {
+    return;
+  }
+
+  event.preventDefault();
+
+  const point = getCanvasPoint(event);
+  touchLastPoint = point;
+
+ // Ball in hand: hanya aktif kalau touch dimulai di bola putih
+if (touchBallInHandMode) {
+  onAimMove(event);
+  return;
+}
+
+  // Mulai dari bola putih = drag untuk power
+  if (touchPowerArmed) {
+    onAimMove(event);
+    return;
+  }
+
+  // Mulai bukan dari bola putih = drag untuk aim saja
+  touchIsDraggingAim = true;
+  updateMobileAimPreview(point);
+}
+
+function onTouchAimEnd(event) {
+  // Kalau masih ada jari lain di layar, jangan proses shot
+  if (event.touches && event.touches.length > 0) {
+    return;
+  }
+
+  if (shouldIgnoreTouchAim(event)) {
+    return;
+  }
+
+  event.preventDefault();
+
+// Ball in hand: selesai drag bola putih
+if (touchBallInHandMode) {
+  onAimEnd(event);
+  resetTouchState();
+  return;
+}
+
+  // Kalau mulai dari bola putih, lepas = shot
+  if (touchPowerArmed) {
+    onAimEnd(event);
+    resetTouchState();
+    return;
+  }
+
+  // Kalau cuma drag area meja untuk aim arah:
+  // jangan shot, jangan reset aim, biarkan garis arah tetap stay
+  if (touchIsDraggingAim) {
+    power = 0;
+    updateUI();
+    draw();
+    resetTouchState();
+    return;
+  }
+
+  // Kalau cuma tap biasa tanpa drag
+  power = 0;
+  updateUI();
+  draw();
+  resetTouchState();
+}
+
+window.addEventListener("touchstart", onTouchAimStart, { passive: false });
+window.addEventListener("touchmove", onTouchAimMove, { passive: false });
+window.addEventListener("touchend", onTouchAimEnd, { passive: false });
+window.addEventListener("touchcancel", onTouchAimEnd, { passive: false });
+
+    async function boot() {
+      await loadLocalPlayer();
+      startHeartbeat();
+      startMatchPolling();
+      connectRealtime();
+    }
+function bindMobileBottomButtonsTouch() {
+  const menuBtn = document.getElementById("mobileMenuToggleBtn");
+  const backBtn = document.getElementById("mobileBackBtn");
+
+  if (menuBtn) {
+    menuBtn.addEventListener("touchend", function(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      toggleMobileMenu(event);
+    }, { passive: false });
+  }
+
+  if (backBtn) {
+    backBtn.addEventListener("touchend", function(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      mobileBackToLobby(event);
+    }, { passive: false });
+  }
+}
+
+    boot();
+  </script>
+</body>
+</html>
