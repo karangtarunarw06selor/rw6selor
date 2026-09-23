@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   rw6selor-web:
     build:
@@ -14,8 +12,6 @@ services:
       - "traefik.http.routers.rw6selor.entrypoints=http"
       - "traefik.http.routers.rw6selor.rule=Host(`rw6selor.org`,`www.rw6selor.org`)"
       - "traefik.http.routers.rw6selor.middlewares=gzip"
-      - "traefik.http.routers.rw6selor.tls=true"
-      - "traefik.http.routers.rw6selor.tls.certresolver=letsencrypt"
       - "traefik.http.services.rw6selor.loadbalancer.server.port=80"
       - "coolify.managed=true"
     volumes:
@@ -37,11 +33,9 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.rw6selor-billiard-ws.entrypoints=http"
       - "traefik.http.routers.rw6selor-billiard-ws.rule=Host(`rw6selor.org`) && PathPrefix(`/billiard/socket.io`)"
-      - "traefik.http.routers.rw6selor-billiard-ws.tls=true"
-      - "traefik.http.routers.rw6selor-billiard-ws.tls.certresolver=letsencrypt"
       - "traefik.http.services.rw6selor-billiard-ws.loadbalancer.server.port=3000"
     volumes:
-      - ./billiard_realtime:/app/billiard_realtime:ro
+      - ./billiard_realtime:/app/billiard_realtime
 
   rw6selor-chess-online:
     build:
@@ -57,11 +51,9 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.rw6selor-chess-ws.entrypoints=http"
       - "traefik.http.routers.rw6selor-chess-ws.rule=Host(`rw6selor.org`) && PathPrefix(`/chess/socket.io`)"
-      - "traefik.http.routers.rw6selor-chess-ws.tls=true"
-      - "traefik.http.routers.rw6selor-chess-ws.tls.certresolver=letsencrypt"
       - "traefik.http.services.rw6selor-chess-ws.loadbalancer.server.port=3000"
     volumes:
-      - ./chess-online:/app/chess-online:ro
+      - ./chess-online:/app/chess-online
 
 networks:
   coolify:
