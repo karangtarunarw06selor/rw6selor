@@ -46,8 +46,6 @@ lavarel/storage/framework/views/*
 _backup_*/
 backup-*/
 
-# Symlinks that won't work in repo
-common
 
 # Temp files
 *.tmp
