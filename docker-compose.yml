@@ -10,7 +10,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.rw6selor.entrypoints=http"
-      - "traefik.http.routers.rw6selor.rule=Host(`rw6selor.org`,`www.rw6selor.org`)"
+      - "traefik.http.routers.rw6selor.rule=Host(`rw6selor.org`) || Host(`www.rw6selor.org`)"
       - "traefik.http.routers.rw6selor.middlewares=gzip"
       - "traefik.http.services.rw6selor.loadbalancer.server.port=80"
       - "coolify.managed=true"
