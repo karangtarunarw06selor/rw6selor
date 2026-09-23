@@ -24,7 +24,7 @@ async function loadMateriDbOverlayOnce() {
     if (mmsMateriDbOverlayLoaded || mmsMateriDbOverlayLoading) return;
     mmsMateriDbOverlayLoading = true;
     try {
-        const response = await fetch("https://mudamudiselor.web.id/common/api/english_public_materi.php?limit=500");
+        const response = await fetch("https://rw6selor.org/common/api/english_public_materi.php?limit=500");
         const payload = await response.json();
         const rows = Array.isArray(payload.data) ? payload.data : [];
         const validItems = new Map();
@@ -1572,14 +1572,14 @@ window.showAchievementToast = function (name, title = "Achievement Unlocked", ic
 };
 
 
-window.resetMMSLearningDev = function () {
+window.resetRW06LearningDev = function () {
     Object.keys(localStorage)
         .filter(key => key.startsWith("mms_"))
         .forEach(key => localStorage.removeItem(key));
 
     renderMenuMateriDinamis();
 
-    console.log("MMS learning data reset.");
+    console.log("RW06 learning data reset.");
 };
 
 window.completeMateriManual = function () {

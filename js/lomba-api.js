@@ -2,7 +2,7 @@ import { normalizeCategory } from "./lomba-storage.js";
 
 // Domain biz.id hanya frontend — backend hanya di web.id
 // Semua request API harus cross-domain ke web.id
-const API_BASE = "https://mudamudiselor.web.id/common/api";
+const API_BASE = "https://rw6selor.org/common/api";
 
 const jsonHeaders = { "Content-Type": "application/json" };
 

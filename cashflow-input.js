@@ -3,7 +3,7 @@
     const IS_LOCAL = hostname === 'localhost' || hostname === '127.0.0.1';
     const CASHFLOW_API_BASE = IS_LOCAL
         ? 'http://localhost:8000/public_html/common/api'
-        : 'https://mudamudiselor.web.id/common/api';
+        : 'https://rw6selor.org/common/api';
 
     const rupiah = (angka) => new Intl.NumberFormat('id-ID', {
         style: 'currency',

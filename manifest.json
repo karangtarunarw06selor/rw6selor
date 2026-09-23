@@ -1,11 +1,11 @@
 {
-  "name": "Muda Mudi Sedahromo Lor",
-  "short_name": "BPH MMS 05",
-  "description": "Aplikasi BPH Muda-Mudi Sedahromo Lor RT 05",
+  "name": "RW06 Selor",
+  "short_name": "RW06 SELOR",
+  "description": "Aplikasi BPH RW06 Selor",
   "start_url": "index.html",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#E53935",
+  "background_color": "#e0f2fe",
+  "theme_color": "#0f5ea8",
   "icons": [
     {
       "src": "images/fix.png",

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Panel Pengurus - Kirim Surat Massal MMS 05</title>
+  <title>Panel Pengurus - Kirim Surat Massal RW06 SELOR</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -57,7 +57,7 @@
 <script>
   function tembakApiEmail() {
     // ⚠️ GANTI LINK DI BAWAH INI DENGAN URL WEB APP GOOGLE SCRIPT KAMU YANG BERAKHIRAN /exec
-    const URL_API_MMS = "https://script.google.com/macros/s/AKfycbwJsN2EjXYhQgF8lyS574CtQoH5NpAJ65kQm7e9UdAwdqSwuYaSShPsWsjC8e1z85zQ/exec";
+    const URL_API_RW06 = "https://script.google.com/macros/s/AKfycbwJsN2EjXYhQgF8lyS574CtQoH5NpAJ65kQm7e9UdAwdqSwuYaSShPsWsjC8e1z85zQ/exec";
 
     var subjek = document.getElementById("subjek").value.trim();
     var pesan = document.getElementById("pesan").value.trim();
@@ -80,7 +80,7 @@
     notif.style.display = "block";
 
     // Melakukan pengiriman data murni menggunakan metode URL Parameters GET aman bypass CORS
-    var urlTujuan = URL_API_MMS + "?aksi=kirimEmailMMSManual&subjek=" + encodeURIComponent(subjek) + "&pesan=" + encodeURIComponent(pesan);
+    var urlTujuan = URL_API_RW06 + "?aksi=kirimEmailRW06Manual&subjek=" + encodeURIComponent(subjek) + "&pesan=" + encodeURIComponent(pesan);
 
     fetch(urlTujuan)
     .then(response => response.json())

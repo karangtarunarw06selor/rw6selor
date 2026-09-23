@@ -3,7 +3,7 @@
     const PRIMARY_HASIL_RAPAT_PUBLIC_API_BASE = HASIL_RAPAT_PUBLIC_API_BASES[0];
 
     function getHasilRapatPublicApiBases() {
-        const publicApiBase = 'https://mudamudiselor.web.id/common/api';
+        const publicApiBase = 'https://rw6selor.org/common/api';
         const origin = typeof window !== 'undefined' ? window.location.origin : '';
         const normalizedOrigin = /^https?:\/\/(?:mudamudiselor\.web\.id|mudamudiselor\.biz\.id)$/i.test(origin)
             ? `${origin.replace(/\/+$/, '')}/common/api`

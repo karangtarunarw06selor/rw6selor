@@ -14,7 +14,7 @@ export function prosesMateriNonTenses(namaMateriKolomC, subMateriKolomD, idLower
 
     let labelTipeTeks = subMateriKolomD.replace(/-/g, " ").toUpperCase();
     if (judulTense) judulTense.innerHTML = `Modul: <b>${dataCocok.materi || namaMateriKolomC} (${labelTipeTeks})</b>`;
-    if(boxSilabus) boxSilabus.innerText = dataCocok.judulBab || "MMS Ruang Literasi";
+    if(boxSilabus) boxSilabus.innerText = dataCocok.judulBab || "RW06 Ruang Literasi";
 
     let isiKontenLaci = "";
 

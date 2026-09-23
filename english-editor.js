@@ -1,5 +1,5 @@
 (function () {
-    const API_BASE = "https://mudamudiselor.web.id/common/api";
+    const API_BASE = "https://rw6selor.org/common/api";
     const IMPORT_URL = API_BASE.replace(/\/api$/, "/import_english_tsv.php");
     const state = { tab: "materi", chapters: [], materi: [], vocabulary: [], verbs: [], exercises: [], editingMateriKey: "" };
 

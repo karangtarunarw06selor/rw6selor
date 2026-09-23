@@ -7,6 +7,14 @@ services:
     restart: unless-stopped
     networks:
       - coolify
+      - rw6selor-internal
+    depends_on:
+      - rw6selor-db
+    environment:
+      DB_HOST: rw6selor-db
+      DB_NAME: ${DB_NAME:-rw06selor}
+      DB_USER: ${DB_USER:-rw06selor}
+      DB_PASS: ${DB_PASS:?set DB_PASS in .env}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.rw6selor.entrypoints=http"
@@ -22,6 +30,22 @@ services:
     volumes:
       - ./:/var/www/html:ro
       - rw6selor-php-logs:/var/log/apache2
+
+  rw6selor-db:
+    image: mariadb:11.4
+    container_name: rw6selor-db
+    restart: unless-stopped
+    networks:
+      - rw6selor-internal
+    environment:
+      MARIADB_DATABASE: ${DB_NAME:-rw06selor}
+      MARIADB_USER: ${DB_USER:-rw06selor}
+      MARIADB_PASSWORD: ${DB_PASS:?set DB_PASS in .env}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASS:?set DB_ROOT_PASS in .env}
+    volumes:
+      - rw6selor-db-data:/var/lib/mysql
+      - ./db-init:/docker-entrypoint-initdb.d:ro
+      - ./sql/mudamudi_common_SAFE_UPDATE.sql:/docker-entrypoint-initdb.d/mudamudi_common_SAFE_UPDATE.sql:ro
 
   # For Node.js realtime games
   rw6selor-billiard-realtime:
@@ -63,6 +87,9 @@ services:
 networks:
   coolify:
     external: true
+  rw6selor-internal:
+    internal: true
 
 volumes:
   rw6selor-php-logs:
+  rw6selor-db-data:

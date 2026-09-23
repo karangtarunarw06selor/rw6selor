@@ -1,9 +1,9 @@
 /* ==========================================================================
-   DAFTAR ANGGOTA MMS 05 - DATABASE API
+   DAFTAR ANGGOTA RW06 SELOR - DATABASE API
    ========================================================================== */
-const URL_API_ANGGOTA = "https://mudamudiselor.web.id/common/api/members.php";
+const URL_API_ANGGOTA = "https://rw6selor.org/common/api/members.php";
 const URL_TSV_ANGGOTA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR45-ysPdK4uVibwJQbXKvaGGA2zlX3m2GnAS2392fiSDwENSz9ABffImneI-u4ZGmErvHbdM5RJoDi/pub?gid=992968433&single=true&output=tsv";
-const PUBLIC_SITE_BASE_ANGGOTA = "https://mudamudiselor.web.id";
+const PUBLIC_SITE_BASE_ANGGOTA = "https://rw6selor.org";
 let dataAnggotaGlobal = [];
 let dataAnggotaTersaring = [];
 let halAnggotaSaatIni = 1;

@@ -1,13 +1,13 @@
 /**
  * Editor Data Anggota - Admin
- * Muda Mudi Sedahromo Lor 05
+ * RW06 Selor
  */
 
 const MEMBERS_ADMIN_API_BASE = getMembersAdminApiBase();
-const MEMBERS_ADMIN_PUBLIC_BASE = 'https://mudamudiselor.web.id';
+const MEMBERS_ADMIN_PUBLIC_BASE = 'https://rw6selor.org';
 
 function getMembersAdminApiBase() {
-    return 'https://mudamudiselor.web.id/common/api';
+    return 'https://rw6selor.org/common/api';
 }
 
 let membersData = [];

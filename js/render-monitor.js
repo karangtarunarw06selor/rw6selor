@@ -2,7 +2,7 @@ import { renderBracket } from "./render-bracket.js";
 import { renderPodium } from "./render-podium.js";
 import { categoryLabel, GENDER_LABELS, MODE_LABELS } from "./lomba-storage.js";
 
-const MONITOR_API_BASE = "https://mudamudiselor.web.id/api/public";
+const MONITOR_API_BASE = "https://rw6selor.org/api/public";
 
 const fetchMonitorJson = async (path, params = {}) => {
   const url = new URL(`${MONITOR_API_BASE}/${path}`);

@@ -35,7 +35,7 @@ const generateInfoVisibility = {
 
 const MONITOR_PUBLIC_URL = window.location.protocol === "file:"
   ? "../website-mms05-main/monitor-lomba.html"
-  : "https://mudamudiselor.biz.id/monitor-lomba.html";
+  : "https://rw6selor.org/monitor-lomba.html";
 
 const escapeHtml = (value = "") => String(value)
   .replaceAll("&", "&amp;")

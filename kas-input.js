@@ -1,6 +1,6 @@
 (function () {
     // Ubah DOMAIN-UTAMA sesuai domain utama yang mengarah ke public_html.
-    const API_BASE = 'https://mudamudiselor.web.id/common/api';
+    const API_BASE = 'https://rw6selor.org/common/api';
     const bulan = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
     const rupiah = (angka) => new Intl.NumberFormat('id-ID', {

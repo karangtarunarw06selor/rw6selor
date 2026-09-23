@@ -4,7 +4,7 @@
  * Dan mengelola pesan (edit/hapus) untuk admin
  */
 function getChatWargaApiBase() {
-    return 'https://mudamudiselor.web.id/common/api';
+    return 'https://rw6selor.org/common/api';
 }
 
 class ChatWargaEditor {

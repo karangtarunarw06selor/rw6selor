@@ -3,7 +3,7 @@
     const IS_LOCAL = hostname === 'localhost' || hostname === '127.0.0.1';
     const HASIL_RAPAT_API_BASE = IS_LOCAL
         ? 'http://localhost:8000/public_html/common/api'
-        : 'https://mudamudiselor.web.id/common/api';
+        : 'https://rw6selor.org/common/api';
 
     const HASIL_RAPAT_PUBLIC_BASE = HASIL_RAPAT_API_BASE.replace(/\/common\/api\/?$/, '');
     let hasilRapatData = [];

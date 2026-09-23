@@ -1,4 +1,4 @@
-const ENGLISH_PUBLIC_API_BASE = "https://mudamudiselor.web.id/common/api";
+const ENGLISH_PUBLIC_API_BASE = "https://rw6selor.org/common/api";
 const URL_LATIHAN = `${ENGLISH_PUBLIC_API_BASE}/english_public_exercises.php?limit=1000`;
 
 const latihanState = {

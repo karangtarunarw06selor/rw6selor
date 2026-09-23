@@ -8,6 +8,8 @@ billiard/test_*.html
 # Archives / env / database dumps
 *.zip
 *.sql
+!sql/mudamudi_common_SAFE_UPDATE.sql
+!db-init/*.sql
 .env
 
 # IDE / OS

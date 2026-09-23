@@ -1,10 +1,10 @@
 {
   "name": "public_html",
   "version": "1.0.0",
-  "description": "---------- Selamat datang di Github Muda Mudi Selor -----------   * Bantu kembangkan website untuk Muda Mudi sedahromo Lor *   * Buat YPPA (yang paham-paham aja)   * You are smarter than other people in Sedahromo Lor ----------------------------------------------------------------",
+  "description": "---------- Selamat datang di Github RW06 Selor -----------   * Bantu kembangkan website untuk RW06 Selor sedahromo Lor *   * Portal warga RW06 Selor   * You are smarter than other people in Sedahromo Lor ----------------------------------------------------------------",
   "main": "englishmms.js",
   "scripts": {
-    "test": "node -e \"const fs=require('fs'); ['Dockerfile','Dockerfile.node','docker-compose.yml','index.html'].forEach((file)=>{if(!fs.existsSync(file)){throw new Error(file+' missing')}}); console.log('deployment files present')\""
+    "test": "node scripts/verify-rw06.js"
   },
   "keywords": [],
   "author": "",

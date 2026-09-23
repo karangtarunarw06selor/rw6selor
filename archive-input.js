@@ -8,14 +8,14 @@ function getArchiveInputApiBase() {
     const isLocal = host === "localhost" || host === "127.0.0.1";
 
     if (isLocal) {
-        if (location.pathname.startsWith("/mudamudiselor.biz.id/")) {
+        if (location.pathname.startsWith("/rw6selor.org/")) {
             return `${location.origin}/public_html/common/api`;
         }
         return `${location.origin}/common/api`;
     }
 
-    if (host.includes("mudamudiselor.biz.id")) {
-        return "https://mudamudiselor.web.id/common/api";
+    if (host.includes("rw6selor.org")) {
+        return "https://rw6selor.org/common/api";
     }
 
     return `${location.origin}/common/api`;
@@ -26,14 +26,14 @@ function getArchivePublicBase() {
     const isLocal = host === "localhost" || host === "127.0.0.1";
 
     if (isLocal) {
-        if (location.pathname.startsWith("/mudamudiselor.biz.id/")) {
+        if (location.pathname.startsWith("/rw6selor.org/")) {
             return `${location.origin}/public_html`;
         }
         return location.origin;
     }
 
-    if (host.includes("mudamudiselor.biz.id")) {
-        return "https://mudamudiselor.web.id";
+    if (host.includes("rw6selor.org")) {
+        return "https://rw6selor.org";
     }
 
     return location.origin;

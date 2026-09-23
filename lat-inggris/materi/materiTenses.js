@@ -19,7 +19,7 @@ export function prosesMateriTenses(namaMateriKolomC, subMateriKolomD, idLower, d
 
     let labelTipeTeks = subMateriKolomD.replace(/-/g, " ").toUpperCase();
     if (judulTense) judulTense.innerHTML = `Modul: <b>${dataCocok.materi || namaMateriKolomC} (${labelTipeTeks})</b>`;
-    if(boxSilabus) boxSilabus.innerText = dataCocok.judulBab || "MMS Ruang Literasi";
+    if(boxSilabus) boxSilabus.innerText = dataCocok.judulBab || "RW06 Ruang Literasi";
 
     let isiRumus = (dataCocok.rumus || "").replace(/\\n/g, "\n");
     let isiContoh = (dataCocok.contohKalimat || "").replace(/\\n/g, "\n");

@@ -1,7 +1,7 @@
 <?php
 /**
  * Members Helpers - Shared functions for Members API
- * Muda Mudi Sedahromo Lor 05
+ * RW06 Selor
  */
 
 header('Content-Type: application/json; charset=utf-8');

@@ -1,5 +1,5 @@
 (function () {
-  const MARKETPLACE_API_BASE = 'https://mudamudiselor.web.id/common/api';
+  const MARKETPLACE_API_BASE = 'https://rw6selor.org/common/api';
   const MARKETPLACE_PUBLIC_BASE = MARKETPLACE_API_BASE.replace(/\/common\/api\/?$/, '');
 
   let databaseMaster = { produk: [], interaksi: [] };
@@ -142,7 +142,7 @@
       const badgeKondisi = isTerjual ? 'TERJUAL' : p.kondisi;
       const badgeColor = isTerjual ? 'bg-danger text-white' : (p.kondisi === '2nd Good Condition' ? 'bg-warning text-dark' : 'bg-success text-white');
       const displaySisaWaktu = isTerjual ? '<b class="text-danger">Sudah Laku</b>' : `Aktif: <b>${escapeHtml(p.sisaHari)}</b> Hari (${escapeHtml(p.stok)} Stk)`;
-      const sellerName = p.nama_toko || p.nama_penjual || 'Penjual MMS';
+      const sellerName = p.nama_toko || p.nama_penjual || 'Penjual RW06';
 
       container.insertAdjacentHTML('beforeend', `
         <div class="product-card" onclick="bukaDetailBarang('${escapeHtml(p.id)}')" style="${isTerjual ? 'opacity: 0.65;' : ''}">
@@ -381,7 +381,7 @@
     const waNumber = normalizePhone(p.no_hp);
     const waUrl = waNumber ? `https://wa.me/${waNumber}` : '';
     const isOwner = currentUser && Number(currentUser.id) === Number(p.user_id);
-    const sellerName = p.nama_toko || p.nama_penjual || 'Penjual MMS';
+    const sellerName = p.nama_toko || p.nama_penjual || 'Penjual RW06';
 
     $('#panelDetailBarang').html(`
       <div class="text-center mb-3 bg-light p-2 rounded">
@@ -701,7 +701,7 @@
     try {
       const result = await requestJson(`marketplace_user_profile.php?user_id=${encodeURIComponent(userId)}&cache=${Date.now()}`);
       const seller = result.seller;
-      const sellerName = seller.nama_toko || seller.nama || 'Penjual MMS';
+      const sellerName = seller.nama_toko || seller.nama || 'Penjual RW06';
       const waNumber = normalizePhone(seller.no_hp);
       const waUrl = waNumber ? `https://wa.me/${waNumber}` : '';
 

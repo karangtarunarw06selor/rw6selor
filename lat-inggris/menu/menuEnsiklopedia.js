@@ -1,6 +1,6 @@
 // menuEnsiklopedia.js
 
-const ENGLISH_PUBLIC_API_BASE = "https://mudamudiselor.web.id/common/api";
+const ENGLISH_PUBLIC_API_BASE = "https://rw6selor.org/common/api";
 const URL_KAMUS = `${ENGLISH_PUBLIC_API_BASE}/english_public_vocabulary.php`;
 const URL_VERB = `${ENGLISH_PUBLIC_API_BASE}/english_public_verbs.php`;
 

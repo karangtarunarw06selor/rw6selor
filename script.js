@@ -1,5 +1,5 @@
 /* ==========================================================================
-   NAMA ORGANISASI : MUDA MUDI SEDAHROMO LOR 05
+   NAMA ORGANISASI : RW06 SELOR
    BERKAS UTAMA    : SCRIPT.JS (LOGIKA INTERAKTIF & DATABASE REAL-TIME)
    ========================================================================== */
 
@@ -889,7 +889,7 @@ function initSistemPWA() {
     }
 
     window.addEventListener('appinstalled', () => { 
-        console.log('Aplikasi MMS 05 Sukses Terinstal!');
+        console.log('Aplikasi RW06 SELOR Sukses Terinstal!');
         tutupPopupInstal(); 
     });
 }
@@ -916,7 +916,7 @@ function validasiLogin() {
         if (errorBox) { errorBox.textContent = "Password tidak boleh kosong!"; errorBox.style.display = "block"; }
         inputBox.focus();
     } else {
-        if (errorBox) { errorBox.textContent = "Password salah! Khusus internal BPH MMS 05."; errorBox.style.display = "block"; }
+        if (errorBox) { errorBox.textContent = "Password salah! Khusus internal RW06 SELOR."; errorBox.style.display = "block"; }
         inputBox.value = ""; inputBox.focus();
     }
 }
