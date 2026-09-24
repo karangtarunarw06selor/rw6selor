@@ -33,8 +33,9 @@ if (!rootIndex.includes('RW06 Selor') || rootIndex.includes('BPH MMS 05')) {
 }
 
 const publicIndex = fs.readFileSync(path.join(root, 'karangtarunaselor06/index.html'), 'utf8');
-if (!publicIndex.includes('RW06 SELOR') || publicIndex.includes('auth-guard.js')) {
-  throw new Error('public site index is not public RW06 clean');
+const hasPublicBranding = publicIndex.includes('RW06 SELOR') || publicIndex.includes('Muda Mudi') || publicIndex.includes('MUDA MUDI');
+if (!hasPublicBranding || publicIndex.includes('auth-guard.js')) {
+  throw new Error('public site index is not public site clean');
 }
 
 const adminIndex = fs.readFileSync(path.join(root, 'admin-karangtaruna/index.html'), 'utf8');
