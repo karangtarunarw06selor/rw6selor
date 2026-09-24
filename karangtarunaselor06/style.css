@@ -178,11 +178,17 @@ body {
 /* ==========================================================================
    2. HERO SECTION & CONTENT MAIN DESIGN
    ========================================================================== */
+:root {
+    --hero-bg-1: url('images/bg-1.avif');
+    --hero-bg-2: url('images/bg-2.avif');
+    --hero-bg-current: var(--hero-bg-1);
+}
+
 .hero-container {
     position: relative; 
     width: 100%; 
     min-height: 100vh;
-    background-image: url('images/mms-foto-bersama2025.jpg'); 
+    background-image: var(--hero-bg-current); 
     background-size: cover; 
     background-position: center; 
     display: flex; 

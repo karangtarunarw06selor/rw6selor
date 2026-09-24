@@ -940,6 +940,29 @@ window.closeModal = function() {
     if (modal) modal.classList.remove('active');
 };
 
+const HERO_BG_STORAGE_KEY = 'karangtarunaHeroBackground';
+const HERO_BG_OPTIONS = ['1', '2'];
+
+function applyHeroBackground(value) {
+    const nextValue = HERO_BG_OPTIONS.includes(String(value)) ? String(value) : '1';
+    document.documentElement.style.setProperty('--hero-bg-current', `var(--hero-bg-${nextValue})`);
+    localStorage.setItem(HERO_BG_STORAGE_KEY, nextValue);
+    return nextValue;
+}
+
+window.setHeroBackground = function(value) {
+    return applyHeroBackground(value);
+};
+
+window.toggleHeroBackground = function() {
+    const currentValue = localStorage.getItem(HERO_BG_STORAGE_KEY) || '1';
+    return applyHeroBackground(currentValue === '1' ? '2' : '1');
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    applyHeroBackground(localStorage.getItem(HERO_BG_STORAGE_KEY) || '1');
+});
+
 
 
 /* ==========================================================================
