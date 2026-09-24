@@ -959,8 +959,25 @@ window.toggleHeroBackground = function() {
     return applyHeroBackground(currentValue === '1' ? '2' : '1');
 };
 
+let heroBgAutoRotateTimer = null;
+
+window.startHeroBackgroundAutoRotate = function(intervalMs = 8000) {
+    if (heroBgAutoRotateTimer) clearInterval(heroBgAutoRotateTimer);
+    heroBgAutoRotateTimer = setInterval(() => {
+        window.toggleHeroBackground();
+    }, intervalMs);
+};
+
+window.stopHeroBackgroundAutoRotate = function() {
+    if (heroBgAutoRotateTimer) {
+        clearInterval(heroBgAutoRotateTimer);
+        heroBgAutoRotateTimer = null;
+    }
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     applyHeroBackground(localStorage.getItem(HERO_BG_STORAGE_KEY) || '1');
+    window.startHeroBackgroundAutoRotate(8000);
 });
 
 
