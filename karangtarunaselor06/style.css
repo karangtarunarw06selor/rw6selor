@@ -1120,3 +1120,118 @@ body.login-page-body .login-page-wrapper {
 .pwa-mms-btn-install:hover {
     background-color: #1a252f !important; 
 }
+
+/* ==========================================================================
+   MODAL POP-UP ANTI-JUDOL
+   ========================================================================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999999 !important;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.4s ease-out, visibility 0.4s ease-out;
+  touch-action: none;
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal-content {
+  background-color: #ffffff;
+  width: 90%;
+  max-width: 440px;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  touch-action: manipulation;
+}
+
+.modal-image {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  max-height: 60vh;
+  display: block;
+  object-fit: contain;
+}
+
+.modal-header {
+  position: relative;
+  height: 30px;
+}
+
+.modal-close-x {
+  position: absolute;
+  top: 5px;
+  right: 15px;
+  font-size: 28px;
+  color: #aaa;
+  cursor: pointer;
+  z-index: 10001;
+}
+
+.modal-close-x:hover {
+  color: #333;
+}
+
+.modal-cta-container {
+  padding: 15px 20px 10px;
+  text-align: center;
+}
+
+.modal-cta-text {
+  font-family: sans-serif;
+  font-size: 16px;
+  font-weight: bold;
+  color: #e53935;
+  margin: 0;
+}
+
+.modal-footer {
+  padding: 10px 20px 20px;
+  text-align: center;
+  border-top: 1px solid #f0f0f0;
+}
+
+.modal-close-btn {
+  background-color: #ffffff;
+  border: 1px solid #dcdcdc;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  color: #4a4a4a;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: auto;
+  margin: 0 auto;
+}
+
+.modal-close-btn span {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.modal-close-btn:hover {
+  background-color: #f7f7f7;
+}
+
+@media (max-width: 480px) {
+  .modal-content {
+    width: 88%;
+  }
+}

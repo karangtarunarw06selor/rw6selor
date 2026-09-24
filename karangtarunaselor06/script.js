@@ -935,11 +935,16 @@ function isiDropdown(id, dataArray) {
 }
 function formatRupiah(angka) { return 'Rp ' + Math.abs(angka).toLocaleString('id-ID'); }
 
+window.closeModal = function() {
+    const modal = document.getElementById('modalOverlay');
+    if (modal) modal.classList.remove('active');
+};
 
 
 
 /* ==========================================================================
    11. DETECTOR DEVICE (ANDROID/IPHONE)
+
    ===========================================*/
 function isIos() {
   const userAgent = window.navigator.userAgent.toLowerCase();
