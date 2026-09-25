@@ -18,16 +18,16 @@
 
     <style>
       /* Pengaturan Dasar Tampilan Literasi */
-      body { background: #FAFBFB; color: #333; font-family: 'Segoe UI', sans-serif; padding-top: 0; }
+      body { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 55%, #0f5ea8 100%); color: #333; font-family: 'Segoe UI', sans-serif; padding-top: 0; }
       
       .site-header { position: relative !important; width: 100%; z-index: 1000; }
       
-      /* Tombol Utama Tema Merah Organisasi */
-      .btn-red-custom { background-color: #E53935; color: white; border: none; font-weight: 600; transition: 0.2s; border-radius: 6px; }
-      .btn-red-custom:hover { background-color: #D32F2F; color: white; }
+      /* Tombol Utama Tema Biru Tua Organisasi */
+      .btn-red-custom { background-color: #0f5ea8; color: white; border: none; font-weight: 600; transition: 0.2s; border-radius: 6px; }
+      .btn-red-custom:hover { background-color: #1a252f; color: white; }
       
       /* Container Form Login Anggota */
-      .login-container { max-width: 90%; width: 360px; margin: 60px auto 120px auto; border-top: 5px solid #E53935; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08) !important; background: white; padding: 25px; border-radius: 8px; }
+      .login-container { max-width: 90%; width: 360px; margin: 60px auto 120px auto; border-top: 5px solid #0f5ea8; box-shadow: 0 4px 15px rgba(15, 94, 168, 0.18) !important; background: white; padding: 25px; border-radius: 8px; }
       
       /* Struktur Tabel Request */
       .table-organisasi { width: 100% !important; border-collapse: collapse !important; }
@@ -38,8 +38,8 @@
       /* Navbar Filter Kategori Buku */
       .category-navbar { display: flex; gap: 8px; margin-bottom: 10px; background: #fff; padding: 8px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border: 1px solid #EAEAEA; overflow-x: auto; white-space: nowrap; }
       .category-nav-btn { background: #f8f9fa; color: #5A6268; border: 1px solid #EAEAEA; font-size: 0.8rem; font-weight: 600; padding: 6px 16px; border-radius: 20px; transition: all 0.2s ease; cursor: pointer; }
-      .category-nav-btn:hover { background: #E53935; color: white; border-color: #E53935; }
-      .category-nav-btn.active { background: #E53935; color: white; border-color: #E53935; box-shadow: 0 3px 8px rgba(229, 57, 53, 0.2); }
+      .category-nav-btn:hover { background: #0f5ea8; color: white; border-color: #0f5ea8; }
+      .category-nav-btn.active { background: #0f5ea8; color: white; border-color: #0f5ea8; box-shadow: 0 3px 8px rgba(15, 94, 168, 0.22); }
 
       /* Sub Navbar Kategori */
       .sub-category-navbar { display: flex; gap: 6px; margin-bottom: 15px; padding: 4px 8px; overflow-x: auto; white-space: nowrap; }
@@ -64,7 +64,7 @@
       #tabelBuku tr, #tabelBuku td { display: block !important; padding: 0 !important; border: none !important; width: 100% !important; }
       
       .book-card { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 3px 8px rgba(0,0,0,0.05); transition: all 0.3s ease; border: 1px solid #EAEAEA; display: flex; flex-direction: column; height: 320px !important; position: relative; width: 100%; }
-      .book-card:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(229, 57, 53, 0.12); border-color: rgba(229, 57, 53, 0.25); }
+      .book-card:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(15, 94, 168, 0.16); border-color: rgba(15, 94, 168, 0.3); }
       
       .book-cover-wrapper { position: relative; width: 100%; height: 155px; background-color: #ECEFF1; display: flex; align-items: center; justify-content: center; overflow: hidden; border-bottom: 1px solid #F0F0F0; }
       .book-cover-img { width: 100%; height: 100%; object-fit: cover; z-index: 2; position: relative; }
@@ -79,8 +79,8 @@
       .badge-status-pending { background-color: #FFF3CD; color: #856404; border: 1px solid #FFEBAA; padding: 4px 8px; border-radius: 20px; font-size: 0.72rem; }
       .badge-status-success { background-color: #D4EDDA; color: #155724; border: 1px solid #C3E6CB; padding: 4px 8px; border-radius: 20px; font-size: 0.72rem; }
       
-      .page-item.active .page-link { background-color: #E53935 !important; border-color: #E53935 !important; color: white !important; }
-      .page-link { color: #E53935; padding: 5px 12px; font-size: 0.8rem; font-weight: bold; }
+      .page-item.active .page-link { background-color: #0f5ea8 !important; border-color: #0f5ea8 !important; color: white !important; }
+      .page-link { color: #0f5ea8; padding: 5px 12px; font-size: 0.8rem; font-weight: bold; }
       
       .dataTables_wrapper .dataTables_filter { width: 100% !important; margin-bottom: 12px; text-align: left !important; }
       .dataTables_wrapper .dataTables_filter input { width: 100% !important; border-radius: 6px; padding: 8px 12px; border: 1px solid #DDD; display: block; font-size: 0.85rem; }
@@ -89,15 +89,15 @@
       /* Efek Glow Pulse untuk Nama Anggota */
       .glow-text { 
         font-weight: 700; 
-        color: #E53935; 
+        color: #0f5ea8; 
         display: inline-block;
         animation: glowPulse 2s infinite ease-in-out;
       }
 
       @keyframes glowPulse {
-        0% { text-shadow: 0 0 4px rgba(229, 57, 53, 0.2); }
-        50% { text-shadow: 0 0 16px rgba(229, 57, 53, 0.7), 0 0 22px rgba(229, 57, 53, 0.4); }
-        100% { text-shadow: 0 0 4px rgba(229, 57, 53, 0.2); }
+        0% { text-shadow: 0 0 4px rgba(15, 94, 168, 0.22); }
+        50% { text-shadow: 0 0 16px rgba(15, 94, 168, 0.72), 0 0 22px rgba(15, 94, 168, 0.45); }
+        100% { text-shadow: 0 0 4px rgba(15, 94, 168, 0.22); }
       }
 
       /* Gaya Tampilan Badge Anggota Aktif */
@@ -243,7 +243,7 @@
         
         <div id="loginPage" class="login-container">
           <div class="text-center mb-4">
-            <h5 class="fw-bold style-header" style="color: #E53935;"><i class="fa-solid fa-book-bookmark me-2"></i>E-PERPUSTAKAAN RW06 SELOR RT.05</h5>
+            <h5 class="fw-bold style-header" style="color: #0f5ea8;"><i class="fa-solid fa-book-bookmark me-2"></i>E-PERPUSTAKAAN RW06 SELOR RT.05</h5>
             <p class="text-muted small">Validasi Khusus Anggota Resmi RW06</p>
           </div>
           <div id="loginAlert" class="alert alert-danger hidden">Email pendaftaran tidak ditemukan!</div>
@@ -257,7 +257,7 @@
         <div id="mainPage" class="bg-white p-3 shadow-sm rounded border hidden">
           <div class="d-flex justify-content-between align-items-start mb-3 border-bottom pb-2 gap-2 text-start">
             <div>
-              <h4 class="mb-0 fw-bold" style="color: #E53935; font-size: 1.2rem;"><i class="fa-solid fa-folder-open me-2"></i>RUANG LITERASI DIGITAL</h4>
+              <h4 class="mb-0 fw-bold" style="color: #0f5ea8; font-size: 1.2rem;"><i class="fa-solid fa-folder-open me-2"></i>RUANG LITERASI DIGITAL</h4>
               <div id="welcomeMsg" class="small mt-1 text-secondary"></div>
             </div>
             
@@ -285,7 +285,7 @@
                 
                 <div class="collapse mb-3" id="formRequestPanel">
                   <div class="bg-white p-3 rounded border">
-                    <h6 class="fw-bold mb-2 text-dark" style="font-size:0.8rem;"><i class="fa-solid fa-file-signature text-danger me-1"></i> Formulir Usulan Buku Baru</h6>
+                    <h6 class="fw-bold mb-2 text-dark" style="font-size:0.8rem;"><i class="fa-solid fa-file-signature text-primary me-1"></i> Formulir Usulan Buku Baru</h6>
                     <div class="row g-2">
                       <div class="col-sm-6"><input type="text" id="reqJudul" class="form-control form-control-sm" placeholder="Judul Buku *"></div>
                       <div class="col-sm-6"><input type="text" id="reqPenulis" class="form-control form-control-sm" placeholder="Nama Penulis"></div>
@@ -320,10 +320,10 @@
 
     <div class="modal fade" id="disclaimerModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
       <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius: 12px; overflow: hidden; border-top: 5px solid #E53935;">
+        <div class="modal-content" style="border-radius: 12px; overflow: hidden; border-top: 5px solid #0f5ea8;">
           <div class="modal-header bg-light">
             <h5 class="modal-title fw-bold text-dark" style="font-size: 1.05rem;">
-              <i class="fa-solid fa-circle-info text-danger me-2"></i>Informasi & Aturan Ruang Literasi
+              <i class="fa-solid fa-circle-info text-primary me-2"></i>Informasi & Aturan Ruang Literasi
             </h5>
           </div>
           <div class="modal-body p-3 small text-secondary" style="line-height: 1.6;">
@@ -332,7 +332,7 @@
             </p>
             <p class="mb-3">Halaman ini <strong>dibuat khusus untuk seluruh anggota resmi</strong> RW06 Selor guna membantu meningkatkan minat baca dan wawasan literasi kita bersama.</p>
             <div style="background-color: #f8f9fa; padding: 12px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 15px; color: #333;">
-              <p class="mb-1 fw-bold text-danger" style="font-size: 0.8rem;"><i class="fa-solid fa-triangle-exclamation me-1"></i> PENTING UNTUK DIPATUHI:</p>
+              <p class="mb-1 fw-bold text-primary" style="font-size: 0.8rem;"><i class="fa-solid fa-triangle-exclamation me-1"></i> PENTING UNTUK DIPATUHI:</p>
               <ul class="m-0 ps-3 small">
                 <li>Seluruh file e-book di sini <strong>tidak untuk dipublikasikan luas atau dikomersilkan</strong> di luar organisasi.</li>
                 <li>Jika kamu suka dengan isi bukunya, <strong>silakan beli buku fisik aslinya di toko buku terdekat</strong> sebagai bentuk nyata dukungan kita kepada penulis dan penerbit.</li>
@@ -524,7 +524,7 @@
         $('#loginPage').addClass('hidden');
         $('#mainPage').removeClass('hidden');
         
-        document.getElementById('welcomeMsg').innerHTML = `<i class="fa-solid fa-circle-user text-danger me-1"></i> Anggota: <b class="glow-text">${res.nama}</b> (${res.nim})`;
+        document.getElementById('welcomeMsg').innerHTML = `<i class="fa-solid fa-circle-user text-primary me-1"></i> Anggota: <b class="glow-text">${res.nama}</b> (${res.nim})`;
         
         // Mengurutkan otomatis data buku berdasarkan alfabet (A-Z) judul buku
         if (res.buku && res.buku.length > 0) {
