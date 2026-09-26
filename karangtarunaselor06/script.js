@@ -387,54 +387,36 @@ function bersihkanNominal(teksNominal) {
 
 async function loadKeuanganDariDrive() {
     try {
-        const response = await fetch(`${linkTsvKeuangan}&cache=${new Date().getTime()}`);
-        const teksData = await response.text();
-        const baris = teksData.split(/\r?\n/);
-        
-        dataKeuanganGlobal = [];
-        let daftarTahun = new Set();
-        let daftarBulan = new Set();
-
-        for (let i = 1; i < baris.length; i++) {
-            const barisBersih = baris[i].trim();
-            if (!barisBersih) continue; 
-            
-            const kolom = barisBersih.split("\t");
-            if (kolom.length < 4) continue; 
-
-            let tglRaw = kolom[0] ? kolom[0].trim() : "";       
-            let ketTransaksi = kolom[1] ? kolom[1].trim() : ""; 
-            let linkNotaRaw = kolom[5] ? kolom[5].trim() : "";  
-            
-            if (!tglRaw || tglRaw === "Tanggal" || ketTransaksi.toUpperCase() === "TOTAL") continue; 
-
-            let nilaiC = kolom[2] ? bersihkanNominal(kolom[2]) : 0; 
-            let nilaiD = kolom[3] ? bersihkanNominal(kolom[3]) : 0; 
-
-            let statusTipe = "";
-            let nominalFix = 0;
-
-            if (nilaiC > 0 && nilaiD === 0) {
-                statusTipe = "masuk"; 
-                nominalFix = nilaiC;  
-            } else if (nilaiD > 0 && nilaiC === 0) {
-                statusTipe = "keluar"; 
-                nominalFix = nilaiD;   
-            } else {
-                continue; 
-            }
-
-            let tglSplit = tglRaw.split("/");
-            let thn = tglSplit[2] ? tglSplit[2].trim() : "2026";
-            let bln = namaBulanIndo[parseInt(tglSplit[1], 10) - 1] || "Semua";
-
-            daftarTahun.add(thn);
-            daftarBulan.add(bln);
-
-            dataKeuanganGlobal.push({ 
-                tanggal: tglRaw, bulan: bln, tahun: thn, keterangan: ketTransaksi, tipe: statusTipe, jumlah: nominalFix.toString(), linkNota: linkNotaRaw
-            });
+        const response = await fetch(`/common/api/cashflow_list.php?cache=${Date.now()}`);
+        const result = await response.json();
+        if (!response.ok || !result.success) {
+            throw new Error(result.message || "Gagal memuat data keuangan.");
         }
+
+        dataKeuanganGlobal = [];
+        const daftarTahun = new Set();
+        const daftarBulan = new Set();
+
+        (result.data || []).forEach((row) => {
+            const tanggalRaw = String(row.tanggal_format || row.tanggal || "").trim();
+            const bagianTanggal = tanggalRaw.split("/");
+            const tahun = bagianTanggal[2] || String(row.tanggal || "").slice(0, 4) || "";
+            const nomorBulan = bagianTanggal[1] || String(row.tanggal || "").slice(5, 7);
+            const bulan = namaBulanIndo[parseInt(nomorBulan, 10) - 1] || "Semua";
+
+            if (tahun) daftarTahun.add(tahun);
+            if (bulan !== "Semua") daftarBulan.add(bulan);
+
+            dataKeuanganGlobal.push({
+                tanggal: tanggalRaw,
+                bulan,
+                tahun,
+                keterangan: String(row.keterangan || "-"),
+                tipe: row.jenis === "keluar" ? "keluar" : "masuk",
+                jumlah: String(row.jumlah || 0),
+                linkNota: String(row.bukti_file || ""),
+            });
+        });
 
         dataKeuanganGlobal.sort((a, b) => parseTanggalKeObjek(b.tanggal) - parseTanggalKeObjek(a.tanggal));
         isiDropdown('filter-tahun', Array.from(daftarTahun).sort().reverse());
@@ -443,7 +425,7 @@ async function loadKeuanganDariDrive() {
     } catch (e) {
         console.error("Gagal memuat data keuangan", e);
         const tBody = document.getElementById('data-tabel-keuangan');
-        if (tBody) tBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">Gagal memuat data dari database.</td></tr>`;
+        if (tBody) tBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Gagal memuat data dari database.</td></tr>`;
     }
 }
 
@@ -491,26 +473,30 @@ function renderTabel() {
     if (!tbody) return;
 
     if (dataTersaringGlobal.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:#666;">Data transaksi tidak ditemukan.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px; color:#666;">Data transaksi tidak ditemukan.</td></tr>`;
         return;
     }
 
     const start = (halamanSaatIni - 1) * barisPerHalaman;
     const pageData = dataTersaringGlobal.slice(start, start + barisPerHalaman);
+    let saldoBerjalan = 0;
+    const notaUrl = (path) => /^https?:\/\//i.test(path) ? path : `/${path.replace(/^\/+/, '')}`;
     
-    let html = pageData.map(i => `
+    let html = pageData.map(i => {
+        const jumlah = parseInt(i.jumlah) || 0;
+        const masuk = i.tipe === 'masuk' ? jumlah : 0;
+        const keluar = i.tipe === 'keluar' ? jumlah : 0;
+        saldoBerjalan += masuk - keluar;
+        return `
         <tr>
             <td>${i.tanggal}</td>
-            <td>
-                ${i.keterangan}
-                ${i.linkNota && i.linkNota !== "-" && i.linkNota.trim() !== "" ? `<br><a href="${i.linkNota}" target="_blank" style="color:#E53935; font-size:10px; font-weight:bold; text-decoration:underline;">[Lihat Nota]</a>` : ""}
-            </td>
-            <td style="font-weight:bold;">
-                ${i.tipe === 'masuk' ? '<span style="color:#2e7d32;"><i class="fa-solid fa-arrow-down"></i> Pemasukan</span>' : '<span style="color:#E53935;"><i class="fa-solid fa-arrow-up"></i> Pengeluaran</span>'}
-            </td>
-            <td><strong>${formatRupiah(parseInt(i.jumlah) || 0)}</strong></td>
-        </tr>
-    `).join('');
+            <td>${i.keterangan}</td>
+            <td style="font-weight:bold; color:#2e7d32;">${masuk ? formatRupiah(masuk) : '-'}</td>
+            <td style="font-weight:bold; color:#0b477f;">${keluar ? formatRupiah(keluar) : '-'}</td>
+            <td><strong>${formatRupiah(saldoBerjalan)}</strong></td>
+            <td>${i.linkNota && i.linkNota !== "-" && i.linkNota.trim() !== "" ? `<a href="${notaUrl(i.linkNota)}" target="_blank" style="color:#0f5ea8; font-size:12px; font-weight:bold; text-decoration:underline;">Lihat Nota</a>` : "-"}</td>
+        </tr>`;
+    }).join('');
 
     const totalHal = Math.ceil(dataTersaringGlobal.length / barisPerHalaman);
     if (totalHal > 1) {
@@ -531,6 +517,88 @@ function renderTabel() {
 window.nav = (dir) => { halamanSaatIni += dir; renderTabel(); };
 
 /* ==========================================================================
+   4B. DEKLARASI AKSES DOKUMENTASI
+   ========================================================================== */
+function callToast(msg, type="info") {
+    const toast = document.getElementById("auth-toast");
+    const icon = document.getElementById("auth-toast-icon");
+    const msgEl = document.getElementById("auth-toast-msg");
+    if (!toast || !icon || !msgEl) return;
+    msgEl.innerText = msg;
+    icon.className = type === "success" ? "fa-solid fa-circle-check" : "fa-solid fa-circle-exclamation";
+    toast.style.background = type === "success" ? "#10b981" : "#ef4444";
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), 3000);
+}
+
+window.verifikasiAksesAnggota = function() {
+    const input = document.getElementById("user-email-auth");
+    const emailInput = input ? input.value.trim().toLowerCase() : "";
+    if (!emailInput) return callToast("Alamat email wajib diisi!", "warning");
+
+    const loader = document.getElementById("custom-loader");
+    if (loader) loader.style.display = "flex";
+
+    fetch(`${linkTsvAnggota}&cache=${Date.now()}`)
+        .then(res => res.text())
+        .then(teksData => {
+            if (loader) loader.style.display = "none";
+            const baris = teksData.split("\n");
+            let emailDitemukan = false;
+
+            for (let i = 1; i < baris.length; i++) {
+                const kolom = baris[i].split("\t");
+                if (kolom[1] && kolom[1].trim().toLowerCase() === emailInput) {
+                    emailDitemukan = true;
+                    break;
+                }
+            }
+
+            if (emailDitemukan) {
+                localStorage.setItem("mms_auth_email", emailInput);
+                callToast("Akses terverifikasi!", "success");
+                window.bukaAksesHalaman(emailInput);
+            } else {
+                callToast("Email Anda tidak terdaftar di database Anggota!", "danger");
+            }
+        })
+        .catch(() => {
+            if (loader) loader.style.display = "none";
+            callToast("Gagal memuat berkas verifikasi!", "danger");
+        });
+};
+
+window.bukaAksesHalaman = function(email) {
+    const authFrame = document.getElementById("auth-frame-anggota");
+    const dataFrame = document.getElementById("data-frame-anggota");
+    const label = document.getElementById("lbl-user-auth");
+    if (authFrame) authFrame.style.display = "none";
+    if (dataFrame) dataFrame.style.display = "block";
+    if (label) label.innerText = email;
+    if (typeof loadDokumentasiDariDrive === "function") {
+        loadDokumentasiDariDrive();
+    }
+};
+
+window.logoutAksesAnggota = function() {
+    localStorage.removeItem("mms_auth_email");
+    location.reload();
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    const authFrame = document.getElementById("auth-frame-anggota");
+    const dataFrame = document.getElementById("data-frame-anggota");
+    if (!authFrame || !dataFrame) return;
+    const emailSaved = localStorage.getItem("mms_auth_email");
+    if (emailSaved) {
+        window.bukaAksesHalaman(emailSaved);
+    } else {
+        authFrame.style.display = "block";
+        dataFrame.style.display = "none";
+    }
+});
+
+/* ========================================================================== 
    5. SISTEM NOTULEN & HASIL MUSYAWARAH RAPAT BULANAN
    ========================================================================== */
 const linkTsvRapat = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRq9to0l-2kWwtGcTvwY70z_Ga8NAVmI-C_k4LYoDgTxGhqPY954gdkuRGmqRYe3wP-zSd6M9cUz-qC/pub?gid=1613608992&single=true&output=tsv";
