@@ -7,6 +7,8 @@ require_once __DIR__ . '/structure_helpers.php';
 handle_cors_preflight();
 
 try {
+    $pdo = db();
+
     if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'GET') {
         json_response(['success' => false, 'message' => 'Method tidak diizinkan.'], 405);
     }

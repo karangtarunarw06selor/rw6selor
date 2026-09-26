@@ -7,6 +7,8 @@ require_once __DIR__ . '/structure_helpers.php';
 handle_cors_preflight();
 
 try {
+    $pdo = db();
+
     structure_ensure_table($pdo);
     $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
