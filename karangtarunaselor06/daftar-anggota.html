@@ -25,14 +25,14 @@
         }
 
         /* Desain Box Form Login Akses Anggota */
-        .auth-card-mms { background: #fff; padding: 30px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); max-width: 420px; margin: 60px auto; text-align: center; border-top: 5px solid #D32F2F; }
+        .auth-card-mms { background: #fff; padding: 30px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); max-width: 420px; margin: 60px auto; text-align: center; border-top: 5px solid #0f5ea8; }
         .auth-form-group { text-align: left; margin: 20px 0; }
         .auth-form-group label { display: block; font-weight: bold; font-size: 13px; color: #475569; margin-bottom: 6px; }
         .auth-input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
-        .auth-register-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; padding: 8px 12px; border-radius: 999px; background: #fff1f1; color: #D32F2F; font-size: 12px; font-weight: 800; text-decoration: none; border: 1px solid #fecaca; transition: 0.2s; }
-        .auth-register-toggle:hover { background: #D32F2F; color: #ffffff; border-color: #D32F2F; }
-        .btn-auth-submit { background-color: #D32F2F; color: #fff; border: none; padding: 12px; border-radius: 6px; font-weight: bold; width: 100%; cursor: pointer; transition: 0.3s; font-size: 14px; }
-        .btn-auth-submit:hover { background-color: #b71c1c; }
+        .auth-register-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; padding: 8px 12px; border-radius: 999px; background: #eff6ff; color: #0f5ea8; font-size: 12px; font-weight: 800; text-decoration: none; border: 1px solid #bfdbfe; transition: 0.2s; }
+        .auth-register-toggle:hover { background: #0f5ea8; color: #ffffff; border-color: #0f5ea8; }
+        .btn-auth-submit { background-color: #0f5ea8; color: #fff; border: none; padding: 12px; border-radius: 6px; font-weight: bold; width: 100%; cursor: pointer; transition: 0.3s; font-size: 14px; }
+        .btn-auth-submit:hover { background-color: #0b477f; }
 
         /* Toast Komponen Notifikasi Kustom */
         .toast-auth { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: #334155; color: #fff; padding: 12px 24px; border-radius: 30px; font-weight: bold; font-size: 14px; z-index: 99999; transition: top 0.4s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 8px; }
@@ -42,7 +42,7 @@
             width: 75px;
             height: 75px;
             border-radius: 50%;
-            border: 3px solid #E53935;
+            border: 3px solid #0f5ea8;
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -59,7 +59,7 @@
         }
 
         .anggota-avatar-fallback {
-            background: linear-gradient(135deg, #ef5350 0%, #d32f2f 52%, #8e1922 100%);
+            background: linear-gradient(135deg, #60a5fa 0%, #0f5ea8 52%, #0b477f 100%);
             color: #ffffff;
             font-weight: 800;
             font-size: 1.05rem;
@@ -86,7 +86,7 @@
 <body> 
     
     <div id="custom-loader" class="loading-overlay" style="display: none;">
-        <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 40px; color:#D32F2F"></i>
+        <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 40px; color:#0f5ea8"></i>
         <div id="loader-text" style="font-weight:bold; margin-top: 10px;">Memverifikasi Akses...</div>
     </div>
 
@@ -189,7 +189,7 @@
    
     <div class="finance-page-wrapper">
         <div id="auth-frame-anggota" class="auth-card-mms" style="display: none;">
-            <i class="fa-solid fa-user-lock" style="font-size: 50px; color: #D32F2F;"></i>
+            <i class="fa-solid fa-user-lock" style="font-size: 50px; color: #0f5ea8;"></i>
             <h3 style="margin-top:15px; color:#1e293b;">Deklarasi Hak Akses</h3>
             <p style="font-size: 13px; color: #64748b; line-height: 1.4;">Untuk melindungi privasi kependudukan warga pemuda, silakan konfirmasi email terdaftar Anda untuk membuka pangkalan data.</p>
             
@@ -206,7 +206,7 @@
         <div id="data-frame-anggota" class="content-box" style="max-width: 1100px; width: 95%; display: none;">
             <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 20px; background:#f8fafc; padding:10px 15px; border-radius:8px; border:1px solid #e2e8f0;">
                 <div style="font-size: 12px; color:#475569;"><i class="fa-solid fa-circle-user" style="color:#10b981;"></i> Sesi: <strong id="lbl-user-auth"></strong></div>
-                <button onclick="logoutAksesAnggota()" style="background:none; border:none; color:#ef4444; font-weight:bold; font-size:11px; cursor:pointer;"><i class="fa-solid fa-power-off"></i> Kunci Akses</button>
+                <button onclick="logoutAksesAnggota()" style="background:none; border:none; color:#0f5ea8; font-weight:bold; font-size:11px; cursor:pointer;"><i class="fa-solid fa-power-off"></i> Kunci Akses</button>
             </div>
 
             <h2 class="box-title">DAFTAR ANGGOTA</h2>
@@ -297,7 +297,7 @@
    
     <script src="online-tracker.js"></script>
 <script src="script.js?v=31"></script>
-<script src="js/daftar-anggota.js?v=auth-popup-1"></script>
+<script src="js/daftar-anggota.js?v=auth-blue-1"></script>
       
 </body>
 </html>

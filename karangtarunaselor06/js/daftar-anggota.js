@@ -196,7 +196,7 @@ function renderTabelAnggota() {
         return `<tr style="height:90px; vertical-align:middle;">
             <td>${escapeHtmlAnggota(item.nim)}</td>
             <td>${renderAvatarAnggota(item.nama, foto)}</td>
-            <td style="text-align:left; padding-left:20px;"><i class="fa-solid fa-user" style="color:#E53935; margin-right:8px;"></i> ${escapeHtmlAnggota(item.nama)}</td>
+            <td style="text-align:left; padding-left:20px;"><i class="fa-solid fa-user" style="color:#0f5ea8; margin-right:8px;"></i> ${escapeHtmlAnggota(item.nama)}</td>
             <td>${escapeHtmlAnggota(item.usia)}</td>
             <td>${getGenerasiBadge(item.tahunLahirInt)}</td>
         </tr>`;
@@ -204,7 +204,7 @@ function renderTabelAnggota() {
 
     const totalHal = Math.ceil(dataAnggotaTersaring.length / barisAnggotaPerHal);
     if (totalHal > 1) {
-        const styleBtn = "padding:8px 16px; background:#D32F2F; color:white; border:none; border-radius:4px; cursor:pointer;";
+        const styleBtn = "padding:8px 16px; background:#0f5ea8; color:white; border:none; border-radius:4px; cursor:pointer;";
         let tombolNav = "";
         if (halAnggotaSaatIni === 1) tombolNav = `<div style="text-align:right;"><button onclick="window.navAnggota(1)" style="${styleBtn}">Selanjutnya &gt;</button></div>`;
         else if (halAnggotaSaatIni === totalHal) tombolNav = `<div style="text-align:left;"><button onclick="window.navAnggota(-1)" style="${styleBtn}">&lt; Sebelumnya</button></div>`;
@@ -252,7 +252,7 @@ function callToast(msg, type = "info") {
 
     text.innerText = msg;
     icon.className = type === "success" ? "fa-solid fa-circle-check" : "fa-solid fa-circle-exclamation";
-    toast.style.background = type === "success" ? "#10b981" : "#ef4444";
+    toast.style.background = type === "success" ? "#10b981" : "#0f5ea8";
     toast.classList.add("show");
     setTimeout(() => toast.classList.remove("show"), 3000);
 }
