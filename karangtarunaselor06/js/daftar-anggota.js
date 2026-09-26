@@ -1,4 +1,5 @@
-/* ==========================================================================
+(() => {
+/* ==========================================================================...
    DAFTAR ANGGOTA RW06 SELOR - DATABASE API
    ========================================================================== */
 const URL_API_ANGGOTA = "/common/api/members.php";
@@ -311,3 +312,4 @@ window.addEventListener("DOMContentLoaded", async () => {
         dataFrame.style.display = "none";
     }
 });
+})();
