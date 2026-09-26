@@ -3,8 +3,7 @@
    DAFTAR ANGGOTA RW06 SELOR - DATABASE API
    ========================================================================== */
 const URL_API_ANGGOTA = "/common/api/members.php";
-const URL_TSV_ANGGOTA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR45-ysPdK4uVibwJQbXKvaGGA2zlX3m2GnAS2392fiSDwENSz9ABffImneI-u4ZGmErvHbdM5RJoDi/pub?gid=992968433&single=true&output=tsv";
-const PUBLIC_SITE_BASE_ANGGOTA = "https://rw6selor.org";
+const PUBLIC_SITE_BASE_ANGGOTA = window.location.origin;
 let dataAnggotaGlobal = [];
 let dataAnggotaTersaring = [];
 let halAnggotaSaatIni = 1;
@@ -117,52 +116,22 @@ async function fetchJsonAnggota(url, options = {}) {
     return result.data;
 }
 
-async function fetchFotoTsvAnggotaMap() {
-    const response = await fetch(`${URL_TSV_ANGGOTA}&cache=${Date.now()}`);
-    const text = await response.text();
-    const lines = text.split(/\r\n|\n|\r/).filter(Boolean);
-    if (lines.length < 2) return new Map();
-
-    const headers = lines[0].split("\t").map((item) => item.trim());
-    const nimIndex = headers.indexOf("NIM");
-    const fotoIndex = headers.indexOf("Upload Foto (Profil)") !== -1
-        ? headers.indexOf("Upload Foto (Profil)")
-        : headers.indexOf("Upload Foto Terbaikmu");
-    if (nimIndex === -1 || fotoIndex === -1) return new Map();
-
-    const fotoMap = new Map();
-    for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].split("\t");
-        const nim = String(cols[nimIndex] || "").trim();
-        const foto = String(cols[fotoIndex] || "").trim();
-        if (nim && foto) fotoMap.set(nim, foto);
-    }
-
-    return fotoMap;
-}
-
 async function loadAnggotaDariApi() {
     const tbody = document.getElementById("data-tabel-anggota");
     if (tbody) {
         tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:30px; color:#666;"><i class="fa-solid fa-spinner fa-spin"></i> Menghubungkan ke Database Anggota...</td></tr>`;
     }
 
-    const [rows, fotoTsvMap] = await Promise.all([
-        fetchJsonAnggota(`${URL_API_ANGGOTA}?cache=${Date.now()}`),
-        fetchFotoTsvAnggotaMap().catch(() => new Map()),
-    ]);
+    const rows = await fetchJsonAnggota(`${URL_API_ANGGOTA}?cache=${Date.now()}`);
 
-    dataAnggotaGlobal = rows.map((item) => {
-        const nim = String(item.member_code ?? "-");
-        return {
-            nim,
-            nama: String(item.full_name ?? "-"),
-            tahunLahirInt: Number(item.birth_year || 0),
-            usia: item.age_years ? `${Number(item.age_years)} Tahun` : "-",
-            fotoLocal: String(item.resolved_photo ?? item.photo_file ?? ""),
-            fotoDrive: String(fotoTsvMap.get(nim) || item.photo_url || ""),
-        };
-    });
+    dataAnggotaGlobal = rows.map((item) => ({
+        nim: String(item.member_code ?? "-"),
+        nama: String(item.full_name ?? "-"),
+        tahunLahirInt: Number(item.birth_year || 0),
+        usia: item.age_years ? `${Number(item.age_years)} Tahun` : "-",
+        fotoLocal: String(item.resolved_photo ?? item.photo_file ?? item.photo_url ?? ""),
+        fotoDrive: "",
+    }));
     terapkanFilterAnggota();
 }
 

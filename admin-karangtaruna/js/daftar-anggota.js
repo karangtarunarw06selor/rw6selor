@@ -1,9 +1,9 @@
-/* ==========================================================================
+(() => {
+/* ==========================================================================...
    DAFTAR ANGGOTA RW06 SELOR - DATABASE API
    ========================================================================== */
 const URL_API_ANGGOTA = "/common/api/members.php";
-const URL_TSV_ANGGOTA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR45-ysPdK4uVibwJQbXKvaGGA2zlX3m2GnAS2392fiSDwENSz9ABffImneI-u4ZGmErvHbdM5RJoDi/pub?gid=992968433&single=true&output=tsv";
-const PUBLIC_SITE_BASE_ANGGOTA = "https://rw6selor.org";
+const PUBLIC_SITE_BASE_ANGGOTA = window.location.origin;
 let dataAnggotaGlobal = [];
 let dataAnggotaTersaring = [];
 let halAnggotaSaatIni = 1;
@@ -116,52 +116,22 @@ async function fetchJsonAnggota(url, options = {}) {
     return result.data;
 }
 
-async function fetchFotoTsvAnggotaMap() {
-    const response = await fetch(`${URL_TSV_ANGGOTA}&cache=${Date.now()}`);
-    const text = await response.text();
-    const lines = text.split(/\r\n|\n|\r/).filter(Boolean);
-    if (lines.length < 2) return new Map();
-
-    const headers = lines[0].split("\t").map((item) => item.trim());
-    const nimIndex = headers.indexOf("NIM");
-    const fotoIndex = headers.indexOf("Upload Foto (Profil)") !== -1
-        ? headers.indexOf("Upload Foto (Profil)")
-        : headers.indexOf("Upload Foto Terbaikmu");
-    if (nimIndex === -1 || fotoIndex === -1) return new Map();
-
-    const fotoMap = new Map();
-    for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].split("\t");
-        const nim = String(cols[nimIndex] || "").trim();
-        const foto = String(cols[fotoIndex] || "").trim();
-        if (nim && foto) fotoMap.set(nim, foto);
-    }
-
-    return fotoMap;
-}
-
 async function loadAnggotaDariApi() {
     const tbody = document.getElementById("data-tabel-anggota");
     if (tbody) {
         tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:30px; color:#666;"><i class="fa-solid fa-spinner fa-spin"></i> Menghubungkan ke Database Anggota...</td></tr>`;
     }
 
-    const [rows, fotoTsvMap] = await Promise.all([
-        fetchJsonAnggota(`${URL_API_ANGGOTA}?cache=${Date.now()}`),
-        fetchFotoTsvAnggotaMap().catch(() => new Map()),
-    ]);
+    const rows = await fetchJsonAnggota(`${URL_API_ANGGOTA}?cache=${Date.now()}`);
 
-    dataAnggotaGlobal = rows.map((item) => {
-        const nim = String(item.member_code ?? "-");
-        return {
-            nim,
-            nama: String(item.full_name ?? "-"),
-            tahunLahirInt: Number(item.birth_year || 0),
-            usia: item.age_years ? `${Number(item.age_years)} Tahun` : "-",
-            fotoLocal: String(item.resolved_photo ?? item.photo_file ?? ""),
-            fotoDrive: String(fotoTsvMap.get(nim) || item.photo_url || ""),
-        };
-    });
+    dataAnggotaGlobal = rows.map((item) => ({
+        nim: String(item.member_code ?? "-"),
+        nama: String(item.full_name ?? "-"),
+        tahunLahirInt: Number(item.birth_year || 0),
+        usia: item.age_years ? `${Number(item.age_years)} Tahun` : "-",
+        fotoLocal: String(item.resolved_photo ?? item.photo_file ?? item.photo_url ?? ""),
+        fotoDrive: "",
+    }));
     terapkanFilterAnggota();
 }
 
@@ -195,7 +165,7 @@ function renderTabelAnggota() {
         return `<tr style="height:90px; vertical-align:middle;">
             <td>${escapeHtmlAnggota(item.nim)}</td>
             <td>${renderAvatarAnggota(item.nama, foto)}</td>
-            <td style="text-align:left; padding-left:20px;"><i class="fa-solid fa-user" style="color:#E53935; margin-right:8px;"></i> ${escapeHtmlAnggota(item.nama)}</td>
+            <td style="text-align:left; padding-left:20px;"><i class="fa-solid fa-user" style="color:#0f5ea8; margin-right:8px;"></i> ${escapeHtmlAnggota(item.nama)}</td>
             <td>${escapeHtmlAnggota(item.usia)}</td>
             <td>${getGenerasiBadge(item.tahunLahirInt)}</td>
         </tr>`;
@@ -203,7 +173,7 @@ function renderTabelAnggota() {
 
     const totalHal = Math.ceil(dataAnggotaTersaring.length / barisAnggotaPerHal);
     if (totalHal > 1) {
-        const styleBtn = "padding:8px 16px; background:#D32F2F; color:white; border:none; border-radius:4px; cursor:pointer;";
+        const styleBtn = "padding:8px 16px; background:#0f5ea8; color:white; border:none; border-radius:4px; cursor:pointer;";
         let tombolNav = "";
         if (halAnggotaSaatIni === 1) tombolNav = `<div style="text-align:right;"><button onclick="window.navAnggota(1)" style="${styleBtn}">Selanjutnya &gt;</button></div>`;
         else if (halAnggotaSaatIni === totalHal) tombolNav = `<div style="text-align:left;"><button onclick="window.navAnggota(-1)" style="${styleBtn}">&lt; Sebelumnya</button></div>`;
@@ -251,7 +221,7 @@ function callToast(msg, type = "info") {
 
     text.innerText = msg;
     icon.className = type === "success" ? "fa-solid fa-circle-check" : "fa-solid fa-circle-exclamation";
-    toast.style.background = type === "success" ? "#10b981" : "#ef4444";
+    toast.style.background = type === "success" ? "#10b981" : "#0f5ea8";
     toast.classList.add("show");
     setTimeout(() => toast.classList.remove("show"), 3000);
 }
@@ -311,3 +281,4 @@ window.addEventListener("DOMContentLoaded", async () => {
         dataFrame.style.display = "none";
     }
 });
+})();

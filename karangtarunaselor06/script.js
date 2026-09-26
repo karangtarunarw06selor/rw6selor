@@ -501,7 +501,7 @@ function renderTabel() {
     const totalHal = Math.ceil(dataTersaringGlobal.length / barisPerHalaman);
     if (totalHal > 1) {
         let tombolNav = "";
-        const styleBtn = "padding:8px 16px; background:#E53935; color:white; border:none; border-radius:4px; cursor:pointer; font-weight:bold; font-size:12px;";
+        const styleBtn = "padding:8px 16px; background:#0f5ea8; color:white; border:none; border-radius:4px; cursor:pointer; font-weight:bold; font-size:12px;";
         if (halamanSaatIni === 1) {
             tombolNav = `<div style="text-align:right;"><button onclick="nav(1)" style="${styleBtn}">Halaman Selanjutnya <i class="fa-solid fa-chevron-right"></i></button></div>`;
         } else if (halamanSaatIni === totalHal) {
@@ -526,12 +526,12 @@ function callToast(msg, type="info") {
     if (!toast || !icon || !msgEl) return;
     msgEl.innerText = msg;
     icon.className = type === "success" ? "fa-solid fa-circle-check" : "fa-solid fa-circle-exclamation";
-    toast.style.background = type === "success" ? "#10b981" : "#ef4444";
+    toast.style.background = type === "success" ? "#10b981" : "#0f5ea8";
     toast.classList.add("show");
     setTimeout(() => toast.classList.remove("show"), 3000);
 }
 
-window.verifikasiAksesAnggota = function() {
+window.verifikasiAksesAnggota = async function() {
     const input = document.getElementById("user-email-auth");
     const emailInput = input ? input.value.trim().toLowerCase() : "";
     if (!emailInput) return callToast("Alamat email wajib diisi!", "warning");
@@ -539,33 +539,24 @@ window.verifikasiAksesAnggota = function() {
     const loader = document.getElementById("custom-loader");
     if (loader) loader.style.display = "flex";
 
-    fetch(`${linkTsvAnggota}&cache=${Date.now()}`)
-        .then(res => res.text())
-        .then(teksData => {
-            if (loader) loader.style.display = "none";
-            const baris = teksData.split("\n");
-            let emailDitemukan = false;
-
-            for (let i = 1; i < baris.length; i++) {
-                const kolom = baris[i].split("\t");
-                if (kolom[1] && kolom[1].trim().toLowerCase() === emailInput) {
-                    emailDitemukan = true;
-                    break;
-                }
-            }
-
-            if (emailDitemukan) {
-                localStorage.setItem("mms_auth_email", emailInput);
-                callToast("Akses terverifikasi!", "success");
-                window.bukaAksesHalaman(emailInput);
-            } else {
-                callToast("Email Anda tidak terdaftar di database Anggota!", "danger");
-            }
-        })
-        .catch(() => {
-            if (loader) loader.style.display = "none";
-            callToast("Gagal memuat berkas verifikasi!", "danger");
+    try {
+        const response = await fetch('/common/api/members.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'verify', email: emailInput }),
         });
+        const result = await response.json();
+        if (!response.ok || !result.ok) {
+            throw new Error(result.message || "Email Anda tidak terdaftar di database Anggota!");
+        }
+        localStorage.setItem("mms_auth_email", emailInput);
+        callToast("Akses terverifikasi!", "success");
+        window.bukaAksesHalaman(emailInput);
+    } catch (error) {
+        callToast(error.message || "Email Anda tidak terdaftar di database Anggota!", "danger");
+    } finally {
+        if (loader) loader.style.display = "none";
+    }
 };
 
 window.bukaAksesHalaman = function(email) {
@@ -675,8 +666,8 @@ function renderTabelRapat() {
     
     let html = pageData.map(i => `
         <tr>
-            <td style="font-weight: 500; color: #333; vertical-align: top;"><i class="fa-regular fa-calendar-days" style="color:#E53935; margin-right:5px;"></i> ${i.tanggal}</td>
-            <td style="font-weight: bold; color: #E53935; vertical-align: top;">${i.agenda}</td>
+            <td style="font-weight: 500; color: #333; vertical-align: top;"><i class="fa-regular fa-calendar-days" style="color:#0f5ea8; margin-right:5px;"></i> ${i.tanggal}</td>
+            <td style="font-weight: bold; color: #0f5ea8; vertical-align: top;">${i.agenda}</td>
             <td style="vertical-align: top; padding-right:20px;"><div style="line-height: 1.6; text-align: left; color: #333;">${i.hasil}</div></td>
             <td style="vertical-align: top;"><i class="fa-solid fa-location-dot" style="color: #666; margin-right:4px;"></i> ${i.lokasi}</td>
         </tr>
@@ -684,7 +675,7 @@ function renderTabelRapat() {
 
     const totalHal = Math.ceil(dataRapatTersaring.length / barisRapatPerHal);
     if (totalHal > 1) {
-        let tombolNav = ""; const styleBtn = "padding:8px 16px; background:#E53935; color:white; border:none; border-radius:4px; cursor:pointer; font-weight:bold;";
+        let tombolNav = ""; const styleBtn = "padding:8px 16px; background:#0f5ea8; color:white; border:none; border-radius:4px; cursor:pointer; font-weight:bold;";
         if (halRapatSaatIni === 1) {
             tombolNav = `<div style="text-align:right;"><button onclick="navRapat(1)" style="${styleBtn}">Halaman Selanjutnya <i class="fa-solid fa-chevron-right"></i></button></div>`;
         } else if (halRapatSaatIni === totalHal) {
@@ -778,19 +769,19 @@ function renderTabelDokumentasi() {
                     kolomMedia += `
                         <div style="text-align:center; margin-bottom: 5px;">
                             <a href="${linkSingle}" target="_blank"><img src="${renderUrl}" alt="${i.agenda}" style="max-width:260px; max-height:200px; object-fit:contain; background-color:#fafafa; border-radius:6px; box-shadow:0 2px 6px rgba(0,0,0,0.12); border:1px solid #ddd;"></a><br>
-                            <a href="${linkSingle}" target="_blank" style="font-size:11px; color:#E53935; text-decoration:none; display:inline-block; margin-top:4px; font-weight:600;"><i class="fa-solid fa-magnifying-glass-plus"></i> Foto ${index + 1} (Penuh)</a>
+                            <a href="${linkSingle}" target="_blank" style="font-size:11px; color:#0f5ea8; text-decoration:none; display:inline-block; margin-top:4px; font-weight:600;"><i class="fa-solid fa-magnifying-glass-plus"></i> Foto ${index + 1} (Penuh)</a>
                         </div>`;
                 } else {
-                    kolomMedia += `<a href="${linkSingle}" target="_blank" style="padding:6px 12px; background:#f5f5f5; border:1px solid #ccc; border-radius:4px; text-decoration:none; color:#333; font-size:11px; display:inline-block; font-weight:bold;"><i class="fa-solid fa-paperclip" style="color:#E53935;"></i> Buka Berkas ${index + 1}</a>`;
+                    kolomMedia += `<a href="${linkSingle}" target="_blank" style="padding:6px 12px; background:#f5f5f5; border:1px solid #ccc; border-radius:4px; text-decoration:none; color:#333; font-size:11px; display:inline-block; font-weight:bold;"><i class="fa-solid fa-paperclip" style="color:#0f5ea8;"></i> Buka Berkas ${index + 1}</a>`;
                 }
             });
             kolomMedia += `</div>`;
         } else { kolomMedia = `<div style="text-align:center; color:#999; font-style:italic; font-size:12px;">Tidak ada file</div>`; }
 
         return `<tr>
-            <td style="font-weight:500; color:#444; vertical-align:top;"><i class="fa-regular fa-calendar" style="color:#E53935; margin-right:4px;"></i> ${i.tanggal}</td>
+            <td style="font-weight:500; color:#444; vertical-align:top;"><i class="fa-regular fa-calendar" style="color:#0f5ea8; margin-right:4px;"></i> ${i.tanggal}</td>
             <td style="vertical-align:top; padding-top:15px;">${kolomMedia}</td>
-            <td style="font-weight:bold; color:#E53935; vertical-align:top; line-height:1.4;">${i.agenda}</td>
+            <td style="font-weight:bold; color:#0f5ea8; vertical-align:top; line-height:1.4;">${i.agenda}</td>
             <td style="font-weight:600; color:#555; vertical-align:top;">${i.subjek}</td>
             <td style="line-height:1.6; text-align:justify; white-space:pre-line; vertical-align:top; padding-right:10px;">${i.kegiatan}</td>
         </tr>`;
@@ -798,7 +789,7 @@ function renderTabelDokumentasi() {
 
     const totalHal = Math.ceil(dataDokumentasiTersaring.length / barisDokPerHal);
     if (totalHal > 1) {
-        let tombolNav = ""; const styleBtn = "padding:8px 16px; background:#E53935; color:white; border:none; border-radius:4px; cursor:pointer; font-weight:bold;";
+        let tombolNav = ""; const styleBtn = "padding:8px 16px; background:#0f5ea8; color:white; border:none; border-radius:4px; cursor:pointer; font-weight:bold;";
         if (halDokSaatIni === 1) {
             tombolNav = `<div style="text-align:right;"><button onclick="navDok(1)" style="${styleBtn}">Halaman Selanjutnya <i class="fa-solid fa-chevron-right"></i></button></div>`;
         } else if (halDokSaatIni === totalHal) {
@@ -815,37 +806,24 @@ window.navDok = (dir) => { halDokSaatIni += dir; renderTabelDokumentasi(); setTi
 /* ==========================================================================
    7. DATABASE ANGGOTA, UMUR JUJUR & FOTO POPUP
    ========================================================================== */
-const linkTsvAnggota = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR45-ysPdK4uVibwJQbXKvaGGA2zlX3m2GnAS2392fiSDwENSz9ABffImneI-u4ZGmErvHbdM5RJoDi/pub?gid=992968433&single=true&output=tsv";
-let dataAnggotaGlobal = []; let dataAnggotaTersaring = []; let halAnggotaSaatIni = 1; const barisAnggotaPerHal = 7; 
+const URL_API_ANGGOTA_PUBLIC = "/common/api/members.php";
+let dataAnggotaGlobal = []; let dataAnggotaTersaring = []; let halAnggotaSaatIni = 1; const barisAnggotaPerHal = 7;
 
 async function loadAnggotaDariDrive() {
     try {
-        const response = await fetch(`${linkTsvAnggota}&cache=${new Date().getTime()}`);
-        const teksData = await response.text(); const baris = teksData.split("\n");
-        dataAnggotaGlobal = [];
-
-        for (let i = 1; i < baris.length; i++) {
-            const barisBersih = baris[i].trim(); if (!barisBersih) continue;
-            const kolom = barisBersih.split("\t");
-            
-            let nama = kolom[2] ? kolom[2].trim() : "-"; let nim = kolom[4] ? kolom[4].trim() : "-";          
-            let tglLahirRaw = kolom[6] ? kolom[6].trim() : ""; let linkFotoRaw = kolom[13] ? kolom[13].trim() : ""; 
-            let usiaTeks = "-", tahunLahirInt = 0;
-
-            let matchTahun = tglLahirRaw.match(/\b(19\d{2}|20\d{2})\b/);
-            if (matchTahun) { tahunLahirInt = parseInt(matchTahun[0], 10); }
-
-            if (tahunLahirInt > 0) {
-                let tglInggris = tglLahirRaw.toLowerCase().replace('mei', 'may').replace('agu', 'aug').replace('okt', 'oct').replace('des', 'dec');
-                let tglLahirObj = new Date(tglInggris); let hariIni = new Date(); let umur = hariIni.getFullYear() - tahunLahirInt;
-                if (!isNaN(tglLahirObj.getTime())) {
-                    let bulanSelisih = hariIni.getMonth() - tglLahirObj.getMonth();
-                    if (bulanSelisih < 0 || (bulanSelisih === 0 && hariIni.getDate() < tglLahirObj.getDate())) { umur--; }
-                }
-                usiaTeks = umur + " Tahun";
-            }
-            if (tahunLahirInt > 0) { dataAnggotaGlobal.push({ nim: nim, nama: nama, tahunLahirInt: tahunLahirInt, usia: usiaTeks, foto: linkFotoRaw }); }
+        const response = await fetch(`${URL_API_ANGGOTA_PUBLIC}?cache=${Date.now()}`);
+        const result = await response.json();
+        if (!response.ok || !result.ok) {
+            throw new Error(result.message || "Gagal memuat database anggota.");
         }
+
+        dataAnggotaGlobal = (result.data || []).map((item) => ({
+            nim: String(item.member_code || "-"),
+            nama: String(item.full_name || "-"),
+            tahunLahirInt: Number(item.birth_year || 0),
+            usia: item.age_years ? `${Number(item.age_years)} Tahun` : "-",
+            foto: String(item.resolved_photo || item.photo_file || item.photo_url || ""),
+        }));
         terapkanFilterAnggota();
     } catch (e) { console.error("Gagal memuat database anggota", e); }
 }
@@ -865,7 +843,7 @@ function renderTabelAnggota() {
     const start = (halAnggotaSaatIni - 1) * barisAnggotaPerHal; const dataPerHalaman = dataAnggotaTersaring.slice(start, start + barisAnggotaPerHal);
     
     let html = dataPerHalaman.map(i => {
-        let linkDefaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(i.nama)}&background=E53935&color=fff&size=150&bold=true`;
+        let linkDefaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(i.nama)}&background=0f5ea8&color=fff&size=150&bold=true`;
         let urlFotoTampil = linkDefaultAvatar; 
         
         if (i.foto && i.foto !== "" && i.foto !== "-") {
@@ -885,8 +863,8 @@ function renderTabelAnggota() {
 
         return `<tr style="height: 90px; vertical-align: middle;"> 
             <td style="font-size: 14px; font-weight: bold; color: #555;">${i.nim}</td>
-            <td style="padding: 10px 0;"><img src="${urlFotoTampil}" alt="Foto ${i.nama}" style="width: 75px; height: 75px; object-fit: cover; border-radius: 50%; border: 3px solid #E53935; box-shadow: 0 4px 8px rgba(0,0,0,0.15); display: block; margin: 0 auto; cursor: pointer;" onerror="this.src='${linkDefaultAvatar}'" onclick="event.stopPropagation(); window.bukaFotoFull('${urlFotoTampil}');"></td>
-            <td style="text-align: left; padding-left: 20px; font-size: 15px; font-weight: 600; color: #333;"><i class="fa-solid fa-user" style="color:#E53935; margin-right:8px;"></i> ${i.nama}</td>
+            <td style="padding: 10px 0;"><img src="${urlFotoTampil}" alt="Foto ${i.nama}" style="width: 75px; height: 75px; object-fit: cover; border-radius: 50%; border: 3px solid #0f5ea8; box-shadow: 0 4px 8px rgba(0,0,0,0.15); display: block; margin: 0 auto; cursor: pointer;" onerror="this.src='${linkDefaultAvatar}'" onclick="event.stopPropagation(); window.bukaFotoFull('${urlFotoTampil}');"></td>
+            <td style="text-align: left; padding-left: 20px; font-size: 15px; font-weight: 600; color: #333;"><i class="fa-solid fa-user" style="color:#0f5ea8; margin-right:8px;"></i> ${i.nama}</td>
             <td><span class="badge-usia" style="font-size: 13px; font-weight: 600; padding: 4px 10px;">${i.usia}</span></td>
             <td>${generasi}</td>
         </tr>`;
@@ -894,7 +872,7 @@ function renderTabelAnggota() {
 
     const totalHal = Math.ceil(dataAnggotaTersaring.length / barisAnggotaPerHal);
     if (totalHal > 1) {
-        let tombolNav = ""; const styleBtn = "padding:8px 16px; background:#E53935; color:white; border:none; border-radius:4px; cursor:pointer; font-weight:bold; font-size:12px;";
+        let tombolNav = ""; const styleBtn = "padding:8px 16px; background:#0f5ea8; color:white; border:none; border-radius:4px; cursor:pointer; font-weight:bold; font-size:12px;";
         if (halAnggotaSaatIni === 1) {
             tombolNav = `<div style="text-align:right;"><button onclick="window.navAnggota(1)" style="${styleBtn}">Halaman Selanjutnya <i class="fa-solid fa-chevron-right"></i></button></div>`;
         } else if (halAnggotaSaatIni === totalHal) {
