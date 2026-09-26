@@ -392,7 +392,212 @@ body {
 .finance-table tr:nth-child(even) { background-color: #fafafa; }
 .finance-table tr:hover { background-color: #f1f1f1; }
 
-/* ==========================================================================
+/* ========================================================================== 
+   4B. HALAMAN NOTULEN RAPAT
+   ========================================================================== */
+.rapat-page .finance-page-wrapper {
+    background: linear-gradient(180deg, #e0f2fe 0%, #f8fbff 52%, #e0f2fe 100%);
+    min-height: 72vh;
+    padding-left: 18px;
+    padding-right: 18px;
+}
+
+.rapat-page .content-box {
+    border-top: 6px solid #0f5ea8;
+    border-radius: 18px;
+    box-shadow: 0 18px 40px rgba(15, 94, 168, 0.12);
+}
+
+.rapat-page .box-title {
+    color: #0f172a;
+    letter-spacing: 0.04em;
+}
+
+.rapat-page .box-divider {
+    width: 70px;
+    height: 4px;
+    border: 0;
+    border-radius: 999px;
+    background: #0f5ea8;
+    margin: 12px auto 18px;
+}
+
+.rapat-page .filter-container {
+    background: #f8fafc;
+    border: 1px solid #dbeafe;
+    border-radius: 16px;
+    padding: 16px;
+}
+
+.rapat-page .filter-box {
+    border-color: #bfdbfe;
+    color: #0f172a;
+    background: #ffffff;
+}
+
+.rapat-page .filter-box:focus {
+    border-color: #0f5ea8;
+    box-shadow: 0 0 0 3px rgba(15, 94, 168, 0.12);
+}
+
+.rapat-card-list {
+    display: grid;
+    gap: 18px;
+}
+
+.rapat-card {
+    background: #ffffff;
+    border: 1px solid #dbeafe;
+    border-left: 5px solid #0f5ea8;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 10px 24px rgba(15, 94, 168, 0.08);
+}
+
+.rapat-card.is-expanded {
+    border-color: #0f5ea8;
+    box-shadow: 0 16px 36px rgba(15, 94, 168, 0.14);
+}
+
+.rapat-card-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    align-items: flex-start;
+}
+
+.rapat-card-title {
+    margin: 0 0 8px;
+    color: #0f172a;
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.rapat-card-subtitle {
+    margin: 0;
+    color: #64748b;
+    font-size: 13px;
+}
+
+.rapat-card-subtitle i,
+.rapat-section h4 i {
+    color: #0f5ea8;
+}
+
+.rapat-card-badge {
+    flex: 0 0 auto;
+    background: #eff6ff;
+    color: #0f5ea8;
+    border: 1px solid #bfdbfe;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+}
+
+.rapat-card-preview {
+    margin-top: 14px;
+    color: #334155;
+    line-height: 1.65;
+}
+
+.rapat-card-detail {
+    margin-top: 16px;
+    padding: 16px;
+    background: #f8fbff;
+    border: 1px solid #dbeafe;
+    border-radius: 14px;
+}
+
+.rapat-section + .rapat-section {
+    margin-top: 18px;
+}
+
+.rapat-section h4,
+.rapat-md-heading,
+.rapat-subheading {
+    color: #0f172a;
+}
+
+.rapat-content {
+    color: #334155;
+    line-height: 1.7;
+}
+
+.rapat-md-list {
+    margin: 8px 0 12px 20px;
+}
+
+.rapat-toggle-detail,
+.rapat-page-btn,
+.rapat-attachment-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1px solid #bfdbfe;
+    background: #eff6ff;
+    color: #0f5ea8;
+    border-radius: 999px;
+    padding: 9px 14px;
+    font-weight: 800;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.rapat-toggle-detail {
+    margin-top: 16px;
+}
+
+.rapat-toggle-detail:hover,
+.rapat-page-btn:hover,
+.rapat-attachment-btn:hover {
+    background: #0f5ea8;
+    border-color: #0f5ea8;
+    color: #ffffff;
+}
+
+.rapat-pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    margin-top: 22px;
+}
+
+.rapat-page-info,
+.rapat-empty-state {
+    color: #64748b;
+    font-weight: 700;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .rapat-page .finance-page-wrapper {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    .rapat-page .content-box {
+        padding: 24px 16px;
+    }
+
+    .rapat-page .filter-container,
+    .rapat-card-header,
+    .rapat-pagination {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .rapat-page .filter-box,
+    .rapat-page #input-cari-rapat {
+        width: 100% !important;
+    }
+}
+
+/* ========================================================================== 
    5. HALAMAN STRUKTUR PENGURUS INTI & SWIPER CAROUSEL
    ========================================================================== */
 .structure-page-wrapper { padding-top: 170px; padding-bottom: 60px; display: flex; justify-content: center; }
