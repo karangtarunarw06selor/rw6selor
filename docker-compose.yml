@@ -61,6 +61,7 @@ services:
       - "coolify.managed=true"
     volumes:
       - ./karangtarunaselor06:/var/www/html:ro
+      - rw6selor-uploads:/var/www/html/uploads:ro
       - rw6selor-public-php-logs:/var/log/apache2
 
   rw6selor-admin:
@@ -93,6 +94,7 @@ services:
       - "coolify.managed=true"
     volumes:
       - ./admin-karangtaruna:/var/www/html:ro
+      - rw6selor-uploads:/var/www/html/uploads
       - rw6selor-admin-php-logs:/var/log/apache2
 
   rw6selor-db:
@@ -158,3 +160,4 @@ volumes:
   rw6selor-public-php-logs:
   rw6selor-admin-php-logs:
   rw6selor-db-data:
+  rw6selor-uploads:
