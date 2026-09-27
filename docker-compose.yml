@@ -96,6 +96,7 @@ services:
       - ./admin-karangtaruna:/var/www/html:ro
       - rw6selor-uploads:/var/www/html/uploads
       - rw6selor-admin-php-logs:/var/log/apache2
+    command: ["sh", "-c", "chown -R www-data:www-data /var/www/html/uploads && apache2-foreground"]
 
   rw6selor-db:
     image: mariadb:11.4
