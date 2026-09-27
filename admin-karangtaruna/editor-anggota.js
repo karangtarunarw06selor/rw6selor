@@ -597,7 +597,13 @@ async function saveMember(event) {
             body: formData
         });
 
-        const result = await response.json();
+        const rawText = await response.text();
+        let result;
+        try {
+            result = JSON.parse(rawText);
+        } catch (parseError) {
+            throw new Error(rawText.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 220) || 'Response server bukan JSON.');
+        }
 
         if (result.success) {
             showAdminAlert('success', result.message || 'Data anggota berhasil disimpan.');
@@ -611,7 +617,7 @@ async function saveMember(event) {
             showAdminAlert('error', result.message || 'Gagal menyimpan data.');
         }
     } catch (err) {
-        showAdminAlert('error', 'Terjadi kesalahan jaringan. Silakan coba lagi.');
+        showAdminAlert('error', 'Gagal menyimpan data: ' + (err.message || 'Terjadi kesalahan jaringan.'));
     } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = originalText;

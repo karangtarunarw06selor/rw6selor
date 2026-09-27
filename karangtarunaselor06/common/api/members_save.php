@@ -4,6 +4,13 @@ declare(strict_types=1);
 require_once __DIR__ . '/members_helpers.php';
 require_once __DIR__ . '/../db.php';
 
+set_exception_handler(function (Throwable $error): void {
+    json_response([
+        'success' => false,
+        'message' => 'Gagal menyimpan data anggota: ' . $error->getMessage(),
+    ], 500);
+});
+
 member_ensure_profile_columns($pdo);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
