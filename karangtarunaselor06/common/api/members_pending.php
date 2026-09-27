@@ -5,6 +5,7 @@ require_once __DIR__ . '/members_pending_helpers.php';
 require_once __DIR__ . '/../db.php';
 
 member_pending_ensure_table($pdo);
+member_ensure_profile_columns($pdo);
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
 if ($method === 'GET') {
@@ -76,6 +77,7 @@ if ($action !== 'approve') {
 $fullName = trim((string)($input['full_name'] ?? $pending['full_name']));
 $email = trim((string)($input['email'] ?? $pending['email']));
 $whatsapp = normalize_whatsapp(trim((string)($input['whatsapp'] ?? $pending['whatsapp'])));
+$rt = preg_replace('/[^0-9A-Za-z]/', '', trim((string)($input['rt'] ?? $pending['rt'] ?? ''))) ?? '';
 $birthPlace = trim((string)($input['birth_place'] ?? $pending['birth_place']));
 $birthDate = trim((string)($input['birth_date'] ?? $pending['birth_date']));
 $parentName = trim((string)($input['parent_name'] ?? $pending['parent_name']));
@@ -111,11 +113,11 @@ try {
 
     $stmt = $pdo->prepare("
         INSERT INTO members (
-            member_code, full_name, email, whatsapp, birth_place, birth_date, age_years,
+            member_code, full_name, email, whatsapp, rt, birth_place, birth_date, age_years,
             parent_name, current_status, hobby, organization_experience, photo_url,
             form_submitted_at, raw_source, is_active
         ) VALUES (
-            :member_code, :full_name, :email, :whatsapp, :birth_place, :birth_date, :age_years,
+            :member_code, :full_name, :email, :whatsapp, :rt, :birth_place, :birth_date, :age_years,
             :parent_name, :current_status, :hobby, :organization_experience, :photo_url,
             COALESCE(:submitted_at, NOW()), :raw_source, 0
         )
@@ -125,6 +127,7 @@ try {
         ':full_name' => $fullName,
         ':email' => $email,
         ':whatsapp' => $whatsapp,
+        ':rt' => $rt,
         ':birth_place' => $birthPlace,
         ':birth_date' => $birthDate,
         ':age_years' => $ageYears,

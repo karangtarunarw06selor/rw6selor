@@ -12,6 +12,7 @@ function member_pending_ensure_table(PDO $pdo): void
             full_name VARCHAR(180) NOT NULL,
             email VARCHAR(180) DEFAULT '',
             whatsapp VARCHAR(40) DEFAULT '',
+            rt VARCHAR(10) DEFAULT '',
             birth_place VARCHAR(120) DEFAULT '',
             birth_date DATE DEFAULT NULL,
             parent_name VARCHAR(180) DEFAULT '',
@@ -32,6 +33,8 @@ function member_pending_ensure_table(PDO $pdo): void
             INDEX idx_member_pending_member (member_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     ");
+
+    $pdo->exec("ALTER TABLE member_pending_submissions ADD COLUMN IF NOT EXISTS rt VARCHAR(10) DEFAULT '' AFTER whatsapp");
 }
 
 function member_pending_json_input(): array
@@ -154,6 +157,7 @@ function member_pending_from_sheet_row(array $row): array
     $fullName = member_pending_pick($row, ['nama lengkap', 'nama', 'full name', 'name']);
     $email = member_pending_pick_exact($row, ['Email (Aktif)', 'Email Aktif']) ?: member_pending_pick($row, ['email', 'mail']);
     $whatsapp = normalize_whatsapp(member_pending_pick($row, ['nomer whatsapp', 'nomor whatsapp', 'whatsapp', 'wa', 'nomor hp', 'nomer hp', 'no hp', 'telepon', 'phone']));
+    $rt = preg_replace('/[^0-9A-Za-z]/', '', member_pending_pick($row, ['rt', 'rukun tetangga'])) ?? '';
     $birthPlace = member_pending_pick($row, ['tempat lahir', 'birth place']);
     $birthDate = member_pending_normalize_date(member_pending_pick($row, ['tanggal lahir', 'tgl lahir', 'birth date']));
     $parentName = member_pending_pick($row, ['orang tua', 'nama ortu', 'parent']);
@@ -170,6 +174,7 @@ function member_pending_from_sheet_row(array $row): array
         'full_name' => $fullName,
         'email' => $email,
         'whatsapp' => $whatsapp,
+        'rt' => $rt,
         'birth_place' => $birthPlace,
         'birth_date' => $birthDate,
         'parent_name' => $parentName,
@@ -190,11 +195,11 @@ function member_pending_insert(PDO $pdo, array $item): bool
 
     $stmt = $pdo->prepare("
         INSERT INTO member_pending_submissions (
-            row_hash, full_name, email, whatsapp, birth_place, birth_date,
+            row_hash, full_name, email, whatsapp, rt, birth_place, birth_date,
             parent_name, current_status, hobby, organization_experience,
             photo_url, submitted_at, raw_source, status
         ) VALUES (
-            :row_hash, :full_name, :email, :whatsapp, :birth_place, NULLIF(:birth_date, ''),
+            :row_hash, :full_name, :email, :whatsapp, :rt, :birth_place, NULLIF(:birth_date, ''),
             :parent_name, :current_status, :hobby, :organization_experience,
             :photo_url, NULLIF(:submitted_at, ''), :raw_source, 'pending'
         )
@@ -202,6 +207,7 @@ function member_pending_insert(PDO $pdo, array $item): bool
             full_name = VALUES(full_name),
             email = VALUES(email),
             whatsapp = VALUES(whatsapp),
+            rt = VALUES(rt),
             birth_place = VALUES(birth_place),
             birth_date = VALUES(birth_date),
             parent_name = VALUES(parent_name),
@@ -217,6 +223,7 @@ function member_pending_insert(PDO $pdo, array $item): bool
         ':full_name' => $item['full_name'],
         ':email' => $item['email'],
         ':whatsapp' => $item['whatsapp'],
+        ':rt' => $item['rt'],
         ':birth_place' => $item['birth_place'],
         ':birth_date' => $item['birth_date'],
         ':parent_name' => $item['parent_name'],

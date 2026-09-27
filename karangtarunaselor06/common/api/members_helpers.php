@@ -50,6 +50,28 @@ function calculate_age($birth_date) {
     return $now->diff($birth)->y;
 }
 
+function member_ensure_profile_columns(PDO $pdo): void
+{
+    $pdo->exec("ALTER TABLE members ADD COLUMN IF NOT EXISTS rt VARCHAR(10) DEFAULT '' AFTER whatsapp");
+}
+
+function member_generation_label(?int $birthYear, ?int $ageYears = null): string
+{
+    if ($birthYear !== null && $birthYear > 0) {
+        if ($birthYear >= 2013) return 'Gen Alpha';
+        if ($birthYear >= 1997) return 'Gen Z';
+        if ($birthYear >= 1981) return 'Milenial';
+        return 'Gen X / Senior';
+    }
+
+    if ($ageYears !== null && $ageYears >= 0) {
+        $birthYear = (int)date('Y') - $ageYears;
+        return member_generation_label($birthYear, null);
+    }
+
+    return 'Umum';
+}
+
 /**
  * Generate member code:
  * Format: 2-digit year + 5-digit sequential number
@@ -162,6 +184,7 @@ function upsert_member(
     string $full_name,
     string $email,
     string $whatsapp,
+    string $rt,
     string $birth_place,
     string $birth_date,
     ?int $age_years,
@@ -197,6 +220,7 @@ function upsert_member(
             full_name = COALESCE(NULLIF(:full_name, ''), full_name),
             email = COALESCE(NULLIF(:email, ''), email),
             whatsapp = COALESCE(NULLIF(:whatsapp, ''), whatsapp),
+            rt = COALESCE(NULLIF(:rt, ''), rt),
             birth_place = COALESCE(NULLIF(:birth_place, ''), birth_place),
             birth_date = COALESCE(NULLIF(:birth_date, ''), birth_date),
             age_years = :age_years,
@@ -217,6 +241,7 @@ function upsert_member(
         ':full_name' => $full_name,
         ':email' => $email,
         ':whatsapp' => $whatsapp,
+        ':rt' => $rt,
         ':birth_place' => $birth_place,
         ':birth_date' => $birth_date,
         ':age_years' => $age_years,

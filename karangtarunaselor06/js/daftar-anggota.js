@@ -88,20 +88,17 @@ function renderAvatarAnggota(nama, fotoUrl) {
     `;
 }
 
-function getGenerasiBadge(tahunLahir) {
-    let generasiTeks = "Umum";
+function getGenerasiBadge(tahunLahir, labelApi = "") {
+    let generasiTeks = labelApi || "Umum";
     let gayaBadge = "background-color: #757575; color: white;";
 
-    if (tahunLahir >= 1981 && tahunLahir <= 1996) {
+    if (generasiTeks === "Milenial" || (tahunLahir >= 1981 && tahunLahir <= 1996)) {
         generasiTeks = "Milenial";
         gayaBadge = "background-color: #1A237E; color: white; box-shadow: 0 2px 5px rgba(26, 35, 126, 0.2);";
-    } else if (tahunLahir >= 1997 && tahunLahir <= 2005) {
+    } else if (generasiTeks === "Gen Z" || (tahunLahir >= 1997 && tahunLahir <= 2012)) {
         generasiTeks = "Gen Z";
         gayaBadge = "background-color: #2E7D32; color: white; box-shadow: 0 2px 5px rgba(46, 125, 50, 0.2);";
-    } else if (tahunLahir >= 2006 && tahunLahir <= 2012) {
-        generasiTeks = "Gen Z";
-        gayaBadge = "background-color: #81C784; color: #1B5E20; box-shadow: 0 2px 5px rgba(129, 199, 132, 0.2);";
-    } else if (tahunLahir >= 2013 && tahunLahir <= 2026) {
+    } else if (generasiTeks === "Gen Alpha" || tahunLahir >= 2013) {
         generasiTeks = "Gen Alpha";
         gayaBadge = "background-color: #008080; color: white; box-shadow: 0 2px 5px rgba(0, 128, 128, 0.2);";
     }
@@ -119,7 +116,7 @@ async function fetchJsonAnggota(url, options = {}) {
 async function loadAnggotaDariApi() {
     const tbody = document.getElementById("data-tabel-anggota");
     if (tbody) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:30px; color:#666;"><i class="fa-solid fa-spinner fa-spin"></i> Menghubungkan ke Database Anggota...</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px; color:#666;"><i class="fa-solid fa-spinner fa-spin"></i> Menghubungkan ke Database Anggota...</td></tr>`;
     }
 
     const rows = await fetchJsonAnggota(`${URL_API_ANGGOTA}?cache=${Date.now()}`);
@@ -129,6 +126,8 @@ async function loadAnggotaDariApi() {
         nama: String(item.full_name ?? "-"),
         tahunLahirInt: Number(item.birth_year || 0),
         usia: item.age_years ? `${Number(item.age_years)} Tahun` : "-",
+        rt: String(item.rt || "-"),
+        generasi: String(item.generation_label || ""),
         fotoLocal: String(item.resolved_photo ?? item.photo_file ?? item.photo_url ?? ""),
         fotoDrive: "",
     }));
@@ -152,7 +151,7 @@ function renderTabelAnggota() {
     if (!tbody) return;
 
     if (dataAnggotaTersaring.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:30px; color:#666;">Data anggota tidak ditemukan.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px; color:#666;">Data anggota tidak ditemukan.</td></tr>`;
         return;
     }
 
@@ -166,8 +165,9 @@ function renderTabelAnggota() {
             <td>${escapeHtmlAnggota(item.nim)}</td>
             <td>${renderAvatarAnggota(item.nama, foto)}</td>
             <td style="text-align:left; padding-left:20px;"><i class="fa-solid fa-user" style="color:#0f5ea8; margin-right:8px;"></i> ${escapeHtmlAnggota(item.nama)}</td>
+            <td>${escapeHtmlAnggota(item.rt)}</td>
             <td>${escapeHtmlAnggota(item.usia)}</td>
-            <td>${getGenerasiBadge(item.tahunLahirInt)}</td>
+            <td>${getGenerasiBadge(item.tahunLahirInt, item.generasi)}</td>
         </tr>`;
     }).join("");
 
@@ -178,7 +178,7 @@ function renderTabelAnggota() {
         if (halAnggotaSaatIni === 1) tombolNav = `<div style="text-align:right;"><button onclick="window.navAnggota(1)" style="${styleBtn}">Selanjutnya &gt;</button></div>`;
         else if (halAnggotaSaatIni === totalHal) tombolNav = `<div style="text-align:left;"><button onclick="window.navAnggota(-1)" style="${styleBtn}">&lt; Sebelumnya</button></div>`;
         else tombolNav = `<div style="display:flex; justify-content:space-between;"><button onclick="window.navAnggota(-1)" style="${styleBtn}">&lt; Sebelumnya</button><button onclick="window.navAnggota(1)" style="${styleBtn}">Selanjutnya &gt;</button></div>`;
-        html += `<tr><td colspan="5" style="padding:12px; background:#f9f9f9;">${tombolNav}</td></tr>`;
+        html += `<tr><td colspan="6" style="padding:12px; background:#f9f9f9;">${tombolNav}</td></tr>`;
     }
 
     tbody.innerHTML = html;

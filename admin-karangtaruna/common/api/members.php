@@ -5,6 +5,25 @@ require_once __DIR__ . '/db.php';
 
 handle_cors_preflight();
 
+function public_member_ensure_profile_columns(PDO $pdo): void
+{
+    $pdo->exec("ALTER TABLE members ADD COLUMN IF NOT EXISTS rt VARCHAR(10) DEFAULT '' AFTER whatsapp");
+}
+
+function public_member_generation_label(?int $birthYear, ?int $ageYears = null): string
+{
+    if ($birthYear !== null && $birthYear > 0) {
+        if ($birthYear >= 2013) return 'Gen Alpha';
+        if ($birthYear >= 1997) return 'Gen Z';
+        if ($birthYear >= 1981) return 'Milenial';
+        return 'Gen X / Senior';
+    }
+    if ($ageYears !== null && $ageYears >= 0) {
+        return public_member_generation_label((int)date('Y') - $ageYears, null);
+    }
+    return 'Umum';
+}
+
 function public_member_normalize_photo(?string $photoFile): string
 {
     $photoFile = trim((string)$photoFile);
@@ -52,6 +71,7 @@ function public_member_resolve_photo(?string $photoFile, ?string $photoUrl): str
 
 try {
     $pdo = db();
+    public_member_ensure_profile_columns($pdo);
     $action = (string)($_GET['action'] ?? $_POST['action'] ?? '');
     $input = $_GET;
 
@@ -95,6 +115,7 @@ try {
             organization_experience,
             photo_url,
             photo_file,
+            rt,
             is_active
         FROM members
         WHERE is_active = 1
@@ -105,6 +126,7 @@ try {
     foreach ($rows as &$row) {
         $row['photo_file'] = public_member_normalize_photo($row['photo_file'] ?? '');
         $row['resolved_photo'] = public_member_resolve_photo($row['photo_file'] ?? '', $row['photo_url'] ?? '');
+        $row['generation_label'] = public_member_generation_label((int)($row['birth_year'] ?? 0), (int)($row['age_years'] ?? 0));
     }
     unset($row);
 

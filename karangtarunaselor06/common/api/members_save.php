@@ -4,6 +4,8 @@ declare(strict_types=1);
 require_once __DIR__ . '/members_helpers.php';
 require_once __DIR__ . '/../db.php';
 
+member_ensure_profile_columns($pdo);
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     json_response(['success' => false, 'message' => 'Method tidak diizinkan.'], 405);
 }
@@ -14,6 +16,7 @@ $member_code = trim((string)($_POST['member_code'] ?? ''));
 $full_name = trim((string)($_POST['full_name'] ?? ''));
 $email = trim((string)($_POST['email'] ?? ''));
 $whatsapp = trim((string)($_POST['whatsapp'] ?? ''));
+$rt = trim((string)($_POST['rt'] ?? ''));
 $birth_place = trim((string)($_POST['birth_place'] ?? ''));
 $birth_date = trim((string)($_POST['birth_date'] ?? ''));
 $parent_name = trim((string)($_POST['parent_name'] ?? ''));
@@ -79,6 +82,7 @@ if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
 
 // Normalize WhatsApp
 $whatsapp = normalize_whatsapp($whatsapp);
+$rt = preg_replace('/[^0-9A-Za-z]/', '', $rt) ?? '';
 
 // Hitung usia
 $age_years = calculate_age($birth_date);
@@ -87,7 +91,7 @@ $raw_source = json_encode($_POST, JSON_UNESCAPED_UNICODE);
 
 // Jika id > 0: update eksplisit (dari admin/editor)
 if ($id > 0) {
-    upsert_member($pdo, $id, $member_code, $full_name, $email, $whatsapp,
+    upsert_member($pdo, $id, $member_code, $full_name, $email, $whatsapp, $rt,
         $birth_place, $birth_date, $age_years, $parent_name, $current_status,
         $hobby, $organization_experience, $photo_url, $photo_file,
         $raw_source, $is_active);
@@ -117,13 +121,13 @@ if ($member_code === '') {
 
 $sql = "
     INSERT INTO members (
-        member_code, full_name, email, whatsapp,
+        member_code, full_name, email, whatsapp, rt,
         birth_place, birth_date, age_years,
         parent_name, current_status, hobby,
         organization_experience, photo_url, photo_file,
         form_submitted_at, raw_source, is_active
     ) VALUES (
-        :member_code, :full_name, :email, :whatsapp,
+        :member_code, :full_name, :email, :whatsapp, :rt,
         :birth_place, :birth_date, :age_years,
         :parent_name, :current_status, :hobby,
         :organization_experience, :photo_url, :photo_file,
@@ -136,6 +140,7 @@ $stmt->execute([
     ':full_name' => $full_name,
     ':email' => $email,
     ':whatsapp' => $whatsapp,
+    ':rt' => $rt,
     ':birth_place' => $birth_place,
     ':birth_date' => $birth_date,
     ':age_years' => $age_years,

@@ -367,7 +367,7 @@ async function rejectPendingMember(id) {
 
 async function loadMembers() {
     const tbody = document.getElementById('membersTableBody');
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px;">Memuat data...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px;">Memuat data...</td></tr>';
 
     try {
         const params = new URLSearchParams();
@@ -431,7 +431,7 @@ function renderMembers() {
     updateMemberSortButtons();
 
     if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px;">Tidak ada data anggota.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px;">Tidak ada data anggota.</td></tr>';
         return;
     }
 
@@ -442,6 +442,7 @@ function renderMembers() {
             '<td>' + escapeHtml(m.member_code || '-') + '</td>' +
             '<td>' + escapeHtml(m.full_name || '') + '</td>' +
             '<td>' + escapeHtml(m.whatsapp || '-') + '</td>' +
+            '<td>' + escapeHtml(m.rt || '-') + '</td>' +
             '<td>' + escapeHtml(m.birth_place || '') + (m.birth_date ? '<br>' + formatDateIndo(m.birth_date) : '') + '</td>' +
             '<td>' + (m.age_years !== null ? m.age_years + ' thn' : '-') + '</td>' +
             '<td>' + escapeHtml(m.current_status || '-') + '</td>' +
@@ -540,6 +541,7 @@ async function editMember(id) {
         document.getElementById('admin_full_name').value = m.full_name || '';
         document.getElementById('admin_email').value = m.email || '';
         document.getElementById('admin_whatsapp').value = m.whatsapp || '';
+        document.getElementById('admin_rt').value = m.rt || '';
         document.getElementById('admin_birth_place').value = m.birth_place || '';
         document.getElementById('admin_birth_date').value = m.birth_date || '';
         document.getElementById('admin_parent_name').value = m.parent_name || '';
@@ -575,6 +577,7 @@ async function saveMember(event) {
     formData.set('full_name', document.getElementById('admin_full_name').value);
     formData.set('email', document.getElementById('admin_email').value);
     formData.set('whatsapp', document.getElementById('admin_whatsapp').value);
+    formData.set('rt', document.getElementById('admin_rt').value);
     formData.set('birth_place', document.getElementById('admin_birth_place').value);
     formData.set('birth_date', document.getElementById('admin_birth_date').value);
     formData.set('parent_name', document.getElementById('admin_parent_name').value);

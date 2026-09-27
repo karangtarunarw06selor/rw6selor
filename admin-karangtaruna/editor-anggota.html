@@ -154,6 +154,10 @@
                             <input type="tel" id="admin_whatsapp" name="whatsapp" required placeholder="628xxxxxxxxxx">
                         </div>
                         <div class="form-group">
+                            <label for="admin_rt">RT</label>
+                            <input type="text" id="admin_rt" name="rt" placeholder="Contoh: 05" maxlength="10">
+                        </div>
+                        <div class="form-group">
                             <label for="admin_birth_place">Tempat Lahir</label>
                             <input type="text" id="admin_birth_place" name="birth_place">
                         </div>
@@ -271,6 +275,7 @@
                                         </button>
                                     </th>
                                     <th>WhatsApp</th>
+                                    <th>RT</th>
                                     <th>Tempat/Tgl Lahir</th>
                                     <th>
                                         <button type="button" class="member-sort-btn" data-sort-key="age_years">
@@ -283,7 +288,7 @@
                                 </tr>
                             </thead>
                             <tbody id="membersTableBody">
-                                <tr><td colspan="8" style="text-align: center; padding: 20px;">Memuat data...</td></tr>
+                                <tr><td colspan="9" style="text-align: center; padding: 20px;">Memuat data...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -328,6 +333,6 @@
         </div>
     </footer>
     <script src="script.js?v=22"></script>
-    <script src="editor-anggota.js?v=hybrid-1"></script>
+    <script src="editor-anggota.js?v=rt-age-gen-1"></script>
 </body>
 </html>
