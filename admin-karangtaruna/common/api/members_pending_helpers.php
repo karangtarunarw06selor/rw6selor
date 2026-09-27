@@ -140,6 +140,25 @@ function member_pending_normalize_date(string $value): string
     $value = trim($value);
     if ($value === '') return '';
 
+    $indonesianMonths = [
+        'januari' => '01', 'februari' => '02', 'maret' => '03', 'april' => '04',
+        'mei' => '05', 'juni' => '06', 'juli' => '07', 'agustus' => '08',
+        'septemb' => '09', 'oktob' => '10', 'novemb' => '11', 'desemb' => '12',
+        'jan' => '01', 'feb' => '02', 'mar' => '03', 'apr' => '04',
+        'jun' => '06', 'jul' => '07', 'agu' => '08', 'sep' => '09',
+        'okt' => '10', 'nov' => '11', 'des' => '12',
+    ];
+
+    $lower = strtolower($value);
+    if (preg_match('/^(\d{1,2})\s+([a-z]+)\s+(\d{4})$/i', $lower, $match)) {
+        $monthKey = $match[2];
+        foreach ($indonesianMonths as $monthName => $monthNum) {
+            if (str_starts_with($monthKey, $monthName)) {
+                return sprintf('%s-%s-%02d', $match[3], $monthNum, (int)$match[1]);
+            }
+        }
+    }
+
     $formats = ['Y-m-d', 'd/m/Y', 'd-m-Y', 'm/d/Y', 'd M Y', 'd F Y'];
     foreach ($formats as $format) {
         $date = DateTime::createFromFormat($format, $value);
