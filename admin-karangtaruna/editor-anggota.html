@@ -94,6 +94,44 @@
             <h2 class="box-title">EDITOR DATA ANGGOTA</h2>
             <hr class="box-divider">
             <div id="memberAdminAlert" class="member-alert" style="display: none;"></div>
+            <details class="member-admin-box member-list-accordion" id="memberPendingAccordion" open>
+                <summary class="member-list-toggle" aria-controls="memberPendingBody">
+                    <span class="member-list-toggle-left">
+                        <i class="fa-solid fa-user-clock"></i>
+                        Pengajuan Google Form
+                    </span>
+                    <i class="fa-solid fa-chevron-down member-list-toggle-icon"></i>
+                </summary>
+                <div class="member-list-body" id="memberPendingBody">
+                    <p style="margin:0 0 12px;color:#555;line-height:1.6;">Paste link Google Sheet yang sudah <strong>Publish to web</strong> sebagai TSV/CSV. Data masuk ke pending, tidak tampil publik sampai admin approve lalu aktifkan toggle.</p>
+                    <div class="member-list-filters">
+                        <input type="url" id="memberPendingSourceUrl" placeholder="https://docs.google.com/spreadsheets/.../pub?output=tsv">
+                        <select id="memberPendingStatusFilter">
+                            <option value="pending">Pending</option>
+                            <option value="approved">Approved</option>
+                            <option value="rejected">Rejected</option>
+                            <option value="all">Semua</option>
+                        </select>
+                        <button type="button" id="memberPendingSyncBtn" class="btn-primary">Sync Google Form</button>
+                    </div>
+                    <div class="member-admin-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nama</th>
+                                    <th>Kontak</th>
+                                    <th>Lahir</th>
+                                    <th>Status</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="memberPendingTableBody">
+                                <tr><td colspan="5" style="text-align:center;padding:20px;">Memuat pengajuan...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </details>
             <div class="member-admin-box">
                 <h3 style="margin-bottom: 15px;">Form Tambah / Edit Anggota</h3>
                 <form id="memberAdminForm" class="member-admin-form">
@@ -292,6 +330,6 @@
         </div>
     </footer>
     <script src="script.js?v=22"></script>
-    <script src="editor-anggota.js?v=46"></script>
+    <script src="editor-anggota.js?v=hybrid-1"></script>
 </body>
 </html>

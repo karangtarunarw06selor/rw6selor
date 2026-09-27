@@ -11,6 +11,7 @@ function getMembersAdminApiBase() {
 }
 
 let membersData = [];
+let pendingMembersData = [];
 let memberSortState = {
     key: '',
     direction: 'asc'
@@ -21,6 +22,7 @@ let adminCheckTimeout = null;
 
 document.addEventListener('DOMContentLoaded', function() {
     loadMembers();
+    loadPendingMembers();
     initAdminPhotoUploadPreview();
 
     const form = document.getElementById('memberAdminForm');
@@ -33,6 +35,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const deleteInput = document.getElementById('memberDeleteConfirmInput');
     const deleteSubmitBtn = document.getElementById('memberDeleteSubmitBtn');
     const alertDiv = document.getElementById('memberAdminAlert');
+    const pendingSyncBtn = document.getElementById('memberPendingSyncBtn');
+    const pendingStatusFilter = document.getElementById('memberPendingStatusFilter');
+
+    pendingSyncBtn?.addEventListener('click', syncPendingMembers);
+    pendingStatusFilter?.addEventListener('change', loadPendingMembers);
 
     form.addEventListener('submit', saveMember);
     cancelBtn.addEventListener('click', cancelEdit);
@@ -239,6 +246,123 @@ function resolveMemberPhotoUrl(url) {
     }
 
     return `${MEMBERS_ADMIN_PUBLIC_BASE}/${normalized.replace(/^\/+/, "")}`;
+}
+
+async function loadPendingMembers() {
+    const tbody = document.getElementById('memberPendingTableBody');
+    const statusFilter = document.getElementById('memberPendingStatusFilter');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;">Memuat pengajuan...</td></tr>';
+
+    try {
+        const status = statusFilter ? statusFilter.value : 'pending';
+        const response = await fetch(MEMBERS_ADMIN_API_BASE + '/members_pending.php?status=' + encodeURIComponent(status));
+        const result = await response.json();
+        pendingMembersData = result.success && Array.isArray(result.data) ? result.data : [];
+    } catch (err) {
+        pendingMembersData = [];
+    }
+
+    renderPendingMembers();
+}
+
+function renderPendingMembers() {
+    const tbody = document.getElementById('memberPendingTableBody');
+    if (!tbody) return;
+    if (pendingMembersData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;">Tidak ada pengajuan.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = '';
+    pendingMembersData.forEach(function(p) {
+        const canReview = p.status === 'pending';
+        const tr = document.createElement('tr');
+        tr.innerHTML =
+            '<td><strong>' + escapeHtml(p.full_name || '') + '</strong><br><small>' + escapeHtml(p.current_status || '-') + '</small></td>' +
+            '<td>' + escapeHtml(p.whatsapp || '-') + '<br><small>' + escapeHtml(p.email || '-') + '</small></td>' +
+            '<td>' + escapeHtml(p.birth_place || '') + (p.birth_date ? '<br><small>' + formatDateIndo(p.birth_date) + '</small>' : '') + '</td>' +
+            '<td><span class="member-badge ' + (p.status === 'approved' ? 'active' : p.status === 'rejected' ? 'inactive' : '') + '">' + escapeHtml(p.status || '-') + '</span></td>' +
+            '<td class="member-action-btn">' +
+                (canReview
+                    ? '<button class="member-edit-btn" onclick="approvePendingMember(' + p.id + ')"><i class="fa-solid fa-check"></i> Approve</button> ' +
+                      '<button class="member-delete-btn" onclick="rejectPendingMember(' + p.id + ')"><i class="fa-solid fa-xmark"></i> Reject</button>'
+                    : '<small>member_id: ' + escapeHtml(p.member_id || '-') + '</small>') +
+            '</td>';
+        tbody.appendChild(tr);
+    });
+}
+
+async function syncPendingMembers() {
+    const input = document.getElementById('memberPendingSourceUrl');
+    const button = document.getElementById('memberPendingSyncBtn');
+    const sourceUrl = input ? input.value.trim() : '';
+    if (!sourceUrl) {
+        showAdminAlert('error', 'Isi URL Google Sheet publish TSV/CSV dulu.');
+        return;
+    }
+
+    const originalText = button ? button.textContent : '';
+    if (button) {
+        button.disabled = true;
+        button.textContent = 'Sync...';
+    }
+
+    try {
+        const formData = new FormData();
+        formData.append('action', 'sync');
+        formData.append('source_url', sourceUrl);
+        const response = await fetch(MEMBERS_ADMIN_API_BASE + '/members_pending.php', { method: 'POST', body: formData });
+        const result = await response.json();
+        showAdminAlert(result.success ? 'success' : 'error', result.message || 'Sinkronisasi selesai.');
+        await loadPendingMembers();
+    } catch (err) {
+        showAdminAlert('error', 'Gagal sinkronisasi Google Form.');
+    } finally {
+        if (button) {
+            button.disabled = false;
+            button.textContent = originalText;
+        }
+    }
+}
+
+async function approvePendingMember(id) {
+    const item = pendingMembersData.find(function(p) { return Number(p.id) === Number(id); });
+    if (!item) return;
+    const ok = window.confirm('Approve ' + (item.full_name || 'pengajuan ini') + ' sebagai anggota nonaktif? Setelah itu bisa dicek dan diaktifkan manual.');
+    if (!ok) return;
+
+    try {
+        const formData = new FormData();
+        formData.append('action', 'approve');
+        formData.append('id', id);
+        const response = await fetch(MEMBERS_ADMIN_API_BASE + '/members_pending.php', { method: 'POST', body: formData });
+        const result = await response.json();
+        showAdminAlert(result.success ? 'success' : 'error', result.message || 'Approve selesai.');
+        await loadPendingMembers();
+        await loadMembers();
+    } catch (err) {
+        showAdminAlert('error', 'Gagal approve pengajuan.');
+    }
+}
+
+async function rejectPendingMember(id) {
+    const item = pendingMembersData.find(function(p) { return Number(p.id) === Number(id); });
+    if (!item) return;
+    const ok = window.confirm('Tolak pengajuan ' + (item.full_name || 'ini') + '?');
+    if (!ok) return;
+
+    try {
+        const formData = new FormData();
+        formData.append('action', 'reject');
+        formData.append('id', id);
+        const response = await fetch(MEMBERS_ADMIN_API_BASE + '/members_pending.php', { method: 'POST', body: formData });
+        const result = await response.json();
+        showAdminAlert(result.success ? 'success' : 'error', result.message || 'Reject selesai.');
+        await loadPendingMembers();
+    } catch (err) {
+        showAdminAlert('error', 'Gagal reject pengajuan.');
+    }
 }
 
 async function loadMembers() {
