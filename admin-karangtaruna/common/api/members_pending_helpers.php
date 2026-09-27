@@ -101,6 +101,37 @@ function member_pending_pick(array $row, array $needles): string
     return '';
 }
 
+function member_pending_pick_exact(array $row, array $labels): string
+{
+    $normalizedLabels = array_map(
+        fn($label) => strtolower(trim(preg_replace('/[^a-z0-9]+/i', ' ', (string)$label))),
+        $labels
+    );
+
+    foreach ($row as $key => $value) {
+        $normalizedKey = strtolower(trim(preg_replace('/[^a-z0-9]+/i', ' ', (string)$key)));
+        if (in_array($normalizedKey, $normalizedLabels, true)) {
+            return trim((string)$value);
+        }
+    }
+
+    return '';
+}
+
+function member_pending_normalize_status(string $value): string
+{
+    $normalized = strtoupper(trim($value));
+    $normalized = str_replace(['-', '_'], ' ', $normalized);
+    $normalized = preg_replace('/\s+/', ' ', $normalized) ?? '';
+
+    if ($normalized === '') return '';
+    if (str_contains($normalized, 'SMP')) return 'SMP';
+    if (str_contains($normalized, 'SMA') || str_contains($normalized, 'SMK')) return 'SMA';
+    if (str_contains($normalized, 'KULIAH') || str_contains($normalized, 'MAHASISWA')) return 'KULIAH';
+    if (str_contains($normalized, 'LULUS') || str_contains($normalized, 'BEKERJA') || str_contains($normalized, 'KERJA')) return 'LULUS/BEKERJA';
+    return 'LAINNYA';
+}
+
 function member_pending_normalize_date(string $value): string
 {
     $value = trim($value);
@@ -121,14 +152,14 @@ function member_pending_normalize_date(string $value): string
 function member_pending_from_sheet_row(array $row): array
 {
     $fullName = member_pending_pick($row, ['nama lengkap', 'nama', 'full name', 'name']);
-    $email = member_pending_pick($row, ['email', 'mail']);
-    $whatsapp = normalize_whatsapp(member_pending_pick($row, ['whatsapp', 'wa', 'nomor hp', 'no hp', 'telepon', 'phone']));
+    $email = member_pending_pick_exact($row, ['Email (Aktif)', 'Email Aktif']) ?: member_pending_pick($row, ['email', 'mail']);
+    $whatsapp = normalize_whatsapp(member_pending_pick($row, ['nomer whatsapp', 'nomor whatsapp', 'whatsapp', 'wa', 'nomor hp', 'nomer hp', 'no hp', 'telepon', 'phone']));
     $birthPlace = member_pending_pick($row, ['tempat lahir', 'birth place']);
     $birthDate = member_pending_normalize_date(member_pending_pick($row, ['tanggal lahir', 'tgl lahir', 'birth date']));
     $parentName = member_pending_pick($row, ['orang tua', 'nama ortu', 'parent']);
-    $currentStatus = member_pending_pick($row, ['status sekarang', 'status', 'pekerjaan', 'pendidikan']);
+    $currentStatus = member_pending_normalize_status(member_pending_pick($row, ['status sekarang', 'status', 'pekerjaan', 'pendidikan']));
     $hobby = member_pending_pick($row, ['hobby', 'hobi', 'kebiasaan']);
-    $organizationExperience = member_pending_pick($row, ['pengalaman organisasi', 'organisasi']);
+    $organizationExperience = member_pending_pick($row, ['pernah ikut organisasi', 'pengalaman organisasi', 'organisasi', 'komunitas']);
     $photoUrl = member_pending_pick($row, ['upload foto', 'foto', 'photo', 'gambar']);
     $submittedAt = member_pending_normalize_date(member_pending_pick($row, ['timestamp', 'submitted', 'waktu']));
 
