@@ -119,7 +119,7 @@ try {
         ) VALUES (
             :member_code, :full_name, :email, :whatsapp, :rt, :birth_place, :birth_date, :age_years,
             :parent_name, :current_status, :hobby, :organization_experience, :photo_url,
-            COALESCE(:submitted_at, NOW()), :raw_source, 0
+            COALESCE(:submitted_at, NOW()), :raw_source, 1
         )
     ");
     $stmt->execute([
@@ -147,7 +147,7 @@ try {
 
     json_response([
         'success' => true,
-        'message' => 'Pengajuan disetujui sebagai anggota nonaktif. Periksa datanya lalu aktifkan dengan toggle.',
+        'message' => 'Pengajuan disetujui dan anggota langsung aktif/tampil publik.',
         'member_id' => $memberId,
     ]);
 } catch (Throwable $error) {

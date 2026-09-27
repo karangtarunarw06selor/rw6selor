@@ -329,7 +329,7 @@ async function syncPendingMembers() {
 async function approvePendingMember(id) {
     const item = pendingMembersData.find(function(p) { return Number(p.id) === Number(id); });
     if (!item) return;
-    const ok = window.confirm('Approve ' + (item.full_name || 'pengajuan ini') + ' sebagai anggota nonaktif? Setelah itu bisa dicek dan diaktifkan manual.');
+    const ok = window.confirm('Approve ' + (item.full_name || 'pengajuan ini') + ' sebagai anggota aktif? Data akan langsung tampil di daftar anggota publik.');
     if (!ok) return;
 
     try {

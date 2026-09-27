@@ -71,13 +71,13 @@ function member_pending_fetch_tsv(string $url): array
         return [];
     }
 
-    $headers = str_getcsv(array_shift($lines), $delimiter);
+    $headers = str_getcsv(array_shift($lines), $delimiter, '"', '\\');
     $headers = array_map(static fn($h) => trim((string)$h), $headers);
     $rows = [];
 
     foreach ($lines as $line) {
         if (trim($line) === '') continue;
-        $values = str_getcsv($line, $delimiter);
+        $values = str_getcsv($line, $delimiter, '"', '\\');
         $row = [];
         foreach ($headers as $index => $header) {
             if ($header === '') continue;
