@@ -38,12 +38,11 @@ function eperpus_json_input(): array {
  */
 function eperpus_ensure_schema(PDO $pdo): void {
     $schemaCandidates = [
-        __DIR__ . '/../../public_html/sql/eperpus_schema.sql',
-        __DIR__ . '/../public_html/sql/eperpus_schema.sql',
-        dirname(__DIR__, 2) . '/public_html/sql/eperpus_schema.sql',
-        dirname(__DIR__, 3) . '/public_html/sql/eperpus_schema.sql',
-        getcwd() . '/public_html/sql/eperpus_schema.sql',
+        __DIR__ . '/../sql/eperpus_schema.sql',
+        __DIR__ . '/../../sql/eperpus_schema.sql',
+        dirname(__DIR__, 2) . '/sql/eperpus_schema.sql',
         getcwd() . '/sql/eperpus_schema.sql',
+        '/var/www/html/sql/eperpus_schema.sql',
     ];
 
     $schemaPath = null;
@@ -231,9 +230,7 @@ function eperpus_get_books(PDO $pdo): array {
         ];
     }
 
-    $tsvBooks = eperpus_fetch_tsv_rows('https://docs.google.com/spreadsheets/d/e/2PACX-1vQ1tOYakhK7oLqDVDa2r0aq8P76NATzvYOVNgO30IHFah3QY1g_g6Mh6uG_XsXa55-bCjaG2Y_4Lad8/pub?gid=31550332&single=true&output=tsv');
-
-    return eperpus_merge_books($dbBooks, $tsvBooks);
+    return $dbBooks;
 }
 
 /**

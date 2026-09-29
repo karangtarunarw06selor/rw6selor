@@ -38,12 +38,11 @@ function eperpus_json_input(): array {
  */
 function eperpus_ensure_schema(PDO $pdo): void {
     $schemaCandidates = [
-        __DIR__ . '/../../public_html/sql/eperpus_schema.sql',
-        __DIR__ . '/../public_html/sql/eperpus_schema.sql',
-        dirname(__DIR__, 2) . '/public_html/sql/eperpus_schema.sql',
-        dirname(__DIR__, 3) . '/public_html/sql/eperpus_schema.sql',
-        getcwd() . '/public_html/sql/eperpus_schema.sql',
+        __DIR__ . '/../sql/eperpus_schema.sql',
+        __DIR__ . '/../../sql/eperpus_schema.sql',
+        dirname(__DIR__, 2) . '/sql/eperpus_schema.sql',
         getcwd() . '/sql/eperpus_schema.sql',
+        '/var/www/html/sql/eperpus_schema.sql',
     ];
 
     $schemaPath = null;
