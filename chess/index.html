@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Catur Online RW06 Selor</title>
+    <link rel="icon" href="../images/karangtaruna.avif" type="image/avif">
+    <link rel="stylesheet" href="chess.css?v=1">
+</head>
+<body>
+    <main class="chess-app">
+        <header class="game-header">
+            <a href="../index.html" class="back-link">← Kembali</a>
+            <div>
+                <p class="eyebrow">GAME RW06 SELOR</p>
+                <h1>Catur Online</h1>
+            </div>
+            <span id="connection-status" class="connection offline">Menghubungkan…</span>
+        </header>
+
+        <section id="lobby" class="panel lobby">
+            <h2>Masuk Room</h2>
+            <p>Buat kode room, lalu kirim kode yang sama ke lawan.</p>
+            <div class="room-form">
+                <input id="room-code" type="text" maxlength="12" placeholder="Contoh: RW06" autocomplete="off">
+                <button id="join-room" type="button">Masuk Game</button>
+            </div>
+            <button id="random-room" class="secondary" type="button">Buat Kode Acak</button>
+            <p id="lobby-message" class="message"></p>
+        </section>
+
+        <section id="game" class="game-layout hidden">
+            <div class="board-panel">
+                <div class="game-info">
+                    <div>Room: <strong id="active-room">-</strong></div>
+                    <div>Bidak: <strong id="player-color">-</strong></div>
+                    <div>Giliran: <strong id="turn-label">Putih</strong></div>
+                </div>
+                <div id="chess-board" class="chess-board" aria-label="Papan catur"></div>
+            </div>
+            <aside class="panel game-sidebar">
+                <h2>Status Permainan</h2>
+                <p id="game-status">Menunggu lawan masuk…</p>
+                <p id="game-message" class="message"></p>
+                <button id="copy-room" type="button">Salin Kode Room</button>
+                <button id="reset-game" class="secondary" type="button">Reset Papan</button>
+                <button id="leave-game" class="danger" type="button">Keluar Game</button>
+                <small>Klik bidak milikmu, lalu klik kotak tujuan.</small>
+            </aside>
+        </section>
+    </main>
+
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="chess.js?v=1"></script>
+</body>
+</html>
