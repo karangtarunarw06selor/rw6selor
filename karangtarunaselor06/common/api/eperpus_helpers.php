@@ -208,6 +208,8 @@ function eperpus_merge_books(array $primary, array $secondary): array {
 }
 
 function eperpus_get_books(PDO $pdo): array {
+    $tsvBooks = eperpus_fetch_tsv_rows('https://docs.google.com/spreadsheets/d/e/2PACX-1vSUetL0ouTraEdGbxzbaJOWY3xSJsKDNm92ML8sL_xeSgxhyeZYjmfPFgkXCgIa91W-uJHBfseojKxc/pub?output=tsv');
+
     $stmt = $pdo->query("
         SELECT id, judul, penulis, link_drive, kategori, source_data
         FROM eperpus_buku
@@ -230,7 +232,7 @@ function eperpus_get_books(PDO $pdo): array {
         ];
     }
 
-    return $dbBooks;
+    return eperpus_merge_books($tsvBooks, $dbBooks);
 }
 
 /**
