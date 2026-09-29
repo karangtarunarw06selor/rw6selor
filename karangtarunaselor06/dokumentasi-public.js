@@ -208,6 +208,16 @@ function renderDokumentasiPager(totalHal) {
     pager.innerHTML = `<div class="dok-pager-left">${previous}</div><div class="dok-pager-center">${pages}</div><div class="dok-pager-right">${next}</div>`;
 }
 
+function scrollToDokumentasiTop() {
+    requestAnimationFrame(() => {
+        const target = document.querySelector('#dokumentasi-grid .dok-card') || document.getElementById('dokumentasi-grid');
+        if (!target) return;
+        const offset = window.matchMedia('(max-width: 768px)').matches ? 170 : 120;
+        const top = target.getBoundingClientRect().top + window.scrollY - offset;
+        window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+    });
+}
+
 function renderDokumentasiDb() {
     const container = document.getElementById('dokumentasi-grid');
     if (!container) return;
@@ -241,12 +251,14 @@ window.navDok = function navDok(dir) {
     const totalHal = Math.ceil(dokumentasiDbFiltered.length / dokumentasiDbPageSize);
     dokumentasiDbPage = Math.max(1, Math.min(totalHal, dokumentasiDbPage + dir));
     renderDokumentasiDb();
+    scrollToDokumentasiTop();
 };
 
 window.gotoDokPage = function gotoDokPage(page) {
     const totalHal = Math.ceil(dokumentasiDbFiltered.length / dokumentasiDbPageSize);
     dokumentasiDbPage = Math.max(1, Math.min(totalHal, Number(page) || 1));
     renderDokumentasiDb();
+    scrollToDokumentasiTop();
 };
 
 document.addEventListener('DOMContentLoaded', () => {
