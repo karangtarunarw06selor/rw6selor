@@ -44,9 +44,29 @@ function english_json(array $payload, int $status = 200): void
 
 function english_ensure_schema(PDO $pdo): void
 {
-    $sql = file_get_contents(__DIR__ . '/../../sql/english_academy_schema.sql');
-    if ($sql === false) {
+    $schemaCandidates = [
+        __DIR__ . '/../sql/english_academy_schema.sql',
+        __DIR__ . '/../../sql/english_academy_schema.sql',
+        dirname(__DIR__, 2) . '/sql/english_academy_schema.sql',
+        getcwd() . '/sql/english_academy_schema.sql',
+        '/var/www/html/sql/english_academy_schema.sql',
+    ];
+
+    $schemaPath = null;
+    foreach ($schemaCandidates as $candidate) {
+        if (is_file($candidate)) {
+            $schemaPath = $candidate;
+            break;
+        }
+    }
+
+    if ($schemaPath === null) {
         throw new RuntimeException('File schema English Academy tidak ditemukan.');
+    }
+
+    $sql = file_get_contents($schemaPath);
+    if ($sql === false) {
+        throw new RuntimeException('File schema English Academy gagal dibaca.');
     }
     $pdo->exec($sql);
     english_ensure_hash_schema($pdo);
