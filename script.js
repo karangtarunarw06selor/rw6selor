@@ -292,19 +292,44 @@ function initCarouselOrganisasi() {
 
 const kegiatanData = [
     {
-        gambar: "images/foto-tirakatan.avif", 
-        judul: "Malam Tirakatan 17 Agustus 2025",
-        deskripsi: "Kegiatan rutin tahunan untuk memperingati Hari Kemerdekaan Indonesia. Warga berkumpul di madrasah dinniyah untuk doa bersama, refleksi perjuangan para pahlawan bangsa."
+        gambar: "images/jalansehat.avif", 
+        judul: "Jalan Sehat",
+        deskripsi: "Foto Bersama setelah Serangkaian Kegiatan untuk memperingati HUT-RI ke81 dengan kegiatan jalan sehat dengan dresscode lurik dan kebaya sebagai identisa budaya jawa "
     },
     {
-        gambar: "images/foto-lomba.avif",
-        judul: "Lomba Agustusan Tahun 2025",
-        deskripsi: "Salah satu lomba anak yaitu pindah air dengan sendok untuk memperingati hari ulang tahun kemerdekaan Indonesia yang ke-80 Tahun"
+        gambar: "images/upacara.avif", 
+        judul: "Upacara",
+        deskripsi: "Foto Bersama setelah melaksanakan prosesi yang khidmat dalam kegiatan upacara bendera untuk memperingati Hari Ulangtahun Kemerdekaan Indonesia yang Ke-81 Tahun"
     },
     {
-        gambar: "images/momen-kebersamaan.avif",
-        judul: "Momen Kebersamaan di Evaluasi Kegiatan",
-        deskripsi: "Momen indah di mana seluruh anggota organisasi berkumpul untuk mengevaluasi kegiatan dalam memperingati HUT-RI yang ke 80 tahun dari persiapan, eksekusi acara, serta harapan kedepannya"
+        gambar: "images/estafetair.avif", 
+        judul: "Fun Games (Estafet Air)",
+        deskripsi: "Keseruan dalam kebersamaan saat melakukan fun games estafer air, walaupun basah kuyub tapi terasa hangat ketika bisa berkumpul bersama dalam keceriaan.. "
+    },
+    {
+        gambar: "images/estafetkaret2.avif",
+        judul: "Fun Games (Estafet Karet)",
+        deskripsi: "Segala cara akan kulakukan biar teamku bisa menang, wkwkwwk. Saking semangatnya memindahkan karet dengan sedotan, kepala sampai seperti robot gedeg xixixi.."
+    },
+    {
+        gambar: "images/estafetsarung.avif",
+        judul: "Fun Games (Estafet Sarung)",
+        deskripsi: "rekor tercepat adalah 1 menit lebih 25 detik, padahal itu karena mereka tidak tahan dengan aroma sarung yang jarang dicuci itu wkwkwk..  "
+    },
+     {
+        gambar: "images/hitungcepat.avif",
+        judul: "Fun Games (Hitung Cepat)",
+        deskripsi: "Melatih konsentrasi dengan berhitung cepat, saking serunya sampai gk sadar semua muka kita menjadi putih semua wkwkwkw, mana paling mentok cuma sampai hitungan 25, pada konsentrasi gk seeeh, hadehh"
+    },
+    {
+        gambar: "images/makanbersama.avif",
+        judul: "Makan Bersama (Makrab)",
+        deskripsi: "Walaupun cuma makan mie saja asal makan bersama dengan duduk melingkar bersama teman teman rasanya seperti makan spagetti di italy bersama valentino rossi, anjayyy slebeww.. "
+    },
+    {
+        gambar: "images/makrab.avif",
+        judul: "Malam Keakraban",
+        deskripsi: "Berkumpul, berkenalan, bersendagurau, bertukar pikiran, sebuah momen yang hangat di malam yang dingin"
     }
 ];
 

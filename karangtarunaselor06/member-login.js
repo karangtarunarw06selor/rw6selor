@@ -30,6 +30,12 @@
     document.addEventListener('DOMContentLoaded', () => {
         const auth = window.RW06MemberAuth;
         const next = auth.safeNext(auth.nextUrl());
+        const inlineAuthPages = new Set(['daftar-anggota.html', 'dokumentasi-kegiatan.html']);
+        if (inlineAuthPages.has(next.split(/[?#]/)[0])) {
+            location.replace(next);
+            return;
+        }
+
         const existing = auth.getSession();
         if (existing) {
             location.replace(next);

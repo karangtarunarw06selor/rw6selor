@@ -39,7 +39,8 @@ if (!hasPublicBranding || publicIndex.includes('auth-guard.js')) {
 }
 
 const adminIndex = fs.readFileSync(path.join(root, 'admin-karangtaruna/index.html'), 'utf8');
-if (!adminIndex.includes('ADMIN KARANG TARUNA RW06') || !adminIndex.includes('script.js')) {
+const hasAdminBranding = adminIndex.includes('PORTAL ADMIN') || adminIndex.includes('ADMIN KARANG TARUNA RW06');
+if (!hasAdminBranding || !adminIndex.includes('script.js')) {
   throw new Error('admin login page missing expected branding/assets');
 }
 

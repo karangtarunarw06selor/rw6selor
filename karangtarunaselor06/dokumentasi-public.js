@@ -4,6 +4,7 @@ let dokumentasiDbData = [];
 let dokumentasiDbFiltered = [];
 let dokumentasiDbPage = 1;
 const dokumentasiDbPageSize = 9;
+const dokumentasiPagerGroupSize = 3;
 const namaBulanDokumentasi = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
 function dokEscape(value) {
@@ -61,6 +62,14 @@ function dokPick(row, headers, candidates) {
     return '';
 }
 
+function dokSplitMediaUrls(value) {
+    const text = String(value || '').trim();
+    if (!text) return [];
+    const matches = text.match(/https?:\/\/[^\s,]+/gi);
+    if (matches?.length) return matches.map(item => item.trim()).filter(Boolean);
+    return text.split(/[\n,]+/).map(item => item.trim()).filter(Boolean);
+}
+
 function dokExtractDriveId(url) {
     const value = String(url || '');
     const fileMatch = value.match(/\/file\/d\/([^/]+)/);
@@ -88,7 +97,7 @@ function dokThumbnail(item) {
 }
 
 function dokDateParts(value) {
-    if (!value) return { tahun: '', bulan: '', label: '-' };
+    if (!value) return { tahun: '', bulan: '', label: '-', sortValue: 0 };
     let date = new Date(`${value}T00:00:00`);
     if (Number.isNaN(date.getTime())) {
         const parts = String(value).split(/[/-]/).map((item) => item.trim());
@@ -97,9 +106,9 @@ function dokDateParts(value) {
             date = new Date(`${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}T00:00:00`);
         }
     }
-    if (Number.isNaN(date.getTime())) return { tahun: '', bulan: '', label: value };
+    if (Number.isNaN(date.getTime())) return { tahun: '', bulan: '', label: value, sortValue: 0 };
     const bulan = namaBulanDokumentasi[date.getMonth()];
-    return { tahun: String(date.getFullYear()), bulan, label: `${String(date.getDate()).padStart(2, '0')} ${bulan} ${date.getFullYear()}` };
+    return { tahun: String(date.getFullYear()), bulan, label: `${String(date.getDate()).padStart(2, '0')} ${bulan} ${date.getFullYear()}`, sortValue: date.getTime() };
 }
 
 function dokIsiDropdown(id, values) {
@@ -113,19 +122,26 @@ function dokIsiDropdown(id, values) {
 function dokMapRows(rows) {
     if (!rows.length) return [];
     const headers = rows[0];
-    return rows.slice(1).map((row, index) => {
+    return rows.slice(1).flatMap((row, index) => {
         const rawUrl = dokPick(row, headers, ['media_url', 'link', 'link dokumentasi', 'upload foto', 'file', 'google drive', 'drive', 'foto', 'dokumentasi']) || row.find((cell) => /^https?:\/\//i.test(cell || '')) || '';
+        const urls = dokSplitMediaUrls(rawUrl);
         const title = dokPick(row, headers, ['title', 'judul', 'nama kegiatan', 'kegiatan', 'agenda']) || `Dokumentasi ${index + 1}`;
-        return {
-            id: index + 1,
-            title,
-            event_date: dokPick(row, headers, ['event_date', 'tanggal', 'tanggal kegiatan', 'timestamp', 'waktu']),
-            location: dokPick(row, headers, ['location', 'lokasi', 'tempat']),
-            category: dokPick(row, headers, ['category', 'kategori', 'agenda', 'jenis kegiatan']) || 'Kegiatan',
-            description: dokPick(row, headers, ['description', 'deskripsi', 'keterangan', 'catatan']),
-            media_url: rawUrl,
-            thumbnail_url: dokPick(row, headers, ['thumbnail_url', 'thumbnail', 'cover', 'preview']),
-        };
+        const eventDate = dokPick(row, headers, ['tanggal kegiatan', 'event_date', 'tanggal']);
+        const location = dokPick(row, headers, ['location', 'lokasi', 'tempat']);
+        const category = dokPick(row, headers, ['subject', 'category', 'kategori', 'jenis kegiatan']) || 'Kegiatan';
+        const description = dokPick(row, headers, ['keterangan kegiatan', 'description', 'deskripsi', 'keterangan', 'catatan']);
+        const thumbnail = dokPick(row, headers, ['thumbnail_url', 'thumbnail', 'cover', 'preview']);
+        const sourceUrls = urls.length ? urls : [''];
+        return sourceUrls.map((mediaUrl, mediaIndex) => ({
+            id: `${index + 1}-${mediaIndex + 1}`,
+            title: urls.length > 1 ? `${title} #${mediaIndex + 1}` : title,
+            event_date: eventDate,
+            location,
+            category,
+            description,
+            media_url: mediaUrl,
+            thumbnail_url: thumbnail,
+        }));
     }).filter((item) => item.media_url || item.title);
 }
 
@@ -138,12 +154,12 @@ window.loadDokumentasiDariDrive = async function loadDokumentasiDariDrive() {
         const rows = dokParseTsv(await response.text());
         const tahunSet = new Set();
         const bulanSet = new Set();
-        dokumentasiDbData = dokMapRows(rows).map(item => {
+        dokumentasiDbData = dokMapRows(rows).map((item, sourceIndex) => {
             const dateParts = dokDateParts(item.event_date);
             if (dateParts.tahun) tahunSet.add(dateParts.tahun);
             if (dateParts.bulan) bulanSet.add(dateParts.bulan);
-            return { ...item, tahun: dateParts.tahun, bulan: dateParts.bulan, tanggal_label: dateParts.label };
-        });
+            return { ...item, tahun: dateParts.tahun, bulan: dateParts.bulan, tanggal_label: dateParts.label, tanggal_sort: dateParts.sortValue, source_index: sourceIndex };
+        }).sort((a, b) => (b.tanggal_sort - a.tanggal_sort) || (a.source_index - b.source_index));
         dokIsiDropdown('filter-dok-tahun', Array.from(tahunSet).sort().reverse());
         dokIsiDropdown('filter-dok-bulan', Array.from(bulanSet).sort((a, b) => namaBulanDokumentasi.indexOf(a) - namaBulanDokumentasi.indexOf(b)));
         window.terapkanFilterDokumentasi();
@@ -164,20 +180,51 @@ window.terapkanFilterDokumentasi = function terapkanFilterDokumentasi() {
     renderDokumentasiDb();
 };
 
+function dokPageNumbers(totalHal) {
+    const currentGroup = Math.floor((dokumentasiDbPage - 1) / dokumentasiPagerGroupSize);
+    const startPage = currentGroup * dokumentasiPagerGroupSize + 1;
+    const endPage = Math.min(totalHal, startPage + dokumentasiPagerGroupSize - 1);
+    const pages = [];
+    for (let page = startPage; page <= endPage; page += 1) pages.push(page);
+    return pages;
+}
+
+function renderDokumentasiPager(totalHal) {
+    const pager = document.getElementById('dokumentasi-pager');
+    if (!pager) return;
+    if (totalHal <= 1) {
+        pager.innerHTML = '';
+        return;
+    }
+    const pages = dokPageNumbers(totalHal).map(page => (
+        `<button class="dok-page-number ${page === dokumentasiDbPage ? 'active' : ''}" onclick="gotoDokPage(${page})" aria-label="Halaman ${page}">${page}</button>`
+    )).join('');
+    const previous = dokumentasiDbPage > 1
+        ? `<button class="dok-nav-btn dok-prev" onclick="navDok(-1)"><i class="fa-solid fa-chevron-left"></i> Sebelumnya</button>`
+        : '<span></span>';
+    const next = dokumentasiDbPage < totalHal
+        ? `<button class="dok-nav-btn dok-next" onclick="navDok(1)">Selanjutnya <i class="fa-solid fa-chevron-right"></i></button>`
+        : '<span></span>';
+    pager.innerHTML = `<div class="dok-pager-left">${previous}</div><div class="dok-pager-center">${pages}</div><div class="dok-pager-right">${next}</div>`;
+}
+
 function renderDokumentasiDb() {
     const container = document.getElementById('dokumentasi-grid');
     if (!container) return;
     if (!dokumentasiDbFiltered.length) {
         container.innerHTML = '<div class="dok-empty">Belum ada dokumentasi yang cocok.</div>';
+        renderDokumentasiPager(0);
         return;
     }
+    const totalHal = Math.ceil(dokumentasiDbFiltered.length / dokumentasiDbPageSize);
+    dokumentasiDbPage = Math.max(1, Math.min(totalHal, dokumentasiDbPage));
     const start = (dokumentasiDbPage - 1) * dokumentasiDbPageSize;
     const pageData = dokumentasiDbFiltered.slice(start, start + dokumentasiDbPageSize);
     container.innerHTML = pageData.map(item => {
         const thumb = dokThumbnail(item);
         return `<article class="dok-card">
             <a class="dok-thumb" href="${dokEscape(item.media_url || '#')}" target="_blank" rel="noopener">
-                <img src="${dokEscape(thumb)}" alt="${dokEscape(item.title)}" loading="lazy">
+                <img src="${dokEscape(thumb)}" alt="${dokEscape(item.title)}" loading="lazy" onerror="this.src='images/karangtaruna.avif'">
                 <span><i class="fa-solid fa-arrow-up-right-from-square"></i> Buka</span>
             </a>
             <div class="dok-card-body">
@@ -187,16 +234,18 @@ function renderDokumentasiDb() {
             </div>
         </article>`;
     }).join('');
-    const totalHal = Math.ceil(dokumentasiDbFiltered.length / dokumentasiDbPageSize);
-    const pager = document.getElementById('dokumentasi-pager');
-    if (pager) {
-        pager.innerHTML = totalHal > 1 ? `<button onclick="navDok(-1)" ${dokumentasiDbPage <= 1 ? 'disabled' : ''}>Sebelumnya</button><strong>${dokumentasiDbPage} / ${totalHal}</strong><button onclick="navDok(1)" ${dokumentasiDbPage >= totalHal ? 'disabled' : ''}>Selanjutnya</button>` : '';
-    }
+    renderDokumentasiPager(totalHal);
 }
 
 window.navDok = function navDok(dir) {
     const totalHal = Math.ceil(dokumentasiDbFiltered.length / dokumentasiDbPageSize);
     dokumentasiDbPage = Math.max(1, Math.min(totalHal, dokumentasiDbPage + dir));
+    renderDokumentasiDb();
+};
+
+window.gotoDokPage = function gotoDokPage(page) {
+    const totalHal = Math.ceil(dokumentasiDbFiltered.length / dokumentasiDbPageSize);
+    dokumentasiDbPage = Math.max(1, Math.min(totalHal, Number(page) || 1));
     renderDokumentasiDb();
 };
 

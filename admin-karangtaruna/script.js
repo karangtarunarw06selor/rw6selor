@@ -6,6 +6,39 @@
 const namaBulanIndo = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 let pemicuInstal = null; 
 
+const ADMIN_HERO_BG_STORAGE_KEY = 'karangtarunaAdminHeroBackground';
+const ADMIN_HERO_BG_OPTIONS = ['1', '2'];
+
+function applyAdminHeroBackground(value) {
+    const nextValue = ADMIN_HERO_BG_OPTIONS.includes(String(value)) ? String(value) : '1';
+    document.documentElement.style.setProperty('--hero-bg-current', `var(--hero-bg-${nextValue})`);
+    localStorage.setItem(ADMIN_HERO_BG_STORAGE_KEY, nextValue);
+    return nextValue;
+}
+
+window.setAdminHeroBackground = function(value) {
+    return applyAdminHeroBackground(value);
+};
+
+window.toggleAdminHeroBackground = function() {
+    const currentValue = localStorage.getItem(ADMIN_HERO_BG_STORAGE_KEY) || '1';
+    return applyAdminHeroBackground(currentValue === '1' ? '2' : '1');
+};
+
+let adminHeroBgAutoRotateTimer = null;
+
+window.startAdminHeroBackgroundAutoRotate = function(intervalMs = 8000) {
+    if (adminHeroBgAutoRotateTimer) clearInterval(adminHeroBgAutoRotateTimer);
+    adminHeroBgAutoRotateTimer = setInterval(() => {
+        window.toggleAdminHeroBackground();
+    }, intervalMs);
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    applyAdminHeroBackground(localStorage.getItem(ADMIN_HERO_BG_STORAGE_KEY) || '1');
+    window.startAdminHeroBackgroundAutoRotate(8000);
+});
+
 function injectDeleteConfirmStyles() {
     if (document.getElementById('global-delete-confirm-style')) return;
     const style = document.createElement('style');
@@ -292,19 +325,44 @@ function initCarouselOrganisasi() {
 
 const kegiatanData = [
     {
-        gambar: "images/foto-tirakatan.avif", 
-        judul: "Malam Tirakatan 17 Agustus 2025",
-        deskripsi: "Kegiatan rutin tahunan untuk memperingati Hari Kemerdekaan Indonesia. Warga berkumpul di madrasah dinniyah untuk doa bersama, refleksi perjuangan para pahlawan bangsa."
+        gambar: "images/jalansehat.avif", 
+        judul: "Jalan Sehat",
+        deskripsi: "Foto Bersama setelah Serangkaian Kegiatan untuk memperingati HUT-RI ke81 dengan kegiatan jalan sehat dengan dresscode lurik dan kebaya sebagai identisa budaya jawa "
     },
     {
-        gambar: "images/foto-lomba.avif",
-        judul: "Lomba Agustusan Tahun 2025",
-        deskripsi: "Salah satu lomba anak yaitu pindah air dengan sendok untuk memperingati hari ulang tahun kemerdekaan Indonesia yang ke-80 Tahun"
+        gambar: "images/upacara.avif", 
+        judul: "Upacara",
+        deskripsi: "Foto Bersama setelah melaksanakan prosesi yang khidmat dalam kegiatan upacara bendera untuk memperingati Hari Ulangtahun Kemerdekaan Indonesia yang Ke-81 Tahun"
     },
     {
-        gambar: "images/momen-kebersamaan.avif",
-        judul: "Momen Kebersamaan di Evaluasi Kegiatan",
-        deskripsi: "Momen indah di mana seluruh anggota organisasi berkumpul untuk mengevaluasi kegiatan dalam memperingati HUT-RI yang ke 80 tahun dari persiapan, eksekusi acara, serta harapan kedepannya"
+        gambar: "images/estafetair.avif", 
+        judul: "Fun Games (Estafet Air)",
+        deskripsi: "Keseruan dalam kebersamaan saat melakukan fun games estafer air, walaupun basah kuyub tapi terasa hangat ketika bisa berkumpul bersama dalam keceriaan.. "
+    },
+    {
+        gambar: "images/estafetkaret2.avif",
+        judul: "Fun Games (Estafet Karet)",
+        deskripsi: "Segala cara akan kulakukan biar teamku bisa menang, wkwkwwk. Saking semangatnya memindahkan karet dengan sedotan, kepala sampai seperti robot gedeg xixixi.."
+    },
+    {
+        gambar: "images/estafetsarung.avif",
+        judul: "Fun Games (Estafet Sarung)",
+        deskripsi: "rekor tercepat adalah 1 menit lebih 25 detik, padahal itu karena mereka tidak tahan dengan aroma sarung yang jarang dicuci itu wkwkwk..  "
+    },
+     {
+        gambar: "images/hitungcepat.avif",
+        judul: "Fun Games (Hitung Cepat)",
+        deskripsi: "Melatih konsentrasi dengan berhitung cepat, saking serunya sampai gk sadar semua muka kita menjadi putih semua wkwkwkw, mana paling mentok cuma sampai hitungan 25, pada konsentrasi gk seeeh, hadehh"
+    },
+    {
+        gambar: "images/makanbersama.avif",
+        judul: "Makan Bersama (Makrab)",
+        deskripsi: "Walaupun cuma makan mie saja asal makan bersama dengan duduk melingkar bersama teman teman rasanya seperti makan spagetti di italy bersama valentino rossi, anjayyy slebeww.. "
+    },
+    {
+        gambar: "images/makrab.avif",
+        judul: "Malam Keakraban",
+        deskripsi: "Berkumpul, berkenalan, bersendagurau, bertukar pikiran, sebuah momen yang hangat di malam yang dingin"
     }
 ];
 
@@ -817,7 +875,7 @@ function renderTabelAnggota() {
 
         return `<tr style="height: 90px; vertical-align: middle;"> 
             <td style="font-size: 14px; font-weight: bold; color: #555;">${i.nim}</td>
-            <td style="padding: 10px 0;"><img src="${urlFotoTampil}" alt="Foto ${i.nama}" style="width: 75px; height: 75px; object-fit: cover; border-radius: 50%; border: 3px solid #E53935; box-shadow: 0 4px 8px rgba(0,0,0,0.15); display: block; margin: 0 auto; cursor: pointer;" onerror="this.src='${linkDefaultAvatar}'" onclick="event.stopPropagation(); window.bukaFotoFull('${urlFotoTampil}');"></td>
+            <td style="padding: 10px 0;"><img src="${urlFotoTampil}" alt="Foto ${i.nama}" style="width: 75px; height: 75px; object-fit: cover; border-radius: 50%; border: 3px solid #3535e5; box-shadow: 0 4px 8px rgba(0,0,0,0.15); display: block; margin: 0 auto; cursor: pointer;" onerror="this.src='${linkDefaultAvatar}'" onclick="event.stopPropagation(); window.bukaFotoFull('${urlFotoTampil}');"></td>
             <td style="text-align: left; padding-left: 20px; font-size: 15px; font-weight: 600; color: #333;"><i class="fa-solid fa-user" style="color:#E53935; margin-right:8px;"></i> ${i.nama}</td>
             <td><span class="badge-usia" style="font-size: 13px; font-weight: 600; padding: 4px 10px;">${i.usia}</span></td>
             <td>${generasi}</td>

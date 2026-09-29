@@ -226,26 +226,84 @@ function callToast(msg, type = "info") {
     setTimeout(() => toast.classList.remove("show"), 3000);
 }
 
-window.verifikasiAksesAnggota = function() {
-    const next = encodeURIComponent("daftar-anggota.html");
-    location.href = `member-login.html?next=${next}`;
+const AUTH_KEY = "rw06_member_auth";
+const AUTH_API = "/common/api/member_auth.php";
+
+function getSessionAnggota() {
+    try {
+        const raw = localStorage.getItem(AUTH_KEY);
+        if (!raw) return null;
+        const session = JSON.parse(raw);
+        if (!session || !session.email) return null;
+        if (session.expires_at && Date.now() > Number(session.expires_at)) {
+            clearSessionAnggota();
+            return null;
+        }
+        return session;
+    } catch (_) {
+        clearSessionAnggota();
+        return null;
+    }
+}
+
+function setSessionAnggota(member) {
+    const session = {
+        id: member.id,
+        email: member.email,
+        member_code: member.member_code || "-",
+        full_name: member.full_name || member.email,
+        rt: member.rt || "",
+        expires_at: Date.now() + (7 * 24 * 60 * 60 * 1000),
+    };
+    localStorage.setItem(AUTH_KEY, JSON.stringify(session));
+    localStorage.setItem("mms_auth_email", session.email);
+    return session;
+}
+
+function clearSessionAnggota() {
+    localStorage.removeItem(AUTH_KEY);
+    localStorage.removeItem("mms_auth_email");
+}
+
+window.verifikasiAksesAnggota = async function() {
+    const input = document.getElementById("user-email-auth");
+    const email = input ? input.value.trim().toLowerCase() : "";
+    if (!email) return callToast("Alamat email wajib diisi!", "warning");
+
+    const loader = document.getElementById("custom-loader");
+    if (loader) loader.style.display = "flex";
+
+    try {
+        const response = await fetch(AUTH_API, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email }),
+        });
+        const result = await response.json();
+        if (!response.ok || !result.ok) {
+            throw new Error(result.message || "Email belum terdaftar sebagai anggota aktif.");
+        }
+        const session = setSessionAnggota(result.member);
+        callToast("Akses terverifikasi!", "success");
+        await bukaAksesHalaman(session);
+    } catch (error) {
+        callToast(error.message || "Email belum terdaftar sebagai anggota aktif.", "danger");
+    } finally {
+        if (loader) loader.style.display = "none";
+    }
 };
 
 async function bukaAksesHalaman(session) {
     document.getElementById("auth-frame-anggota").style.display = "none";
     document.getElementById("data-frame-anggota").style.display = "block";
-    document.getElementById("lbl-user-auth").innerText = `${session.full_name} (${session.member_code})`;
+    document.getElementById("lbl-user-auth").innerText = `${session.full_name} (${session.member_code || "-"})`;
     await loadAnggotaDariApi();
 }
 
 window.logoutAksesAnggota = function() {
-    if (window.RW06MemberAuth) {
-        window.RW06MemberAuth.clearSession();
-    } else {
-        localStorage.removeItem("rw06_member_auth");
-        localStorage.removeItem("mms_auth_email");
-    }
-    location.href = "member-login.html?next=daftar-anggota.html";
+    clearSessionAnggota();
+    document.getElementById("auth-frame-anggota").style.display = "block";
+    document.getElementById("data-frame-anggota").style.display = "none";
 };
 
 window.addEventListener("DOMContentLoaded", async () => {
@@ -253,17 +311,17 @@ window.addEventListener("DOMContentLoaded", async () => {
     const dataFrame = document.getElementById("data-frame-anggota");
     if (!authFrame || !dataFrame) return;
 
-    const auth = window.RW06MemberAuth;
-    const session = auth ? auth.getSession() : null;
+    const session = getSessionAnggota();
     if (!session) {
-        location.replace("member-login.html?next=daftar-anggota.html");
+        authFrame.style.display = "block";
+        dataFrame.style.display = "none";
         return;
     }
 
     try {
         await bukaAksesHalaman(session);
     } catch (error) {
-        if (auth) auth.clearSession();
+        clearSessionAnggota();
         authFrame.style.display = "block";
         dataFrame.style.display = "none";
         callToast(error.message || "Sesi perlu diverifikasi ulang.", "danger");

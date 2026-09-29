@@ -3,111 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="auth-guard.js"></script>
-    <title>Input Dokumentasi - Admin Karang Taruna RW06</title>
-    <link rel="icon" href="images/karangtaruna.avif" type="image/avif">
-    <link rel="stylesheet" href="style.css?v=docs-db-1">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <meta http-equiv="refresh" content="0; url=https://forms.gle/QEVYBHkxVyEPFreA6">
+    <title>Input Dokumentasi</title>
     <style>
-        .docs-admin-wrapper{max-width:1100px;margin:40px auto;padding:0 18px}.docs-admin-card{background:#fff;border:1px solid #dbe7f3;border-radius:16px;box-shadow:0 12px 32px rgba(15,94,168,.08);padding:24px;margin-bottom:22px}.docs-admin-card h2,.docs-admin-card h3{margin-top:0;color:#0b477f}.docs-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.docs-field label{display:block;font-weight:800;color:#334155;font-size:13px;margin-bottom:6px}.docs-field input,.docs-field select,.docs-field textarea{width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:10px;padding:11px 12px;font-size:14px;background:#fff}.docs-field textarea{min-height:98px;resize:vertical}.docs-full{grid-column:1/-1}.docs-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.docs-btn{border:0;border-radius:10px;padding:11px 16px;font-weight:900;cursor:pointer}.docs-primary{background:#0f5ea8;color:#fff}.docs-secondary{background:#e2e8f0;color:#0f172a}.docs-danger{background:#fee2e2;color:#991b1b}.docs-alert{display:none;border-radius:10px;padding:12px 14px;margin-bottom:16px;font-weight:800}.docs-alert.success{display:block;background:#dcfce7;color:#166534}.docs-alert.error{display:block;background:#fee2e2;color:#991b1b}.docs-table-wrap{overflow:auto}.docs-table{width:100%;border-collapse:collapse;min-width:920px}.docs-table th,.docs-table td{border-bottom:1px solid #e2e8f0;padding:11px;text-align:left;vertical-align:top}.docs-table th{background:#eff6ff;color:#0b477f;font-size:12px;text-transform:uppercase}.docs-thumb{width:88px;height:58px;object-fit:cover;border-radius:10px;border:1px solid #dbe7f3;background:#f8fafc}.docs-muted{color:#64748b;font-size:12px}.docs-chip{display:inline-flex;border-radius:999px;padding:4px 9px;font-size:11px;font-weight:900;background:#eff6ff;color:#0f5ea8}.docs-chip.off{background:#f1f5f9;color:#64748b}@media(max-width:760px){.docs-grid{grid-template-columns:1fr}.docs-admin-wrapper{margin:24px auto}}
+        body { min-height:100vh; margin:0; display:grid; place-items:center; font-family:Arial, sans-serif; background:#eff6ff; color:#0b2c55; }
+        .card { width:min(92vw,420px); padding:28px; border-radius:20px; background:#fff; box-shadow:0 20px 60px rgba(15,94,168,.16); text-align:center; }
+        a { display:inline-flex; margin-top:16px; padding:12px 16px; border-radius:12px; background:#0f5ea8; color:#fff; text-decoration:none; font-weight:800; }
     </style>
 </head>
 <body>
-    <header class="site-header">
-        <div class="top-header">
-            <div class="header-logo-area">
-                <a href="admin.html" class="logo-wrapper">
-                    <img src="images/karangtaruna.avif" alt="Logo" class="mini-logo">
-                    <div class="header-text">
-                        <span class="brand-title">ADMIN RW06</span>
-                        <span class="brand-subtitle">Input Dokumentasi</span>
-                    </div>
-                </a>
-            </div>
-        </div>
-    </header>
-
-    <main class="docs-admin-wrapper">
-        <section class="docs-admin-card">
-            <h2>Input Dokumentasi Link-Only</h2>
-            <p class="docs-muted">Simpan metadata dan link saja. File foto/video tetap di Google Drive, YouTube, atau storage luar. Website akan membuat thumbnail otomatis dari link.</p>
-            <div id="docsAdminAlert" class="docs-alert"></div>
-            <form id="docsAdminForm">
-                <input type="hidden" id="docs_id" name="id">
-                <div class="docs-grid">
-                    <div class="docs-field docs-full">
-                        <label>Judul Kegiatan *</label>
-                        <input id="docs_title" name="title" required placeholder="Contoh: Kerja Bakti Lingkungan RW06"></div>
-                    <div class="docs-field">
-                        <label>Tanggal Kegiatan</label>
-                        <input id="docs_event_date" name="event_date" type="date"></div>
-                    <div class="docs-field">
-                        <label>Lokasi</label>
-                        <input id="docs_location" name="location" placeholder="Balai RW06"></div>
-                    <div class="docs-field">
-                        <label>Kategori</label>
-                        <input id="docs_category" name="category" placeholder="Rapat / Kegiatan / Lomba / Sosial"></div>
-                    <div class="docs-field">
-                        <label>Tipe Media</label>
-                        <select id="docs_media_type" name="media_type">
-                            <option value="google_drive_file">Google Drive File</option>
-                            <option value="google_drive_folder">Google Drive Folder</option>
-                            <option value="youtube">YouTube</option>
-                            <option value="link">Link Lainnya</option>
-                        </select>
-                    </div>
-                    <div class="docs-field docs-full">
-                        <label>Link Dokumentasi *</label>
-                        <input id="docs_media_url" name="media_url" type="url" required placeholder="https://drive.google.com/file/d/... atau folder/video"></div>
-                    <div class="docs-field docs-full">
-                        <label>Thumbnail Manual (optional)</label>
-                        <input id="docs_thumbnail_url" name="thumbnail_url" type="url" placeholder="Kosongkan jika ingin auto dari Google Drive/YouTube"></div>
-                    <div class="docs-field docs-full">
-                        <label>Deskripsi Singkat</label>
-                        <textarea id="docs_description" name="description" placeholder="Ringkasan kegiatan..."></textarea>
-                    </div>
-                    <div class="docs-field">
-                        <label>Urutan</label>
-                        <input id="docs_sort_order" name="sort_order" type="number" value="0"></div>
-                    <div class="docs-field">
-                        <label>Status Tampil</label>
-                        <select id="docs_is_active" name="is_active">
-                            <option value="1">Tampil</option>
-                            <option value="0">Sembunyi</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="docs-actions">
-                    <button type="submit" class="docs-btn docs-primary">Simpan Dokumentasi</button>
-                    <button type="button" id="docsCancelEditBtn" class="docs-btn docs-secondary" style="display:none">Batal Edit</button>
-                </div>
-            </form>
-        </section>
-
-        <section class="docs-admin-card">
-            <h3>Daftar Dokumentasi</h3>
-            <div class="docs-table-wrap">
-                <table class="docs-table">
-                    <thead>
-                        <tr>
-                            <th>Preview</th>
-                            <th>Judul</th>
-                            <th>Tanggal</th>
-                            <th>Link</th>
-                            <th>Status</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody id="docsTableBody">
-                        <tr>
-                            <td colspan="6">Memuat data...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
+    <main class="card">
+        <h1>Input Dokumentasi</h1>
+        <p>Form input dokumentasi dipindahkan ke Google Form.</p>
+        <a href="https://forms.gle/QEVYBHkxVyEPFreA6">Buka Google Form</a>
     </main>
-
-    <script src="input-dokumentasi.js?v=docs-db-1"></script>
 </body>
 </html>
