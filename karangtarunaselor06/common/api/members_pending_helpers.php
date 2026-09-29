@@ -20,6 +20,7 @@ function member_pending_ensure_table(PDO $pdo): void
             hobby VARCHAR(180) DEFAULT '',
             organization_experience VARCHAR(120) DEFAULT '',
             photo_url TEXT DEFAULT NULL,
+            photo_file VARCHAR(255) DEFAULT NULL,
             raw_source JSON DEFAULT NULL,
             status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
             member_id INT UNSIGNED DEFAULT NULL,
@@ -35,6 +36,7 @@ function member_pending_ensure_table(PDO $pdo): void
     ");
 
     $pdo->exec("ALTER TABLE member_pending_submissions ADD COLUMN IF NOT EXISTS rt VARCHAR(10) DEFAULT '' AFTER whatsapp");
+    $pdo->exec("ALTER TABLE member_pending_submissions ADD COLUMN IF NOT EXISTS photo_file VARCHAR(255) DEFAULT NULL AFTER photo_url");
 }
 
 function member_pending_json_input(): array
@@ -184,6 +186,7 @@ function member_pending_from_sheet_row(array $row): array
     $hobby = member_pending_pick($row, ['hobby', 'hobi', 'kebiasaan']);
     $organizationExperience = member_pending_pick($row, ['pernah ikut organisasi', 'pengalaman organisasi', 'organisasi', 'komunitas']);
     $photoUrl = member_pending_pick($row, ['upload foto', 'foto', 'photo', 'gambar']);
+    $photoFile = ''; // Google Sheet tidak menyimpan file upload, hanya URL
     $submittedAt = member_pending_normalize_date(member_pending_pick($row, ['timestamp', 'submitted', 'waktu']));
 
     $hashBasis = strtolower($fullName) . '|' . strtolower($email) . '|' . $whatsapp . '|' . $birthDate;
@@ -201,6 +204,7 @@ function member_pending_from_sheet_row(array $row): array
         'hobby' => $hobby,
         'organization_experience' => $organizationExperience,
         'photo_url' => $photoUrl,
+        'photo_file' => $photoFile,
         'submitted_at' => $submittedAt,
         'raw_source' => json_encode($row, JSON_UNESCAPED_UNICODE),
     ];
@@ -216,11 +220,11 @@ function member_pending_insert(PDO $pdo, array $item): bool
         INSERT INTO member_pending_submissions (
             row_hash, full_name, email, whatsapp, rt, birth_place, birth_date,
             parent_name, current_status, hobby, organization_experience,
-            photo_url, submitted_at, raw_source, status
+            photo_url, photo_file, submitted_at, raw_source, status
         ) VALUES (
             :row_hash, :full_name, :email, :whatsapp, :rt, :birth_place, NULLIF(:birth_date, ''),
             :parent_name, :current_status, :hobby, :organization_experience,
-            :photo_url, NULLIF(:submitted_at, ''), :raw_source, 'pending'
+            :photo_url, :photo_file, NULLIF(:submitted_at, ''), :raw_source, 'pending'
         )
         ON DUPLICATE KEY UPDATE
             full_name = VALUES(full_name),
@@ -234,6 +238,7 @@ function member_pending_insert(PDO $pdo, array $item): bool
             hobby = VALUES(hobby),
             organization_experience = VALUES(organization_experience),
             photo_url = VALUES(photo_url),
+            photo_file = VALUES(photo_file),
             raw_source = VALUES(raw_source),
             updated_at = NOW()
     ");
@@ -250,6 +255,7 @@ function member_pending_insert(PDO $pdo, array $item): bool
         ':hobby' => $item['hobby'],
         ':organization_experience' => $item['organization_experience'],
         ':photo_url' => $item['photo_url'],
+        ':photo_file' => $item['photo_file'],
         ':submitted_at' => $item['submitted_at'],
         ':raw_source' => $item['raw_source'],
     ]);

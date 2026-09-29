@@ -231,9 +231,7 @@ function eperpus_get_books(PDO $pdo): array {
         ];
     }
 
-    $tsvBooks = eperpus_fetch_tsv_rows('https://docs.google.com/spreadsheets/d/e/2PACX-1vQ1tOYakhK7oLqDVDa2r0aq8P76NATzvYOVNgO30IHFah3QY1g_g6Mh6uG_XsXa55-bCjaG2Y_4Lad8/pub?gid=31550332&single=true&output=tsv');
-
-    return eperpus_merge_books($dbBooks, $tsvBooks);
+    return $dbBooks;
 }
 
 /**

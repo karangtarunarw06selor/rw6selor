@@ -1,7 +1,9 @@
+const DOKUMENTASI_TSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR6rvpMrucgfgZ2o1AD5FmACm9Gu324J2zZF_hb1Q_J7rJpfZtDvZ0cyPYcWcZUo3uZyFdKvCu4e6OK/pub?gid=1848626837&single=true&output=tsv';
+const DOKUMENTASI_FORM_URL = 'https://forms.gle/QEVYBHkxVyEPFreA6';
 let dokumentasiDbData = [];
 let dokumentasiDbFiltered = [];
 let dokumentasiDbPage = 1;
-const dokumentasiDbPageSize = 5;
+const dokumentasiDbPageSize = 9;
 const namaBulanDokumentasi = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
 function dokEscape(value) {
@@ -14,10 +16,57 @@ function dokEscape(value) {
     }[char]));
 }
 
+function dokParseTsv(text) {
+    const rows = [];
+    let row = [];
+    let cell = '';
+    let quoted = false;
+    for (let i = 0; i < text.length; i += 1) {
+        const char = text[i];
+        const next = text[i + 1];
+        if (char === '"') {
+            if (quoted && next === '"') {
+                cell += '"';
+                i += 1;
+            } else {
+                quoted = !quoted;
+            }
+        } else if (char === '\t' && !quoted) {
+            row.push(cell.trim());
+            cell = '';
+        } else if ((char === '\n' || char === '\r') && !quoted) {
+            if (char === '\r' && next === '\n') i += 1;
+            row.push(cell.trim());
+            if (row.some(Boolean)) rows.push(row);
+            row = [];
+            cell = '';
+        } else {
+            cell += char;
+        }
+    }
+    row.push(cell.trim());
+    if (row.some(Boolean)) rows.push(row);
+    return rows;
+}
+
+function dokKey(value) {
+    return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+}
+
+function dokPick(row, headers, candidates) {
+    const wanted = candidates.map(dokKey);
+    for (let i = 0; i < headers.length; i += 1) {
+        if (wanted.includes(dokKey(headers[i]))) return row[i] || '';
+    }
+    return '';
+}
+
 function dokExtractDriveId(url) {
     const value = String(url || '');
     const fileMatch = value.match(/\/file\/d\/([^/]+)/);
     if (fileMatch) return fileMatch[1];
+    const folderMatch = value.match(/\/folders\/([^/?]+)/);
+    if (folderMatch) return folderMatch[1];
     const idMatch = value.match(/[?&]id=([^&]+)/);
     if (idMatch) return idMatch[1];
     return '';
@@ -40,7 +89,14 @@ function dokThumbnail(item) {
 
 function dokDateParts(value) {
     if (!value) return { tahun: '', bulan: '', label: '-' };
-    const date = new Date(`${value}T00:00:00`);
+    let date = new Date(`${value}T00:00:00`);
+    if (Number.isNaN(date.getTime())) {
+        const parts = String(value).split(/[/-]/).map((item) => item.trim());
+        if (parts.length >= 3) {
+            const [d, m, y] = parts[0].length === 4 ? [parts[2], parts[1], parts[0]] : parts;
+            date = new Date(`${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}T00:00:00`);
+        }
+    }
     if (Number.isNaN(date.getTime())) return { tahun: '', bulan: '', label: value };
     const bulan = namaBulanDokumentasi[date.getMonth()];
     return { tahun: String(date.getFullYear()), bulan, label: `${String(date.getDate()).padStart(2, '0')} ${bulan} ${date.getFullYear()}` };
@@ -54,28 +110,45 @@ function dokIsiDropdown(id, values) {
     select.value = values.includes(current) ? current : 'Semua';
 }
 
-window.loadDokumentasiDariDrive = async function loadDokumentasiDariDrive() {
-    const tbody = document.getElementById('data-tabel-dokumentasi');
-    if (!tbody) return;
-    try {
-        const response = await fetch(`/common/api/documentation_list.php?cache=${Date.now()}`);
-        const result = await response.json();
-        if (!result.success) throw new Error(result.message || 'Gagal memuat dokumentasi.');
+function dokMapRows(rows) {
+    if (!rows.length) return [];
+    const headers = rows[0];
+    return rows.slice(1).map((row, index) => {
+        const rawUrl = dokPick(row, headers, ['media_url', 'link', 'link dokumentasi', 'upload foto', 'file', 'google drive', 'drive', 'foto', 'dokumentasi']) || row.find((cell) => /^https?:\/\//i.test(cell || '')) || '';
+        const title = dokPick(row, headers, ['title', 'judul', 'nama kegiatan', 'kegiatan', 'agenda']) || `Dokumentasi ${index + 1}`;
+        return {
+            id: index + 1,
+            title,
+            event_date: dokPick(row, headers, ['event_date', 'tanggal', 'tanggal kegiatan', 'timestamp', 'waktu']),
+            location: dokPick(row, headers, ['location', 'lokasi', 'tempat']),
+            category: dokPick(row, headers, ['category', 'kategori', 'agenda', 'jenis kegiatan']) || 'Kegiatan',
+            description: dokPick(row, headers, ['description', 'deskripsi', 'keterangan', 'catatan']),
+            media_url: rawUrl,
+            thumbnail_url: dokPick(row, headers, ['thumbnail_url', 'thumbnail', 'cover', 'preview']),
+        };
+    }).filter((item) => item.media_url || item.title);
+}
 
+window.loadDokumentasiDariDrive = async function loadDokumentasiDariDrive() {
+    const container = document.getElementById('dokumentasi-grid');
+    if (!container) return;
+    try {
+        const response = await fetch(`${DOKUMENTASI_TSV_URL}&cache=${Date.now()}`);
+        if (!response.ok) throw new Error('Gagal memuat TSV dokumentasi.');
+        const rows = dokParseTsv(await response.text());
         const tahunSet = new Set();
         const bulanSet = new Set();
-        dokumentasiDbData = (result.data || []).map(item => {
+        dokumentasiDbData = dokMapRows(rows).map(item => {
             const dateParts = dokDateParts(item.event_date);
             if (dateParts.tahun) tahunSet.add(dateParts.tahun);
             if (dateParts.bulan) bulanSet.add(dateParts.bulan);
             return { ...item, tahun: dateParts.tahun, bulan: dateParts.bulan, tanggal_label: dateParts.label };
         });
-
         dokIsiDropdown('filter-dok-tahun', Array.from(tahunSet).sort().reverse());
         dokIsiDropdown('filter-dok-bulan', Array.from(bulanSet).sort((a, b) => namaBulanDokumentasi.indexOf(a) - namaBulanDokumentasi.indexOf(b)));
         window.terapkanFilterDokumentasi();
     } catch (error) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:30px;color:#991b1b;">${dokEscape(error.message)}</td></tr>`;
+        container.innerHTML = `<div class="dok-empty">${dokEscape(error.message)}</div>`;
     }
 };
 
@@ -92,39 +165,33 @@ window.terapkanFilterDokumentasi = function terapkanFilterDokumentasi() {
 };
 
 function renderDokumentasiDb() {
-    const tbody = document.getElementById('data-tabel-dokumentasi');
-    if (!tbody) return;
+    const container = document.getElementById('dokumentasi-grid');
+    if (!container) return;
     if (!dokumentasiDbFiltered.length) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:#666;">Belum ada dokumentasi yang cocok.</td></tr>';
+        container.innerHTML = '<div class="dok-empty">Belum ada dokumentasi yang cocok.</div>';
         return;
     }
-
     const start = (dokumentasiDbPage - 1) * dokumentasiDbPageSize;
     const pageData = dokumentasiDbFiltered.slice(start, start + dokumentasiDbPageSize);
-    const rows = pageData.map(item => {
+    container.innerHTML = pageData.map(item => {
         const thumb = dokThumbnail(item);
-        return `<tr>
-            <td style="white-space:nowrap;">${dokEscape(item.tanggal_label)}</td>
-            <td style="text-align:center;">
-                <a href="${dokEscape(item.media_url)}" target="_blank" rel="noopener" style="display:inline-block;position:relative;">
-                    <img src="${dokEscape(thumb)}" alt="${dokEscape(item.title)}" style="width:180px;height:112px;object-fit:cover;border-radius:12px;border:1px solid #dbe7f3;background:#f8fafc;">
-                </a>
-                <br><a href="${dokEscape(item.media_url)}" target="_blank" rel="noopener" style="font-size:12px;font-weight:800;color:#0f5ea8;">Lihat Dokumentasi</a>
-            </td>
-            <td>${dokEscape(item.category || '-')}</td>
-            <td>${dokEscape(item.location || '-')}</td>
-            <td><strong>${dokEscape(item.title)}</strong><br><span style="color:#64748b;font-size:12px;line-height:1.5;">${dokEscape(item.description || '')}</span></td>
-        </tr>`;
+        return `<article class="dok-card">
+            <a class="dok-thumb" href="${dokEscape(item.media_url || '#')}" target="_blank" rel="noopener">
+                <img src="${dokEscape(thumb)}" alt="${dokEscape(item.title)}" loading="lazy">
+                <span><i class="fa-solid fa-arrow-up-right-from-square"></i> Buka</span>
+            </a>
+            <div class="dok-card-body">
+                <div class="dok-meta"><span>${dokEscape(item.tanggal_label)}</span><span>${dokEscape(item.category || 'Kegiatan')}</span></div>
+                <h3>${dokEscape(item.title)}</h3>
+                <p>${dokEscape(item.description || item.location || 'Dokumentasi kegiatan RW06 Selor.')}</p>
+            </div>
+        </article>`;
     }).join('');
-
     const totalHal = Math.ceil(dokumentasiDbFiltered.length / dokumentasiDbPageSize);
-    const nav = totalHal > 1 ? `<tr><td colspan="5" style="text-align:center;padding:18px;">
-        <button onclick="navDok(-1)" ${dokumentasiDbPage <= 1 ? 'disabled' : ''} style="padding:8px 14px;margin:0 4px;border:0;border-radius:8px;background:#0f5ea8;color:#fff;font-weight:800;">Prev</button>
-        <strong>Halaman ${dokumentasiDbPage} / ${totalHal}</strong>
-        <button onclick="navDok(1)" ${dokumentasiDbPage >= totalHal ? 'disabled' : ''} style="padding:8px 14px;margin:0 4px;border:0;border-radius:8px;background:#0f5ea8;color:#fff;font-weight:800;">Next</button>
-    </td></tr>` : '';
-
-    tbody.innerHTML = rows + nav;
+    const pager = document.getElementById('dokumentasi-pager');
+    if (pager) {
+        pager.innerHTML = totalHal > 1 ? `<button onclick="navDok(-1)" ${dokumentasiDbPage <= 1 ? 'disabled' : ''}>Sebelumnya</button><strong>${dokumentasiDbPage} / ${totalHal}</strong><button onclick="navDok(1)" ${dokumentasiDbPage >= totalHal ? 'disabled' : ''}>Selanjutnya</button>` : '';
+    }
 }
 
 window.navDok = function navDok(dir) {
@@ -132,3 +199,11 @@ window.navDok = function navDok(dir) {
     dokumentasiDbPage = Math.max(1, Math.min(totalHal, dokumentasiDbPage + dir));
     renderDokumentasiDb();
 };
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('[data-dokumentasi-form]').forEach((link) => {
+        link.href = DOKUMENTASI_FORM_URL;
+        link.target = '_blank';
+        link.rel = 'noopener';
+    });
+});

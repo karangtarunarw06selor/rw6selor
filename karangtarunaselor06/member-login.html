@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Deklarasi Hak Akses - RW06 Selor</title>
+    <link rel="icon" href="images/karangtaruna.avif" type="image/avif">
+    <link rel="stylesheet" href="style.css?v=footer-1">
+    <link rel="stylesheet" href="member-login.css?v=simple-email-1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+</head>
+<body class="member-login-page">
+    <main class="member-login-shell">
+        <section class="member-login-card">
+            <div class="access-icon" aria-hidden="true">
+                <i class="fa-solid fa-user-lock"></i>
+            </div>
+
+            <form id="memberLoginForm" class="auth-panel is-active" data-panel="login">
+                <h1>Deklarasi Hak Akses</h1>
+                <p class="auth-help">Untuk melindungi data internal RW06, silakan konfirmasi email terdaftar Anda untuk membuka halaman.</p>
+
+                <label for="memberEmail">Alamat Email Anggota</label>
+                <input id="memberEmail" name="email" type="email" autocomplete="email" placeholder="nama@email.com" required>
+
+                <button type="button" class="register-pill" data-tab="register">
+                    <i class="fa-solid fa-user-plus"></i> Belum terdaftar?
+                </button>
+
+                <button id="memberLoginButton" class="auth-submit" type="submit">
+                    <i class="fa-solid fa-lock-open"></i> Verifikasi & Buka Data
+                </button>
+                <p id="memberLoginMessage" class="auth-message" role="status"></p>
+            </form>
+
+            <div class="auth-panel" data-panel="register">
+                <h1>Daftar Anggota Baru</h1>
+                <p class="auth-help">Jika email belum ada di database, isi biodata dulu. Setelah data aktif, email tersebut bisa dipakai untuk membuka halaman internal.</p>
+                <a class="auth-submit auth-link" id="registerLink" href="form-anggota.html">
+                    <i class="fa-solid fa-user-plus"></i> Buka Form Daftar
+                </a>
+                <button type="button" class="auth-secondary" data-tab="login">Kembali ke Verifikasi Email</button>
+            </div>
+        </section>
+    </main>
+
+    <div id="memberLoginPopup" class="access-popup" hidden>
+        <div class="access-popup-card" role="alertdialog" aria-modal="true" aria-labelledby="accessPopupTitle">
+            <button type="button" class="access-popup-close" id="accessPopupClose" aria-label="Tutup">&times;</button>
+            <div class="access-popup-icon"><i class="fa-solid fa-circle-exclamation"></i></div>
+            <h2 id="accessPopupTitle">Email belum terdaftar</h2>
+            <p>Data email ini belum ada sebagai anggota aktif. Silakan daftar dulu melalui form anggota baru.</p>
+            <a class="auth-submit auth-link" id="popupRegisterLink" href="form-anggota.html">
+                <i class="fa-solid fa-user-plus"></i> Daftar dulu
+            </a>
+        </div>
+    </div>
+
+    <script src="member-auth.js?v=email-only-1"></script>
+    <script src="member-login.js?v=popup-1"></script>
+</body>
+</html>

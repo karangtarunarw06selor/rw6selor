@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="auth-guard.js"></script>
     <title>Input Dokumentasi - Admin Karang Taruna RW06</title>
-    <link rel="icon" href="images/logo.png" type="image/png">
+    <link rel="icon" href="images/karangtaruna.avif" type="image/avif">
     <link rel="stylesheet" href="style.css?v=docs-db-1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
@@ -15,7 +15,15 @@
 <body>
     <header class="site-header">
         <div class="top-header">
-            <div class="header-logo-area"><a href="admin.html" class="logo-wrapper"><img src="images/karangtaruna.avif" alt="Logo" class="mini-logo"><div class="header-text"><span class="brand-title">ADMIN RW06</span><span class="brand-subtitle">Input Dokumentasi</span></div></a></div>
+            <div class="header-logo-area">
+                <a href="admin.html" class="logo-wrapper">
+                    <img src="images/karangtaruna.avif" alt="Logo" class="mini-logo">
+                    <div class="header-text">
+                        <span class="brand-title">ADMIN RW06</span>
+                        <span class="brand-subtitle">Input Dokumentasi</span>
+                    </div>
+                </a>
+            </div>
         </div>
     </header>
 
@@ -27,24 +35,76 @@
             <form id="docsAdminForm">
                 <input type="hidden" id="docs_id" name="id">
                 <div class="docs-grid">
-                    <div class="docs-field docs-full"><label>Judul Kegiatan *</label><input id="docs_title" name="title" required placeholder="Contoh: Kerja Bakti Lingkungan RW06"></div>
-                    <div class="docs-field"><label>Tanggal Kegiatan</label><input id="docs_event_date" name="event_date" type="date"></div>
-                    <div class="docs-field"><label>Lokasi</label><input id="docs_location" name="location" placeholder="Balai RW06"></div>
-                    <div class="docs-field"><label>Kategori</label><input id="docs_category" name="category" placeholder="Rapat / Kegiatan / Lomba / Sosial"></div>
-                    <div class="docs-field"><label>Tipe Media</label><select id="docs_media_type" name="media_type"><option value="google_drive_file">Google Drive File</option><option value="google_drive_folder">Google Drive Folder</option><option value="youtube">YouTube</option><option value="link">Link Lainnya</option></select></div>
-                    <div class="docs-field docs-full"><label>Link Dokumentasi *</label><input id="docs_media_url" name="media_url" type="url" required placeholder="https://drive.google.com/file/d/... atau folder/video"></div>
-                    <div class="docs-field docs-full"><label>Thumbnail Manual (optional)</label><input id="docs_thumbnail_url" name="thumbnail_url" type="url" placeholder="Kosongkan jika ingin auto dari Google Drive/YouTube"></div>
-                    <div class="docs-field docs-full"><label>Deskripsi Singkat</label><textarea id="docs_description" name="description" placeholder="Ringkasan kegiatan..."></textarea></div>
-                    <div class="docs-field"><label>Urutan</label><input id="docs_sort_order" name="sort_order" type="number" value="0"></div>
-                    <div class="docs-field"><label>Status Tampil</label><select id="docs_is_active" name="is_active"><option value="1">Tampil</option><option value="0">Sembunyi</option></select></div>
+                    <div class="docs-field docs-full">
+                        <label>Judul Kegiatan *</label>
+                        <input id="docs_title" name="title" required placeholder="Contoh: Kerja Bakti Lingkungan RW06"></div>
+                    <div class="docs-field">
+                        <label>Tanggal Kegiatan</label>
+                        <input id="docs_event_date" name="event_date" type="date"></div>
+                    <div class="docs-field">
+                        <label>Lokasi</label>
+                        <input id="docs_location" name="location" placeholder="Balai RW06"></div>
+                    <div class="docs-field">
+                        <label>Kategori</label>
+                        <input id="docs_category" name="category" placeholder="Rapat / Kegiatan / Lomba / Sosial"></div>
+                    <div class="docs-field">
+                        <label>Tipe Media</label>
+                        <select id="docs_media_type" name="media_type">
+                            <option value="google_drive_file">Google Drive File</option>
+                            <option value="google_drive_folder">Google Drive Folder</option>
+                            <option value="youtube">YouTube</option>
+                            <option value="link">Link Lainnya</option>
+                        </select>
+                    </div>
+                    <div class="docs-field docs-full">
+                        <label>Link Dokumentasi *</label>
+                        <input id="docs_media_url" name="media_url" type="url" required placeholder="https://drive.google.com/file/d/... atau folder/video"></div>
+                    <div class="docs-field docs-full">
+                        <label>Thumbnail Manual (optional)</label>
+                        <input id="docs_thumbnail_url" name="thumbnail_url" type="url" placeholder="Kosongkan jika ingin auto dari Google Drive/YouTube"></div>
+                    <div class="docs-field docs-full">
+                        <label>Deskripsi Singkat</label>
+                        <textarea id="docs_description" name="description" placeholder="Ringkasan kegiatan..."></textarea>
+                    </div>
+                    <div class="docs-field">
+                        <label>Urutan</label>
+                        <input id="docs_sort_order" name="sort_order" type="number" value="0"></div>
+                    <div class="docs-field">
+                        <label>Status Tampil</label>
+                        <select id="docs_is_active" name="is_active">
+                            <option value="1">Tampil</option>
+                            <option value="0">Sembunyi</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="docs-actions"><button type="submit" class="docs-btn docs-primary">Simpan Dokumentasi</button><button type="button" id="docsCancelEditBtn" class="docs-btn docs-secondary" style="display:none">Batal Edit</button></div>
+                <div class="docs-actions">
+                    <button type="submit" class="docs-btn docs-primary">Simpan Dokumentasi</button>
+                    <button type="button" id="docsCancelEditBtn" class="docs-btn docs-secondary" style="display:none">Batal Edit</button>
+                </div>
             </form>
         </section>
 
         <section class="docs-admin-card">
             <h3>Daftar Dokumentasi</h3>
-            <div class="docs-table-wrap"><table class="docs-table"><thead><tr><th>Preview</th><th>Judul</th><th>Tanggal</th><th>Link</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="docsTableBody"><tr><td colspan="6">Memuat data...</td></tr></tbody></table></div>
+            <div class="docs-table-wrap">
+                <table class="docs-table">
+                    <thead>
+                        <tr>
+                            <th>Preview</th>
+                            <th>Judul</th>
+                            <th>Tanggal</th>
+                            <th>Link</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="docsTableBody">
+                        <tr>
+                            <td colspan="6">Memuat data...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </section>
     </main>
 

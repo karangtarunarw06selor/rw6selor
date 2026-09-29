@@ -403,7 +403,7 @@
     <script src="online-tracker.js"></script> 
 
     <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbzN0NB4NmmJuEaEvtwUr9yGKNbNitMEz_7OE80Umd4uMkQ2I3WOk_WwVJx929ThQodt/exec";
+    const API_URL = "/common/api/kesehatan.php";
 
     let sess = null;
     let kamusMenu = [];
@@ -455,7 +455,7 @@
             sess.kaloriBakar = 0; 
             sess.jurnal = res.jurnal;
             localStorage.setItem("mms_v2", JSON.stringify(sess)); 
-            kalkulasiUI(); drawJurnal(); toast("Log harian di sheet terhapus otomatis!", "success");
+            kalkulasiUI(); drawJurnal(); toast("Log harian di database VPS terhapus otomatis!", "success");
         }).catch(() => { loading(false); toast("Gagal terkoneksi", "danger"); });
     }
 
@@ -813,6 +813,7 @@
         }
     }
     </script>
+    <script src="member-auth.js?v=email-only-1"></script>
     <script src="script.js?v=30"></script>
 </body>
 </html>

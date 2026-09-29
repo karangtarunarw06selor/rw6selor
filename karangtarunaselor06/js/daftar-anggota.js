@@ -226,39 +226,26 @@ function callToast(msg, type = "info") {
     setTimeout(() => toast.classList.remove("show"), 3000);
 }
 
-window.verifikasiAksesAnggota = async function() {
-    const emailInput = document.getElementById("user-email-auth")?.value.trim().toLowerCase();
-    if (!emailInput) return callToast("Alamat email wajib diisi!", "warning");
-
-    const loader = document.getElementById("custom-loader");
-    if (loader) loader.style.display = "flex";
-
-    try {
-        await fetchJsonAnggota(URL_API_ANGGOTA, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "verify", email: emailInput }),
-        });
-        localStorage.setItem("mms_auth_email", emailInput);
-        callToast("Akses terverifikasi!", "success");
-        await bukaAksesHalaman(emailInput);
-    } catch (error) {
-        callToast(error.message || "Email Anda tidak terdaftar di database Anggota!", "danger");
-    } finally {
-        if (loader) loader.style.display = "none";
-    }
+window.verifikasiAksesAnggota = function() {
+    const next = encodeURIComponent("daftar-anggota.html");
+    location.href = `member-login.html?next=${next}`;
 };
 
-async function bukaAksesHalaman(email) {
+async function bukaAksesHalaman(session) {
     document.getElementById("auth-frame-anggota").style.display = "none";
     document.getElementById("data-frame-anggota").style.display = "block";
-    document.getElementById("lbl-user-auth").innerText = email;
+    document.getElementById("lbl-user-auth").innerText = `${session.full_name} (${session.member_code})`;
     await loadAnggotaDariApi();
 }
 
 window.logoutAksesAnggota = function() {
-    localStorage.removeItem("mms_auth_email");
-    location.reload();
+    if (window.RW06MemberAuth) {
+        window.RW06MemberAuth.clearSession();
+    } else {
+        localStorage.removeItem("rw06_member_auth");
+        localStorage.removeItem("mms_auth_email");
+    }
+    location.href = "member-login.html?next=daftar-anggota.html";
 };
 
 window.addEventListener("DOMContentLoaded", async () => {
@@ -266,19 +253,20 @@ window.addEventListener("DOMContentLoaded", async () => {
     const dataFrame = document.getElementById("data-frame-anggota");
     if (!authFrame || !dataFrame) return;
 
-    const emailSaved = localStorage.getItem("mms_auth_email");
-    if (emailSaved) {
-        try {
-            await bukaAksesHalaman(emailSaved);
-        } catch (error) {
-            localStorage.removeItem("mms_auth_email");
-            authFrame.style.display = "block";
-            dataFrame.style.display = "none";
-            callToast(error.message || "Sesi perlu diverifikasi ulang.", "danger");
-        }
-    } else {
+    const auth = window.RW06MemberAuth;
+    const session = auth ? auth.getSession() : null;
+    if (!session) {
+        location.replace("member-login.html?next=daftar-anggota.html");
+        return;
+    }
+
+    try {
+        await bukaAksesHalaman(session);
+    } catch (error) {
+        if (auth) auth.clearSession();
         authFrame.style.display = "block";
         dataFrame.style.display = "none";
+        callToast(error.message || "Sesi perlu diverifikasi ulang.", "danger");
     }
 });
 })();

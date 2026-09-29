@@ -111,14 +111,16 @@ try {
         'sheet_row' => json_decode((string)$pending['raw_source'], true),
     ], JSON_UNESCAPED_UNICODE);
 
+    $pendingPhotoFile = $pending['photo_file'] ?? '';
+
     $stmt = $pdo->prepare("
         INSERT INTO members (
             member_code, full_name, email, whatsapp, rt, birth_place, birth_date, age_years,
-            parent_name, current_status, hobby, organization_experience, photo_url,
+            parent_name, current_status, hobby, organization_experience, photo_url, photo_file,
             form_submitted_at, raw_source, is_active
         ) VALUES (
             :member_code, :full_name, :email, :whatsapp, :rt, :birth_place, :birth_date, :age_years,
-            :parent_name, :current_status, :hobby, :organization_experience, :photo_url,
+            :parent_name, :current_status, :hobby, :organization_experience, :photo_url, :photo_file,
             COALESCE(:submitted_at, NOW()), :raw_source, 1
         )
     ");
@@ -136,6 +138,7 @@ try {
         ':hobby' => $hobby,
         ':organization_experience' => $organizationExperience,
         ':photo_url' => $photoUrl,
+        ':photo_file' => $pendingPhotoFile,
         ':submitted_at' => $pending['submitted_at'] ?: null,
         ':raw_source' => $rawSource,
     ]);

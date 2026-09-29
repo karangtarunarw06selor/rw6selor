@@ -37,9 +37,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const alertDiv = document.getElementById('memberAdminAlert');
     const pendingSyncBtn = document.getElementById('memberPendingSyncBtn');
     const pendingStatusFilter = document.getElementById('memberPendingStatusFilter');
+    const copyNimDraftsBtn = document.getElementById('copyMemberNimDraftsBtn');
 
     pendingSyncBtn?.addEventListener('click', syncPendingMembers);
     pendingStatusFilter?.addEventListener('change', loadPendingMembers);
+    copyNimDraftsBtn?.addEventListener('click', copyMemberNimDrafts);
 
     form.addEventListener('submit', saveMember);
     cancelBtn.addEventListener('click', cancelEdit);
@@ -449,6 +451,7 @@ function renderMembers() {
             '<td><span class="member-badge ' + (m.is_active == 1 ? 'active' : 'inactive') + '">' + (m.is_active == 1 ? 'Aktif' : 'Nonaktif') + '</span></td>' +
             '<td class="member-action-btn">' +
                 '<button class="member-edit-btn" onclick="editMember(' + m.id + ')"><i class="fa-solid fa-pen"></i> Edit</button> ' +
+                '<button class="member-edit-btn" onclick="openMemberNimEmailDraft(' + m.id + ')" title="Buat draft email NIM"><i class="fa-solid fa-envelope"></i> Draft Email</button> ' +
                 '<button class="member-toggle-btn ' + (m.is_active == 1 ? 'is-active' : 'is-inactive') + '" onclick="toggleActiveMember(' + m.id + ',' + m.is_active + ')" title="' + (m.is_active == 1 ? 'Nonaktifkan anggota' : 'Aktifkan anggota') + '">' +
                     '<span class="toggle-track"><span class="toggle-knob"></span></span>' +
                     '<span>' + (m.is_active == 1 ? 'Aktif' : 'Nonaktif') + '</span>' +
@@ -751,6 +754,74 @@ async function confirmDeleteMember(forcedConfirmation) {
             submitBtn.disabled = false;
             submitBtn.textContent = 'OK Hapus';
         }
+    }
+}
+
+function buildMemberNimEmailDraft(member) {
+    const name = member.full_name || 'Anggota RW06';
+    const nim = member.member_code || '-';
+    const loginUrl = MEMBERS_ADMIN_PUBLIC_BASE + '/member-login.html';
+    return [
+        'Halo ' + name + ',',
+        '',
+        'Akun portal anggota RW06 kamu sudah aktif.',
+        '',
+        'Email login: ' + (member.email || '-'),
+        'Password / NIM: ' + nim,
+        '',
+        'Silakan login melalui:',
+        loginUrl,
+        '',
+        'NIM ini dipakai sebagai password untuk membuka daftar anggota, dokumentasi, arsip, dan laporan keuangan.',
+        '',
+        'Terima kasih.',
+        'Admin RW06 Selor'
+    ].join('\n');
+}
+
+function openMemberNimEmailDraft(id) {
+    const member = membersData.find(function(item) {
+        return Number(item.id) === Number(id);
+    });
+
+    if (!member) {
+        showAdminAlert('error', 'Data anggota tidak ditemukan.');
+        return;
+    }
+    if (!member.email) {
+        showAdminAlert('error', 'Email anggota kosong. Lengkapi email dulu sebelum membuat draft.');
+        return;
+    }
+    if (!member.member_code) {
+        showAdminAlert('error', 'NIM anggota kosong. Generate/simpan NIM dulu sebelum membuat draft.');
+        return;
+    }
+
+    const subject = 'NIM dan Akses Portal Anggota RW06';
+    const body = buildMemberNimEmailDraft(member);
+    const mailto = 'mailto:' + encodeURIComponent(member.email) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+    window.location.href = mailto;
+}
+
+async function copyMemberNimDrafts() {
+    const rows = membersData.filter(function(member) {
+        return member.email && member.member_code && String(member.is_active) === '1';
+    });
+
+    if (rows.length === 0) {
+        showAdminAlert('error', 'Tidak ada anggota aktif dengan email dan NIM lengkap.');
+        return;
+    }
+
+    const text = rows.map(function(member) {
+        return 'TO: ' + member.email + '\nSUBJECT: NIM dan Akses Portal Anggota RW06\n\n' + buildMemberNimEmailDraft(member);
+    }).join('\n\n---\n\n');
+
+    try {
+        await navigator.clipboard.writeText(text);
+        showAdminAlert('success', 'Draft email NIM untuk ' + rows.length + ' anggota aktif sudah dicopy. Tinggal paste ke email.');
+    } catch (error) {
+        showAdminAlert('error', 'Browser tidak mengizinkan copy otomatis. Gunakan tombol Draft Email per anggota.');
     }
 }
 

@@ -1,6 +1,6 @@
 // Isi file online-tracker.js
 (function() {
-  const URL_API_RW06 = "https://script.google.com/macros/s/AKfycbzbXLQ8kBNDh-xTaOpamrzdRuZTFbNGIZwToVh7TfmpOg4C0scshNs7tgDsjKfAAXzlvg/exec"; 
+  const URL_API_RW06 = "/common/api/online_tracker.php"; 
   
   // Buat element badge secara otomatis via JS agar tidak perlu copas HTML-nya
   let badge = document.createElement('div');

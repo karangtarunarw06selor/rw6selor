@@ -122,7 +122,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const result = await response.json();
 
             if (result.success) {
-                showAlert('success', '✅ Data anggota berhasil dikirim.');
+                const nim = result.member_code || '';
+                const successMessage = nim
+                    ? '✅ Data anggota berhasil dikirim.<br>NIM / password login kamu: <code>' + escapeHtml(nim) + '</code><br><small>Simpan NIM ini. Login nanti pakai email yang didaftarkan + NIM tersebut.</small><br><a class="member-login-inline" href="member-login.html">Buka halaman login</a>'
+                    : '✅ Data anggota berhasil dikirim. Admin akan mengirim NIM ke email anggota setelah data diverifikasi.';
+                showAlert('success', successMessage);
                 form.reset();
                 resetPhotoPreview();
                 if (isDuplicatePublic) {

@@ -36,35 +36,63 @@ $is_active = isset($_POST['is_active']) ? (int)$_POST['is_active'] : 1;
 
 // --- Handle photo_file upload ---
 $photo_file = '';
-if (isset($_FILES['photo_file']) && $_FILES['photo_file']['error'] === UPLOAD_ERR_OK) {
+if (isset($_FILES['photo_file'])) {
     $file = $_FILES['photo_file'];
-    $allowed = ['image/jpeg', 'image/png', 'image/webp'];
-    $maxSize = 10 * 1024 * 1024; // 10 MB
+    $uploadError = $file['error'] ?? UPLOAD_ERR_NO_FILE;
 
-    if (!in_array($file['type'], $allowed)) {
-        json_response(['success' => false, 'message' => 'Format foto harus JPG, PNG, atau WEBP.'], 400);
-    }
-    if ($file['size'] > $maxSize) {
-        json_response(['success' => false, 'message' => 'Ukuran foto maksimal 10 MB.'], 400);
-    }
+    if ($uploadError === UPLOAD_ERR_OK) {
+        $allowed = ['image/jpeg', 'image/png', 'image/webp'];
+        $maxSize = 10 * 1024 * 1024; // 10 MB
 
-    $uploadDir = __DIR__ . '/../../uploads/foto-anggota/';
-    if (!is_dir($uploadDir)) {
-        mkdir($uploadDir, 0755, true);
-    }
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mimeType = $finfo ? finfo_file($finfo, $file['tmp_name']) : ($file['type'] ?? '');
+        if ($finfo) {
+            finfo_close($finfo);
+        }
 
-    $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
-    $safeName = 'member_' . time() . '_' . bin2hex(random_bytes(6)) . '.' . $ext;
-    $destPath = $uploadDir . $safeName;
+        if (!in_array($mimeType, $allowed, true)) {
+            json_response(['success' => false, 'message' => 'Format foto harus JPG, PNG, atau WEBP.'], 400);
+        }
+        if (($file['size'] ?? 0) > $maxSize) {
+            json_response(['success' => false, 'message' => 'Ukuran foto maksimal 10 MB.'], 400);
+        }
 
-    if (move_uploaded_file($file['tmp_name'], $destPath)) {
-        $photo_file = 'uploads/foto-anggota/' . $safeName;
-    } else {
-        json_response(['success' => false, 'message' => 'Gagal menyimpan file foto.'], 500);
+        $uploadDir = __DIR__ . '/../../uploads/foto-anggota/';
+        if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true) && !is_dir($uploadDir)) {
+            json_response(['success' => false, 'message' => 'Gagal membuat direktori upload.'], 500);
+        }
+        if (!is_writable($uploadDir)) {
+            json_response(['success' => false, 'message' => 'Direktori upload tidak writable.'], 500);
+        }
+
+        $extensionMap = [
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/webp' => 'webp',
+        ];
+        $ext = $extensionMap[$mimeType] ?? strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        $safeName = 'member_' . time() . '_' . bin2hex(random_bytes(6)) . '.' . $ext;
+        $destPath = $uploadDir . $safeName;
+
+        if (move_uploaded_file($file['tmp_name'], $destPath)) {
+            $photo_file = 'uploads/foto-anggota/' . $safeName;
+        } else {
+            $lastError = error_get_last();
+            $errorMessage = $lastError ? $lastError['message'] : 'Unknown move_uploaded_file failure';
+            json_response(['success' => false, 'message' => 'Gagal menyimpan file foto: ' . $errorMessage], 500);
+        }
+    } elseif ($uploadError !== UPLOAD_ERR_NO_FILE) {
+        $errorMessages = [
+            UPLOAD_ERR_INI_SIZE => 'File melebihi batas ukuran server (upload_max_filesize).',
+            UPLOAD_ERR_FORM_SIZE => 'File melebihi batas ukuran form (MAX_FILE_SIZE).',
+            UPLOAD_ERR_PARTIAL => 'Upload file tidak lengkap.',
+            UPLOAD_ERR_NO_TMP_DIR => 'Folder temporary server tidak tersedia.',
+            UPLOAD_ERR_CANT_WRITE => 'Gagal menulis file ke disk.',
+            UPLOAD_ERR_EXTENSION => 'Upload dihentikan oleh ekstensi PHP.',
+        ];
+        $errorMsg = $errorMessages[$uploadError] ?? "Error upload foto (code: $uploadError)";
+        json_response(['success' => false, 'message' => $errorMsg], 400);
     }
-} elseif (isset($_FILES['photo_file']) && $_FILES['photo_file']['error'] !== UPLOAD_ERR_NO_FILE) {
-    // Upload error other than "no file"
-    json_response(['success' => false, 'message' => 'Error upload foto: ' . $_FILES['photo_file']['error']], 400);
 }
 
 // --- Validasi ---
@@ -82,8 +110,11 @@ $d = \DateTime::createFromFormat('Y-m-d', $birth_date);
 if (!$d || $d->format('Y-m-d') !== $birth_date) {
     json_response(['success' => false, 'message' => 'Format tanggal lahir tidak valid (YYYY-MM-DD).'], 400);
 }
-// Validasi email jika ada
-if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+if ($email === '') {
+    json_response(['success' => false, 'message' => 'Email wajib diisi karena dipakai untuk login anggota dan pengiriman NIM.'], 400);
+}
+// Validasi email
+if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     json_response(['success' => false, 'message' => 'Format email tidak valid.'], 400);
 }
 
@@ -167,4 +198,5 @@ json_response([
     'success' => true,
     'message' => 'Data anggota berhasil disimpan.',
     'id' => $newId,
+    'member_code' => $member_code,
 ]);
