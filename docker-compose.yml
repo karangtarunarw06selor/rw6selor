@@ -149,6 +149,9 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.rw6selor-chess-ws.entrypoints=http"
       - "traefik.http.routers.rw6selor-chess-ws.rule=(Host(`rw6selor.org`) || Host(`karangtaruna.rw6selor.org`)) && PathPrefix(`/chess/socket.io`)"
+      - "traefik.http.routers.rw6selor-chess-ws-secure.entrypoints=https"
+      - "traefik.http.routers.rw6selor-chess-ws-secure.rule=(Host(`rw6selor.org`) || Host(`karangtaruna.rw6selor.org`)) && PathPrefix(`/chess/socket.io`)"
+      - "traefik.http.routers.rw6selor-chess-ws-secure.tls=true"
       - "traefik.http.services.rw6selor-chess-ws.loadbalancer.server.port=3000"
     volumes:
       - ./chess-online:/app/chess-online
