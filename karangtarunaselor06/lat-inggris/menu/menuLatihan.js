@@ -579,11 +579,32 @@ function escapeHTML(value) {
         .replaceAll("'", "&#039;");
 }
 
+function getJawabanBenarLatihan(soal) {
+    const huruf = String(soal[8] || "").toUpperCase().trim();
+    const indexMap = { A: 4, B: 5, C: 6, D: 7 };
+    return {
+        huruf,
+        teks: soal[indexMap[huruf]] || ""
+    };
+}
+
+function getPembahasanLatihan(soal) {
+    const pembahasan = String(soal[9] || "").trim();
+    if (pembahasan && pembahasan !== "-") return escapeHTML(pembahasan);
+
+    const jawaban = getJawabanBenarLatihan(soal);
+    if (jawaban.huruf || jawaban.teks) {
+        return `Jawaban yang benar: <b>${escapeHTML(jawaban.huruf || "-")}</b>${jawaban.teks ? ` — ${escapeHTML(jawaban.teks)}` : ""}.`;
+    }
+
+    return "Pembahasan belum tersedia.";
+}
+
 export function cekJawabanLatihan(button) {
     const soal = latihanState.soalAktif[latihanState.index];
     if (!soal) return;
 
-    const pembahasan = soal[9] || "-";
+    const pembahasanHTML = getPembahasanLatihan(soal);
     const benar = button.dataset.benar === "true";
 
     document.querySelectorAll("#mms-latihan-options button").forEach(btn => {
@@ -619,7 +640,7 @@ export function cekJawabanLatihan(button) {
         </div>
 
         <div style="font-size:13px; font-weight:700; color:#334155; line-height:1.45;">
-            ${escapeHTML(pembahasan)}
+            ${pembahasanHTML}
         </div>
 
         <button onclick="lanjutSoalLatihan()" style="width:100%; margin-top:12px; border:none; border-radius:14px; padding:13px; background:${benar ? "#22c55e" : "#ef4444"}; color:white; font-weight:900; cursor:pointer;">
