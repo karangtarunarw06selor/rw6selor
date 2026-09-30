@@ -5,7 +5,8 @@
     const REGISTER_PAGE = 'form-anggota.html';
     const PROTECTED_PAGES = new Set([
         'daftar-anggota.html',
-        'dokumentasi-kegiatan.html'
+        'dokumentasi-kegiatan.html',
+        'englishmms.html'
     ]);
 
     function currentPage() {
