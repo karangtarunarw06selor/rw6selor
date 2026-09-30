@@ -16,8 +16,27 @@
     <link rel="stylesheet" href="lat-inggris.css?v=4">
     <link rel="stylesheet" href="englishmms.css?v=2.9">
     <link rel="manifest" href="manifest.json">
-  
-    
+    <style>
+        html, body { -webkit-text-size-adjust: 100%; -moz-text-size-adjust: 100%; text-size-adjust: 100%; }
+        @media (max-width: 768px) { #user-email-auth { font-size: 16px !important; } }
+        .english-auth-wrapper { width:min(1120px, 95%); margin:40px auto; }
+        .auth-card-mms { max-width: 90%; width: 360px; margin: 60px auto 120px auto; border-top: 5px solid #0f5ea8; box-shadow: 0 4px 15px rgba(15, 94, 168, 0.18); background: #ffffff; padding: 25px; border-radius: 8px; border: 1px solid #e5eef7; text-align: center; }
+        .auth-card-mms h3 { margin: 0; color: #0f5ea8; font-size: 1.05rem; font-weight: 800; letter-spacing: -0.01em; }
+        .auth-card-mms .auth-help { margin: 7px 0 0; color: #6c757d; font-size: 0.85rem; line-height: 1.45; }
+        .auth-form-group { text-align: left; margin: 18px 0; }
+        .auth-form-group label { display: block; font-weight: 700; font-size: 0.82rem; color: #6c757d; margin-bottom: 6px; }
+        .auth-input { width: 100%; padding: 10px 12px; border: 1px solid #dee2e6; border-radius: 6px; box-sizing: border-box; font-size: 0.95rem; }
+        .auth-input:focus { outline: 0; border-color: #0f5ea8; box-shadow: 0 0 0 3px rgba(15, 94, 168, 0.12); }
+        .auth-register-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; padding: 8px 12px; border-radius: 999px; background: #eff6ff; color: #0f5ea8; font-size: 12px; font-weight: 800; text-decoration: none; border: 1px solid #bfdbfe; transition: 0.2s; }
+        .auth-register-toggle:hover { background: #0f5ea8; color: #ffffff; border-color: #0f5ea8; }
+        .btn-auth-submit { background-color: #0f5ea8; color: #fff; border: none; padding: 10px; border-radius: 6px; font-weight: 700; width: 100%; cursor: pointer; transition: 0.2s; font-size: 0.92rem; }
+        .btn-auth-submit:hover { background-color: #1a252f; }
+        .english-session-bar { display:flex; justify-content:space-between; align-items:center; gap:14px; margin:0 auto 18px; padding:12px 16px; border-radius:18px; background:#eff6ff; border:1px solid #bfdbfe; color:#0b2c55; font-size:13px; font-weight:800; }
+        .english-session-bar i { color:#0f5ea8; }
+        .english-session-bar button { border:0; background:#dbeafe; color:#0b477f; padding:9px 12px; border-radius:999px; font-weight:900; cursor:pointer; }
+        .toast-auth { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: #334155; color: #fff; padding: 12px 24px; border-radius: 30px; font-weight: bold; font-size: 14px; z-index: 99999; transition: top 0.4s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 8px; }
+        .toast-auth.show { top: 30px; }
+    </style>
 </head>
 <body class="english-academy-page">
     
@@ -113,6 +132,26 @@
         </nav>
 </header>
 
+<div class="english-auth-wrapper">
+    <div id="auth-frame-anggota" class="auth-card-mms" style="display:none;">
+        <h3><i class="fa-solid fa-language"></i> ENGLISH ACADEMY RW06 SELOR</h3>
+        <p class="auth-help">Validasi Khusus Anggota Resmi RW06</p>
+        <div class="auth-form-group">
+            <label for="user-email-auth">Alamat Email Anggota</label>
+            <input type="email" id="user-email-auth" class="auth-input" placeholder="nama@email.com" autocomplete="email">
+            <a href="form-anggota.html" class="auth-register-toggle">
+                <i class="fa-solid fa-user-plus"></i> Belum terdaftar?
+            </a>
+        </div>
+        <button class="btn-auth-submit" id="english-auth-submit" onclick="verifikasiAksesEnglish()">Verifikasi Akun English Academy</button>
+    </div>
+
+    <div id="data-frame-anggota" style="display:none;">
+        <div class="english-session-bar">
+            <div><i class="fa-solid fa-circle-user"></i> Sesi: <strong id="lbl-user-auth"></strong></div>
+            <button onclick="logoutAksesEnglish()"><i class="fa-solid fa-power-off"></i> Kunci Akses</button>
+        </div>
+
 <div id="dashboard-menu" class="mms-academy-dashboard" style="display:block;">
     <div class="mms-dashboard-fixed">
         <div class="mms-dashboard-hero">
@@ -150,7 +189,8 @@
 </div>
 
 <div id="materi-body" style="display:none;"></div>
-
+    </div>
+</div>
 
         <footer class="site-footer">
         <div class="footer-container">
@@ -195,9 +235,7 @@
     </footer>
     
     <script type="module" src="englishmms.js?v=feedback-1"></script>
-<script src="script.js?v=1.7"></script>
-
-    
-    <script src="member-auth.js?v=english-lock-1"></script>
+    <script src="script.js?v=1.7"></script>
+    <script src="english-auth.js?v=inline-1"></script>
 </body>
 </html>
