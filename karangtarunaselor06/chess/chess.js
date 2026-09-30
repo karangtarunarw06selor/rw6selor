@@ -11,6 +11,45 @@
     let board = [];
     let turn = "white";
     let selected = null;
+    let audioContext = null;
+
+    function getAudioContext() {
+        if (!audioContext) {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContextClass) return null;
+            audioContext = new AudioContextClass();
+        }
+        if (audioContext.state === "suspended") {
+            audioContext.resume().catch(() => {});
+        }
+        return audioContext;
+    }
+
+    function playTone(frequency, duration = 0.09, type = "sine", gainValue = 0.05) {
+        const context = getAudioContext();
+        if (!context) return;
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(frequency, context.currentTime);
+        gain.gain.setValueAtTime(gainValue, context.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + duration);
+        oscillator.connect(gain);
+        gain.connect(context.destination);
+        oscillator.start();
+        oscillator.stop(context.currentTime + duration);
+    }
+
+    function playSound(kind) {
+        if (kind === "select") playTone(520, 0.05, "triangle", 0.035);
+        if (kind === "move") {
+            playTone(620, 0.08, "sine", 0.05);
+            setTimeout(() => playTone(820, 0.07, "sine", 0.04), 65);
+        }
+        if (kind === "error") playTone(150, 0.12, "sawtooth", 0.045);
+        if (kind === "ready") playTone(880, 0.12, "triangle", 0.045);
+        if (kind === "reset") playTone(360, 0.12, "square", 0.035);
+    }
 
     const $ = (id) => document.getElementById(id);
     const els = {
@@ -69,7 +108,8 @@
 
                 if (piece) {
                     const span = document.createElement("span");
-                    span.className = "piece";
+                    const pieceColor = piece === piece.toUpperCase() ? "white" : "black";
+                    span.className = `piece piece-${pieceColor}`;
                     span.textContent = pieces[piece] || piece;
                     square.appendChild(span);
                 }
@@ -108,6 +148,7 @@
     function handleSquareClick(row, col) {
         if (!roomCode || !playerColor) return;
         if (turn !== playerColor) {
+            playSound("error");
             setMessage(els.gameMessage, "Belum giliran kamu.", true);
             return;
         }
@@ -117,9 +158,11 @@
 
         if (!selected) {
             if (!isOwnPiece) {
+                playSound("error");
                 setMessage(els.gameMessage, "Pilih bidak milikmu.", true);
                 return;
             }
+            playSound("select");
             selected = { row, col };
             setMessage(els.gameMessage, "Pilih kotak tujuan.");
             renderBoard();
@@ -160,18 +203,32 @@
 
     socket.on("roomUpdate", renderGame);
     socket.on("gameReady", (data) => {
+        playSound("ready");
         setMessage(els.gameMessage, "Lawan sudah masuk. Game mulai.");
         renderGame(data);
     });
     socket.on("boardUpdated", (data) => {
+        playSound("move");
         selected = null;
         setMessage(els.gameMessage, "Langkah berhasil.");
         renderGame(data);
     });
-    socket.on("invalidMove", (message) => setMessage(els.gameMessage, message, true));
-    socket.on("joinError", (message) => setMessage(els.lobbyMessage, message, true));
-    socket.on("roomFull", (message) => setMessage(els.lobbyMessage, message, true));
-    socket.on("playerDisconnected", (data) => setMessage(els.gameMessage, data.message, true));
+    socket.on("invalidMove", (message) => {
+        playSound("error");
+        setMessage(els.gameMessage, message, true);
+    });
+    socket.on("joinError", (message) => {
+        playSound("error");
+        setMessage(els.lobbyMessage, message, true);
+    });
+    socket.on("roomFull", (message) => {
+        playSound("error");
+        setMessage(els.lobbyMessage, message, true);
+    });
+    socket.on("playerDisconnected", (data) => {
+        playSound("error");
+        setMessage(els.gameMessage, data.message, true);
+    });
 
     els.join.addEventListener("click", joinRoom);
     els.roomInput.addEventListener("keydown", (event) => {
@@ -189,7 +246,10 @@
             setMessage(els.gameMessage, `Kode room: ${roomCode}`);
         }
     });
-    els.reset.addEventListener("click", () => socket.emit("resetGame"));
+    els.reset.addEventListener("click", () => {
+        playSound("reset");
+        socket.emit("resetGame");
+    });
     els.leave.addEventListener("click", () => window.location.href = "../index.html");
 
     els.roomInput.value = randomRoom();
