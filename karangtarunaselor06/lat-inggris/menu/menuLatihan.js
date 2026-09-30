@@ -1,5 +1,6 @@
 const ENGLISH_PUBLIC_API_BASE = "/common/api";
 const URL_LATIHAN = `${ENGLISH_PUBLIC_API_BASE}/english_public_exercises.php?limit=1000`;
+const URL_PROGRESS = `${ENGLISH_PUBLIC_API_BASE}/english_progress.php`;
 
 const latihanState = {
     semuaSoal: [],
@@ -8,8 +9,83 @@ const latihanState = {
     index: 0,
     skor: 0,
     benar: 0,
-    salah: 0
+    salah: 0,
+    progress: {},
+    streak: 0
 };
+
+function getMemberSessionLatihan() {
+    try {
+        const session = JSON.parse(localStorage.getItem("rw06_member_auth") || "null");
+        return session && session.email ? session : null;
+    } catch (_) {
+        return null;
+    }
+}
+
+function keyHasilLatihan(level) {
+    return `mms_latihan_hasil_${level}`;
+}
+
+function getLocalHasilLatihan(level) {
+    try {
+        return JSON.parse(localStorage.getItem(keyHasilLatihan(level)) || "null");
+    } catch (_) {
+        return null;
+    }
+}
+
+function setLocalHasilLatihan(level, data) {
+    localStorage.setItem(keyHasilLatihan(level), JSON.stringify(data));
+}
+
+function getHasilLatihanLevel(level) {
+    return latihanState.progress[level] || getLocalHasilLatihan(level);
+}
+
+async function loadProgressLatihan() {
+    const session = getMemberSessionLatihan();
+    if (!session) return;
+
+    try {
+        const params = new URLSearchParams({ email: session.email, member_id: String(session.id || "") });
+        const response = await fetch(`${URL_PROGRESS}?${params.toString()}`, { headers: { Accept: "application/json" } });
+        const result = await response.json();
+        if (!response.ok || !result.success) throw new Error(result.message || "Progress belum tersedia.");
+        latihanState.progress = result.progress || {};
+        latihanState.streak = Number(result.streak || 0);
+    } catch (_) {
+        latihanState.progress = {};
+    }
+}
+
+async function saveProgressLatihan(hasil) {
+    const session = getMemberSessionLatihan();
+    if (!session) return;
+
+    try {
+        const response = await fetch(URL_PROGRESS, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify({
+                member_id: session.id,
+                email: session.email,
+                level: hasil.level,
+                skor: hasil.skor,
+                benar: hasil.benar,
+                salah: hasil.salah,
+                totalSoal: hasil.totalSoal,
+                akurasi: hasil.akurasi
+            })
+        });
+        const result = await response.json();
+        if (!response.ok || !result.success) throw new Error(result.message || "Progress gagal disimpan.");
+        latihanState.progress = result.progress || latihanState.progress;
+        latihanState.streak = Number(result.streak || latihanState.streak || 0);
+    } catch (_) {
+        // LocalStorage tetap jadi fallback offline/cache sementara.
+    }
+}
 
 export async function loadLatihanFromTSV() {
     try {
@@ -89,17 +165,13 @@ export async function bukaLatihanMenu() {
     modal.style.display = "flex";
 
     await loadLatihanFromTSV();
+    await loadProgressLatihan();
 
     if (!latihanState.semuaSoal.length) return;
 
-const basicData =
-    JSON.parse(localStorage.getItem("mms_latihan_hasil_basic") || "null");
-
-const intermediateData =
-    JSON.parse(localStorage.getItem("mms_latihan_hasil_intermediate") || "null");
-
-const advancedData =
-    JSON.parse(localStorage.getItem("mms_latihan_hasil_advanced") || "null");
+const basicData = getHasilLatihanLevel("basic");
+const intermediateData = getHasilLatihanLevel("intermediate");
+const advancedData = getHasilLatihanLevel("advanced");
 
 const playerData = hitungXPPlayerLatihan();
 
@@ -741,71 +813,50 @@ function resetLatihan() {
 }
 
 function simpanHasilLatihan() {
-
     const totalSoal = latihanState.soalAktif.length;
-
     const sudahSelesai = latihanState.index >= totalSoal;
-
     if (!sudahSelesai || totalSoal === 0) return;
-
 
     const total = latihanState.benar + latihanState.salah;
     const akurasi = total ? Math.round((latihanState.benar / total) * 100) : 0;
-
     const hasil = {
         level: latihanState.level,
         skor: latihanState.skor,
         benar: latihanState.benar,
         salah: latihanState.salah,
-        akurasi: akurasi,
+        totalSoal,
+        akurasi,
         waktu: new Date().toISOString()
     };
 
-    const key = `mms_latihan_hasil_${latihanState.level}`;
-    const hasilLama = JSON.parse(localStorage.getItem(key) || "null");
-
-    const hasilTerbaik =
-    !hasilLama ||
-    hasil.akurasi > hasilLama.akurasi ||
-    (hasil.akurasi === hasilLama.akurasi && hasil.skor > hasilLama.skor)
+    const hasilLama = getHasilLatihanLevel(latihanState.level);
+    const hasilTerbaik = !hasilLama || hasil.akurasi > hasilLama.akurasi || (hasil.akurasi === hasilLama.akurasi && hasil.skor > hasilLama.skor)
         ? hasil
         : hasilLama;
 
     const achievementSebelum = getAchievements();
-
-    localStorage.setItem(key, JSON.stringify(hasilTerbaik));
+    latihanState.progress[latihanState.level] = hasilTerbaik;
+    setLocalHasilLatihan(latihanState.level, hasilTerbaik);
+    saveProgressLatihan(hasilTerbaik);
 
     const achievementSesudah = getAchievements();
-
     achievementSesudah.forEach(id => {
-    if (!achievementSebelum.includes(id)) {
-        tampilAchievementToast(id);
-    }
-});
+        if (!achievementSebelum.includes(id)) tampilAchievementToast(id);
+    });
 
     updateDailyStreakLatihan();
 }
 
 function hitungXPPlayerLatihan() {
     const levels = ["basic", "intermediate", "advanced"];
-
-    const totalXP = levels.reduce((total, level) => {
-        const data = JSON.parse(localStorage.getItem(`mms_latihan_hasil_${level}`) || "null");
-        return total + (data?.skor || 0);
-    }, 0);
-
+    const totalXP = levels.reduce((total, level) => total + (getHasilLatihanLevel(level)?.skor || 0), 0);
     const xpPerLevel = 100;
     const playerLevel = Math.floor(totalXP / xpPerLevel) + 1;
     const xpDalamLevel = totalXP % xpPerLevel;
     const xpProgress = Math.round((xpDalamLevel / xpPerLevel) * 100);
     const xpSisa = xpPerLevel - xpDalamLevel;
 
-    return {
-        totalXP,
-        playerLevel,
-        xpProgress,
-        xpSisa
-    };
+    return { totalXP, playerLevel, xpProgress, xpSisa };
 }
 
 function getPlayerRank(level) {
@@ -817,14 +868,9 @@ function getPlayerRank(level) {
 }
 
 function getLevelStatus() {
-    const basic =
-        JSON.parse(localStorage.getItem("mms_latihan_hasil_basic") || "null");
-
-    const intermediate =
-        JSON.parse(localStorage.getItem("mms_latihan_hasil_intermediate") || "null");
-
-    const advanced =
-        JSON.parse(localStorage.getItem("mms_latihan_hasil_advanced") || "null");
+    const basic = getHasilLatihanLevel("basic");
+    const intermediate = getHasilLatihanLevel("intermediate");
+    const advanced = getHasilLatihanLevel("advanced");
 
     return {
         basic:
@@ -868,9 +914,9 @@ function renderStatusBadge(status, jumlahSoal) {
 function getAchievements() {
     const achievements = [];
 
-    const basic = JSON.parse(localStorage.getItem("mms_latihan_hasil_basic") || "null");
-    const intermediate = JSON.parse(localStorage.getItem("mms_latihan_hasil_intermediate") || "null");
-    const advanced = JSON.parse(localStorage.getItem("mms_latihan_hasil_advanced") || "null");
+    const basic = getHasilLatihanLevel("basic");
+    const intermediate = getHasilLatihanLevel("intermediate");
+    const advanced = getHasilLatihanLevel("advanced");
 
     if (basic?.akurasi >= 50) achievements.push("first_level");
 if (basic?.akurasi >= 70) achievements.push("basic_champion");
@@ -1032,9 +1078,8 @@ document.body.appendChild(popup);
 
 function getStatistikGlobalLatihan() {
     const levels = ["basic", "intermediate", "advanced"];
-
     const dataLevels = levels
-        .map(level => JSON.parse(localStorage.getItem(`mms_latihan_hasil_${level}`) || "null"))
+        .map(getHasilLatihanLevel)
         .filter(Boolean);
 
     const levelSelesai = dataLevels.length;
@@ -1046,6 +1091,8 @@ function getStatistikGlobalLatihan() {
 }
 
 function updateDailyStreakLatihan() {
+    if (latihanState.streak > 0) return latihanState.streak;
+
     const today = new Date().toISOString().slice(0, 10);
     const lastDate = localStorage.getItem("mms_latihan_last_date");
     let streak = Number(localStorage.getItem("mms_latihan_streak") || 0);
@@ -1071,5 +1118,5 @@ function updateDailyStreakLatihan() {
 }
 
 function getDailyStreakLatihan() {
-    return Number(localStorage.getItem("mms_latihan_streak") || 0);
+    return latihanState.streak || Number(localStorage.getItem("mms_latihan_streak") || 0);
 }

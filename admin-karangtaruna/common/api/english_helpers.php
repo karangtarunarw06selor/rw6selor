@@ -71,6 +71,36 @@ function english_ensure_schema(PDO $pdo): void
     $pdo->exec($sql);
     english_ensure_hash_schema($pdo);
     english_ensure_materi_video_schema($pdo);
+    english_ensure_progress_schema($pdo);
+}
+
+function english_ensure_progress_schema(PDO $pdo): void
+{
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS english_member_progress (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            member_id INT UNSIGNED NOT NULL,
+            email VARCHAR(160) NOT NULL,
+            level ENUM('basic','intermediate','advanced') NOT NULL,
+            skor INT NOT NULL DEFAULT 0,
+            benar INT NOT NULL DEFAULT 0,
+            salah INT NOT NULL DEFAULT 0,
+            total_soal INT NOT NULL DEFAULT 0,
+            akurasi INT NOT NULL DEFAULT 0,
+            xp INT NOT NULL DEFAULT 0,
+            streak INT NOT NULL DEFAULT 0,
+            last_played_at DATETIME NULL,
+            completed_at DATETIME NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+            UNIQUE KEY uq_english_member_level (member_id, level),
+            KEY idx_english_member_progress_email (email),
+            KEY idx_english_member_progress_level (level),
+            CONSTRAINT fk_english_progress_member
+                FOREIGN KEY (member_id) REFERENCES members(id)
+                ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    ");
 }
 
 function english_hash(array $values): string

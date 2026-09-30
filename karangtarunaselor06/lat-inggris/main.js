@@ -76,7 +76,7 @@ import {
     tutupKonfirmasiKeluarLatihan,
     konfirmasiKeluarLatihanYa,
     lanjutSoalLatihan
-} from './menu/menuLatihan.js?v=feedback-1';
+} from './menu/menuLatihan.js?v=progress-1';
 
 
 
