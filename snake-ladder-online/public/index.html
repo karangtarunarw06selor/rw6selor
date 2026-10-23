@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#082235">
+  <title>Ular Tangga • Muda-Mudi Selor</title>
+  <link rel="icon" href="assets/mms.avif">
+  <link rel="stylesheet" href="game.css?v=1">
+</head>
+<body>
+  <header class="game-header">
+    <a class="back-link" href="/">← Portal</a>
+    <div class="brand"><img src="assets/mms.avif" alt="Logo Muda-Mudi"><span><b>MUDA MUDI</b><small>Sedahromo Lor 05</small></span></div>
+    <button id="sound-toggle" class="icon-button" type="button" aria-label="Suara">♪</button>
+  </header>
+
+  <main>
+    <section id="welcome" class="welcome-panel">
+      <div class="welcome-copy">
+        <span class="eyebrow">Dolanan Nusantara</span>
+        <h1>Ular Tangga<br><em>Muda-Mudi Selor</em></h1>
+        <p>Naik lewat tangga, hindari ular, dan jadi pemain pertama yang mencapai petak 100.</p>
+      </div>
+      <div class="mode-grid">
+        <button class="mode-card featured" data-mode="solo"><span>🎲</span><b>Main vs Bot</b><small>Langsung bermain di perangkat ini</small></button>
+        <button class="mode-card" data-mode="create"><span>✦</span><b>Buat Room</b><small>Undang maksimal tiga teman</small></button>
+        <button class="mode-card" data-mode="join"><span>⌁</span><b>Gabung Room</b><small>Masukkan kode enam karakter</small></button>
+      </div>
+      <p class="credit">Papan dan audio diadaptasi dari proyek ghofur135/ular-dan-tangga.</p>
+    </section>
+
+    <section id="setup" class="dialog-panel" hidden>
+      <button class="dialog-close" type="button" aria-label="Tutup">×</button>
+      <span class="eyebrow" id="setup-kicker">Pemain</span>
+      <h2 id="setup-title">Siapa namamu?</h2>
+      <form id="setup-form">
+        <label>Nama pemain<input id="player-name" maxlength="24" autocomplete="nickname" placeholder="Contoh: Ardyan" required></label>
+        <label id="room-code-label" hidden>Kode room<input id="room-code" maxlength="6" autocomplete="off" placeholder="ABC123"></label>
+        <button class="primary-button" type="submit">Lanjut bermain</button>
+      </form>
+      <p id="setup-feedback" class="feedback" aria-live="polite"></p>
+    </section>
+
+    <section id="game" class="game-shell" hidden>
+      <div class="game-topbar">
+        <div><span class="eyebrow">Room</span><button id="room-code-display" class="room-code" type="button">SOLO</button></div>
+        <div class="turn-card"><span id="turn-dot"></span><small>Giliran</small><b id="turn-name">Kamu</b></div>
+      </div>
+
+      <div class="game-layout">
+        <section class="board-card">
+          <div id="board" class="board" aria-label="Papan ular tangga">
+            <img src="assets/board-jawa.png" alt="Papan ular tangga bernuansa Jawa">
+            <div id="tokens" class="tokens"></div>
+          </div>
+          <div id="event-banner" class="event-banner">Permainan siap dimulai.</div>
+        </section>
+
+        <aside class="control-card">
+          <div id="players" class="player-list"></div>
+          <div class="dice-zone">
+            <div id="dice" class="dice" aria-live="polite">⚄</div>
+            <button id="roll-button" class="roll-button" type="button">Kocok Dadu</button>
+            <button id="start-button" class="secondary-button" type="button" hidden>Mulai Game</button>
+            <button id="reset-button" class="text-button" type="button" hidden>Main Lagi</button>
+          </div>
+          <ol id="move-log" class="move-log"><li>Selamat datang di arena.</li></ol>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <audio id="dice-sound" src="assets/sound/dice-roll.mp3" preload="auto"></audio>
+  <audio id="ladder-sound" src="assets/sound/ladder.mp3" preload="auto"></audio>
+  <audio id="snake-sound" src="assets/sound/snake.mp3" preload="auto"></audio>
+  <script src="/ular-tangga/socket.io/socket.io.js"></script>
+  <script src="game.js?v=1"></script>
+</body>
+</html>
