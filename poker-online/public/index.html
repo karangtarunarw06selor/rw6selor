@@ -4,14 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <meta name="theme-color" content="#101418">
-  <title>Poker RW06</title>
-  <link rel="stylesheet" href="game.css?v=2">
+  <title>Game Kartu RW06</title>
+  <link rel="stylesheet" href="game.css?v=3">
 </head>
 <body>
   <main id="app">
     <section id="lobby" class="lobby card-panel">
-      <div class="brand"><span class="brand-mark">♠</span><div><small>RW 06 SOCIAL GAME</small><h1>Texas Hold’em</h1></div></div>
-      <p class="intro">Main santai 2–6 orang. Chip virtual hanya untuk room ini—tanpa uang, hadiah, transfer, atau bot.</p>
+      <div class="brand"><span class="brand-mark">♠</span><div><small>RW 06 SOCIAL GAME</small><h1>Game Kartu</h1></div></div>
+      <p class="intro">Buat lobby untuk 2–6 orang, lalu pilih Texas Hold’em, Capsa 5 Kartu, atau Cangkulan. Tanpa uang, hadiah, transfer, atau bot.</p>
       <label>Nama pemain<input id="playerName" maxlength="20" autocomplete="nickname" placeholder="Nama kamu"></label>
       <button id="createRoom" class="primary">Buat Room Baru</button>
       <div class="divider"><span>atau gabung</span></div>
@@ -23,7 +23,7 @@
     <section id="game" class="game hidden" aria-label="Meja poker">
       <header class="game-head">
         <button id="leaveGame" class="icon-button" aria-label="Keluar">←</button>
-        <div><strong>POKER RW06</strong><small>ROOM <button id="copyCode" title="Salin kode">------</button></small></div>
+        <div><strong>GAME KARTU RW06</strong><small>ROOM <button id="copyCode" title="Salin kode">------</button></small></div>
         <div class="media-controls"><button id="audioToggle" class="icon-button" aria-label="Aktifkan voice">🎧</button><button id="videoToggle" class="icon-button" aria-label="Aktifkan kamera">▣</button></div>
       </header>
 
@@ -36,14 +36,24 @@
         <div id="seats" class="seats"></div>
       </div>
 
+      <div id="handDock" class="hand-dock hidden" aria-label="Kartu tangan"></div>
       <aside id="notice" class="notice">Buat atau bagikan kode room.</aside>
       <footer id="actionDock" class="action-dock">
-        <button id="startGame" class="primary hidden">Mulai Hand</button>
+        <div id="modePicker" class="mode-picker hidden" aria-label="Pilih mode permainan">
+          <strong>HOST PILIH MODE</strong>
+          <button data-mode="holdem">Texas Hold’em</button>
+          <button data-mode="capsa-five">Capsa 5 Kartu</button>
+          <button data-mode="cangkulan">Cangkulan</button>
+        </div>
+        <button id="startGame" class="primary hidden">Mulai Permainan</button>
         <div id="actions" class="actions hidden">
           <button data-action="fold" class="danger">Fold</button>
           <button data-action="check" id="checkCall">Check</button>
           <button id="raiseOpen" class="primary">Raise</button>
           <button data-action="all-in">All-in</button>
+        </div>
+        <div id="cangkulanActions" class="cangkulan-actions hidden">
+          <button id="drawCard" class="primary">Cangkul sampai dapat</button>
         </div>
         <div id="raisePanel" class="raise-panel hidden">
           <input id="raiseAmount" type="range" min="20" max="1000" step="10" value="40">
@@ -64,6 +74,6 @@
   <div id="remoteMedia" aria-hidden="true"></div>
   <script src="/poker/socket.io/socket.io.js"></script>
   <script src="media.js?v=2"></script>
-  <script src="game.js?v=2"></script>
+  <script src="game.js?v=3"></script>
 </body>
 </html>

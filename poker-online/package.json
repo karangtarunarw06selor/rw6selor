@@ -2,11 +2,11 @@
   "name": "rw06-poker-online",
   "version": "1.0.0",
   "private": true,
-  "description": "Server-authoritative social Texas Hold'em for RW06",
+  "description": "Server-authoritative social card games for RW06",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "check": "node --check server.js && node --check poker-engine.js && node --check public/game.js && node --check public/media.js",
+    "check": "node --check server.js && node --check poker-engine.js && node --check game-modes.js && node --check public/game.js && node --check public/media.js",
     "test": "node --test test/*.test.js"
   },
   "dependencies": {

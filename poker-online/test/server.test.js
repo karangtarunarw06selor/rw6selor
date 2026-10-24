@@ -40,6 +40,7 @@ test("rooms are isolated by site and expose only viewer hole cards", async () =>
   assert.equal(denied.ok, false);
   const joined = await emit(guest, "room:join", { name: "Guest", code: created.room.code, siteId: "MMS" });
   assert.equal(joined.ok, true);
+  await emit(host, "room:mode", { mode: "holdem" });
   const started = await emit(host, "game:start");
   assert.equal(started.ok, true);
   assert.equal((await emit(host, "game:start")).ok, false);
@@ -68,6 +69,63 @@ test("reconnect token restores the same player seat and replaces the old socket"
   assert.equal(denied.ok, false);
 });
 
+test("host selects a mode only after another player joins and mode locks during play", async () => {
+  const host = await connect();
+  const guest = await connect();
+  const created = await emit(host, "room:create", { name: "Host", siteId: "MMS" });
+  assert.equal((await emit(host, "room:mode", { mode: "cangkulan" })).ok, false);
+  await emit(guest, "room:join", { name: "Guest", code: created.room.code, siteId: "MMS" });
+  assert.equal((await emit(guest, "room:mode", { mode: "cangkulan" })).ok, false);
+  assert.equal((await emit(host, "game:start")).ok, false);
+  assert.equal((await emit(host, "room:mode", { mode: "cangkulan" })).ok, true);
+  const selected = (await emit(host, "room:get")).room;
+  assert.equal(selected.mode, "cangkulan");
+  assert.equal((await emit(host, "game:start")).ok, true);
+  assert.equal((await emit(host, "room:mode", { mode: "holdem" })).ok, false);
+});
+
+test("capsa five starts from a selected lobby and reveals five cards at showdown", async () => {
+  const host = await connect();
+  const guest = await connect();
+  const created = await emit(host, "room:create", { name: "Host", siteId: "KT" });
+  const joined = await emit(guest, "room:join", { name: "Guest", code: created.room.code, siteId: "KT" });
+  assert.equal((await emit(host, "room:mode", { mode: "capsa-five" })).ok, true);
+  assert.equal((await emit(host, "game:start")).ok, true);
+  const hostState = (await emit(host, "room:get")).room;
+  assert.equal(hostState.mode, "capsa-five");
+  assert.equal(hostState.players.find((p) => p.id === created.playerId).hand.length, 5);
+  assert.equal(hostState.players.find((p) => p.id === joined.playerId).hand.every(Boolean), true);
+});
+
+test("cangkulan action uses server hand and rejects a nonmatching card", async () => {
+  const host = await connect();
+  const guest = await connect();
+  const created = await emit(host, "room:create", { name: "Host", siteId: "MMS" });
+  const joined = await emit(guest, "room:join", { name: "Guest", code: created.room.code, siteId: "MMS" });
+  await emit(host, "room:mode", { mode: "cangkulan" });
+  await emit(host, "game:start");
+  const state = (await emit(host, "room:get")).room;
+  const actorSocket = state.turnId === created.playerId ? host : guest;
+  const observerSocket = actorSocket === host ? guest : host;
+  const actorId = state.turnId;
+  const actorState = (await emit(actorSocket, "room:get")).room;
+  const hand = actorState.players.find((player) => player.id === actorId).hand;
+  const top = actorState.topDiscard;
+  const playable = hand.findIndex((card) => card.rank === top.rank || card.suit === top.suit);
+  const blocked = hand.findIndex((card) => card.rank !== top.rank && card.suit !== top.suit);
+  if (blocked >= 0) assert.equal((await emit(actorSocket, "game:action", { type: "play", cardIndex: blocked, actionId: "blocked-card" })).ok, false);
+  const action = playable >= 0
+    ? { type: "play", cardIndex: playable, actionId: "legal-card" }
+    : { type: "draw", actionId: "legal-draw" };
+  assert.equal((await emit(actorSocket, "game:action", action)).ok, true);
+  const next = (await emit(host, "room:get")).room;
+  assert.notEqual(next.turnId, actorId);
+  const observerView = (await emit(observerSocket, "room:get")).room;
+  const hidden = observerView.players.find((player) => player.id === actorId).hand;
+  assert.equal(hidden.length > 0, true);
+  assert.equal(hidden.every((card) => card === null), true);
+});
+
 test("only host starts and table accepts at most six players", async () => {
   const host = await connect();
   const created = await emit(host, "room:create", { name: "P1", siteId: "KT" });
@@ -80,6 +138,7 @@ test("only host starts and table accepts at most six players", async () => {
   }
   const denied = await emit(guests[0], "game:start");
   assert.equal(denied.ok, false);
+  await emit(host, "room:mode", { mode: "holdem" });
   assert.equal((await emit(host, "game:start")).ok, true);
 });
 
@@ -96,6 +155,7 @@ test("duplicate action does not extend the next player's deadline", async () => 
   const guest = await connect();
   const created = await emit(host, "room:create", { name: "Host", siteId: "MMS" });
   await emit(guest, "room:join", { name: "Guest", code: created.room.code, siteId: "MMS" });
+  await emit(host, "room:mode", { mode: "holdem" });
   await emit(host, "game:start");
   const initial = (await emit(host, "room:get")).room;
   const actor = initial.turnId === created.playerId ? host : guest;

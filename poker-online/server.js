@@ -6,6 +6,7 @@ const path = require("path");
 const crypto = require("crypto");
 const { Server } = require("socket.io");
 const { PokerTable } = require("./poker-engine");
+const { CapsaFiveTable, CangkulanTable } = require("./game-modes");
 
 const app = express();
 const server = http.createServer(app);
@@ -30,6 +31,7 @@ const validToken = (expected, received) => expected === received && crypto.timin
 
 function publicView(room, viewerId) {
   const view = room.table.viewFor(viewerId);
+  view.mode = room.mode;
   view.hostId = room.hostId;
   view.turnDeadline = room.turnDeadline || null;
   view.players = view.players.map((player) => {
@@ -43,6 +45,29 @@ function emitRoom(room) {
   room.table.players.forEach((player) => {
     if (player.connected && player.socketId) io.to(player.socketId).emit("room:state", publicView(room, player.id));
   });
+}
+
+function createTable(mode, room) {
+  if (mode === "holdem") return new PokerTable({ code: room.code, siteId: room.siteId, smallBlind: 10, bigBlind: 20 });
+  if (mode === "capsa-five") return new CapsaFiveTable({ code: room.code, siteId: room.siteId });
+  if (mode === "cangkulan") return new CangkulanTable({ code: room.code, siteId: room.siteId });
+  throw new Error("Mode permainan tidak valid.");
+}
+
+function selectMode(room, mode) {
+  if (!["waiting", "finished"].includes(room.table.phase)) throw new Error("Mode terkunci selama ronde berjalan.");
+  const table = createTable(mode, room);
+  room.table.players.forEach((source) => {
+    const player = table.addPlayer({ id: source.id, name: source.name, stack: source.stack || 1000 });
+    Object.assign(player, {
+      token: source.token,
+      media: source.media,
+      socketId: source.socketId,
+      connected: source.connected,
+    });
+  });
+  room.mode = mode;
+  room.table = table;
 }
 
 function scheduleTurn(room) {
@@ -111,7 +136,7 @@ io.on("connection", (socket) => {
     const player = table.addPlayer({ id: crypto.randomUUID(), name: playerName });
     player.token = crypto.randomBytes(24).toString("base64url");
     player.media = { audio: false, video: false };
-    const room = { code, siteId, table, hostId: player.id, emptyTimer: null, turnTimer: null, turnDeadline: null };
+    const room = { code, siteId, mode: null, table, hostId: player.id, emptyTimer: null, turnTimer: null, turnDeadline: null };
     rooms.set(code, room);
     attach(socket, room, player);
     reply({ ok: true, room: publicView(room, player.id), playerId: player.id, token: player.token });
@@ -160,13 +185,28 @@ io.on("connection", (socket) => {
     reply({ ok: true, room: publicView(room, player.id) });
   });
 
+  socket.on("room:mode", ({ mode } = {}, reply = () => {}) => {
+    const { room, player } = session(socket);
+    if (!room || !player) return reply({ ok: false, error: "Sesi tidak ditemukan." });
+    if (room.hostId !== player.id) return reply({ ok: false, error: "Hanya pembuat room yang bisa memilih mode." });
+    if (room.table.players.filter((item) => item.connected).length < 2) return reply({ ok: false, error: "Tunggu minimal dua pemain di lobby." });
+    try {
+      selectMode(room, String(mode || ""));
+      reply({ ok: true });
+      emitRoom(room);
+    } catch (error) { reply({ ok: false, error: error.message }); }
+  });
+
   socket.on("game:start", (_payload, reply = () => {}) => {
     const { room, player } = session(socket);
     if (!room || !player) return reply({ ok: false, error: "Sesi tidak ditemukan." });
     if (room.hostId !== player.id) return reply({ ok: false, error: "Hanya pembuat room yang bisa mulai." });
+    if (!room.mode) return reply({ ok: false, error: "Pilih mode permainan dahulu." });
     try {
-      room.table.players.forEach((item) => { if (item.connected && item.stack <= 0) item.stack = 1000; });
-      room.table.startHand();
+      if (room.mode === "holdem") {
+        room.table.players.forEach((item) => { if (item.connected && item.stack <= 0) item.stack = 1000; });
+        room.table.startHand();
+      } else room.table.startRound();
       scheduleTurn(room);
       reply({ ok: true });
       emitRoom(room);
@@ -182,6 +222,7 @@ io.on("connection", (socket) => {
       const result = room.table.act(player.id, {
         type: String(action.type || ""),
         amount: Number(action.amount),
+        cardIndex: Number(action.cardIndex),
         actionId,
       });
       if (!result?.duplicate) scheduleTurn(room);
