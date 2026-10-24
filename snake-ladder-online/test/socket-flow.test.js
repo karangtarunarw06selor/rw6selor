@@ -52,3 +52,32 @@ test("rooms are isolated by site identity", async (context) => {
   assert.equal(wrongSite.ok, false);
   assert.match(wrongSite.error, /situs ini/i);
 });
+
+test("voice signaling is limited to joined peers in the same room", async (context) => {
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const port = server.address().port;
+  const host = await connect(port);
+  const guest = await connect(port);
+  const outsider = await connect(port);
+  context.after(() => { host.close(); guest.close(); outsider.close(); io.close(); server.close(); rooms.clear(); });
+
+  const created = await emit(host, "room:create", { name: "Host", siteId: "KT" });
+  const joined = await emit(guest, "room:join", { name: "Teman", code: created.room.code, siteId: "KT" });
+  const otherRoom = await emit(outsider, "room:create", { name: "Luar", siteId: "KT" });
+  assert.equal(joined.ok, true);
+  assert.equal(otherRoom.ok, true);
+
+  assert.equal((await emit(host, "voice:join")).ok, true);
+  const guestVoice = await emit(guest, "voice:join");
+  assert.deepEqual(guestVoice.peers, [{ id: created.playerId, name: "Host" }]);
+
+  const relayed = new Promise((resolve) => guest.once("voice:signal", resolve));
+  const offer = { description: { type: "offer", sdp: "v=0\r\n" } };
+  assert.equal((await emit(host, "voice:signal", { targetId: joined.playerId, signal: offer })).ok, true);
+  assert.deepEqual((await relayed).signal, offer);
+
+  const crossRoom = await emit(host, "voice:signal", { targetId: otherRoom.playerId, signal: offer });
+  assert.equal(crossRoom.ok, false);
+  const invalid = await emit(host, "voice:signal", { targetId: joined.playerId, signal: { arbitrary: true } });
+  assert.equal(invalid.ok, false);
+});

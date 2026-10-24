@@ -58,6 +58,16 @@
         </section>
 
         <aside class="control-card">
+          <section id="voice-panel" class="voice-panel" hidden>
+            <div class="voice-heading"><div><span class="eyebrow">Voice Room</span><b id="voice-status">Belum terhubung</b></div><span class="voice-privacy">Tidak direkam</span></div>
+            <div id="voice-members" class="voice-members"></div>
+            <div class="voice-actions">
+              <button id="voice-join" class="voice-button" type="button">Gabung Voice</button>
+              <button id="voice-mute" class="voice-button secondary" type="button" hidden>Mute</button>
+              <button id="voice-leave" class="voice-button danger" type="button" hidden>Keluar</button>
+            </div>
+            <div id="voice-audio" hidden></div>
+          </section>
           <div id="players" class="player-list"></div>
           <div class="dice-zone">
             <div id="dice" class="dice" aria-live="polite">⚄</div>
@@ -76,6 +86,7 @@
   <audio id="ladder-sound" src="assets/sound/ladder.mp3" preload="auto"></audio>
   <audio id="snake-sound" src="assets/sound/snake.mp3" preload="auto"></audio>
   <script src="/ular-tangga/socket.io/socket.io.js"></script>
-  <script src="game.js?v=1"></script>
+  <script src="game.js?v=2"></script>
+  <script src="voice.js?v=1"></script>
 </body>
 </html>

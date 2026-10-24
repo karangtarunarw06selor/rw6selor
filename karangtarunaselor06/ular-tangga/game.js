@@ -22,6 +22,7 @@
     clearTimeout(toast.timer);
     toast.timer = setTimeout(() => element.classList.remove("show"), 2400);
   };
+  window.snakeGame = { socket, getState: () => state, toast };
   const moveResult = (position, dice) => {
     const stepped = position + dice <= 100 ? position + dice : position;
     const to = ladders[stepped] || snakes[stepped] || stepped;
@@ -50,6 +51,7 @@
     $("#welcome").hidden = true;
     $("#setup").hidden = true;
     $("#game").hidden = false;
+    window.dispatchEvent(new CustomEvent("snake:game-started", { detail: { mode: state.mode } }));
     render();
   };
   const addLog = (text) => {

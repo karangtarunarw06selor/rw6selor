@@ -21,6 +21,22 @@ app.get("/", (_request, response) => response.redirect("/ular-tangga/"));
 const code = () => crypto.randomBytes(3).toString("hex").slice(0, 6).toUpperCase();
 const cleanName = (value) => String(value || "").trim().slice(0, 24);
 const cleanSiteId = (value) => String(value || "MMS").trim().toUpperCase() === "KT" ? "KT" : "MMS";
+const cleanVoiceSignal = (signal) => {
+  if (!signal || typeof signal !== "object") return null;
+  if (JSON.stringify(signal).length > 16_384) return null;
+  if (signal.description && ["offer", "answer"].includes(signal.description.type) && typeof signal.description.sdp === "string") {
+    return { description: { type: signal.description.type, sdp: signal.description.sdp } };
+  }
+  if (signal.candidate && typeof signal.candidate.candidate === "string") {
+    return { candidate: {
+      candidate: signal.candidate.candidate,
+      sdpMid: signal.candidate.sdpMid ?? null,
+      sdpMLineIndex: signal.candidate.sdpMLineIndex ?? null,
+      usernameFragment: signal.candidate.usernameFragment ?? null,
+    } };
+  }
+  return null;
+};
 const publicRoom = (room) => ({
   code: room.code,
   siteId: room.siteId,
@@ -32,6 +48,14 @@ const publicRoom = (room) => ({
 });
 const findPlayer = (room, socket) => room.players.find((player) => player.socketId === socket.id);
 const emitRoom = (room) => io.to(room.code).emit("room:state", publicRoom(room));
+const voicePeers = (room, playerId) => room.players
+  .filter((player) => player.connected && player.voice && player.id !== playerId)
+  .map(({ id, name }) => ({ id, name }));
+const leaveVoice = (room, player) => {
+  if (!room || !player?.voice) return;
+  player.voice = false;
+  io.to(room.code).emit("voice:peer-left", { peerId: player.id });
+};
 const finishIfEmpty = (room) => {
   if (room.players.every((player) => !player.connected)) rooms.delete(room.code);
 };
@@ -117,10 +141,38 @@ io.on("connection", (socket) => {
     reply({ ok: true });
   });
 
+  socket.on("voice:join", (_payload, reply = () => {}) => {
+    const room = rooms.get(socket.data.roomCode);
+    const player = room && findPlayer(room, socket);
+    if (!room || !player || !player.connected) return reply({ ok: false, error: "Sesi pemain tidak ditemukan." });
+    const peers = voicePeers(room, player.id);
+    player.voice = true;
+    socket.to(room.code).emit("voice:peer-joined", { peerId: player.id, name: player.name });
+    reply({ ok: true, peers });
+  });
+
+  socket.on("voice:signal", ({ targetId, signal } = {}, reply = () => {}) => {
+    const room = rooms.get(socket.data.roomCode);
+    const player = room && findPlayer(room, socket);
+    const target = room?.players.find((item) => item.id === targetId && item.connected && item.voice);
+    const safeSignal = cleanVoiceSignal(signal);
+    if (!room || !player?.voice || !target || !safeSignal) return reply({ ok: false, error: "Peer voice tidak valid." });
+    io.to(target.socketId).emit("voice:signal", { peerId: player.id, name: player.name, signal: safeSignal });
+    reply({ ok: true });
+  });
+
+  socket.on("voice:leave", (_payload, reply = () => {}) => {
+    const room = rooms.get(socket.data.roomCode);
+    const player = room && findPlayer(room, socket);
+    leaveVoice(room, player);
+    reply({ ok: true });
+  });
+
   socket.on("disconnect", () => {
     const room = rooms.get(socket.data.roomCode);
     const player = room && findPlayer(room, socket);
     if (!room || !player) return;
+    leaveVoice(room, player);
     player.connected = false;
     if (room.turn === player.id) {
       const next = room.players.find((item) => item.connected);
