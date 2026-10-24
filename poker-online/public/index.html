@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="theme-color" content="#101418">
+  <title>Poker RW06</title>
+  <link rel="stylesheet" href="game.css?v=1">
+</head>
+<body>
+  <main id="app">
+    <section id="lobby" class="lobby card-panel">
+      <div class="brand"><span class="brand-mark">♠</span><div><small>RW 06 SOCIAL GAME</small><h1>Texas Hold’em</h1></div></div>
+      <p class="intro">Main santai 2–6 orang. Chip virtual hanya untuk room ini—tanpa uang, hadiah, transfer, atau bot.</p>
+      <label>Nama pemain<input id="playerName" maxlength="20" autocomplete="nickname" placeholder="Nama kamu"></label>
+      <button id="createRoom" class="primary">Buat Room Baru</button>
+      <div class="divider"><span>atau gabung</span></div>
+      <div class="join-row"><input id="roomCode" maxlength="6" inputmode="text" placeholder="KODE ROOM"><button id="joinRoom">Gabung</button></div>
+      <p id="lobbyError" class="error" role="alert"></p>
+      <a class="back-link" href="../">← Kembali ke portal</a>
+    </section>
+
+    <section id="game" class="game hidden" aria-label="Meja poker">
+      <header class="game-head">
+        <button id="leaveGame" class="icon-button" aria-label="Keluar">←</button>
+        <div><strong>POKER RW06</strong><small>ROOM <button id="copyCode" title="Salin kode">------</button></small></div>
+        <div class="media-controls"><button id="audioToggle" class="icon-button" aria-label="Aktifkan voice">🎧</button><button id="videoToggle" class="icon-button" aria-label="Aktifkan kamera">▣</button></div>
+      </header>
+
+      <div id="tableArea" class="table-area">
+        <div class="felt">
+          <div id="pot" class="pot">POT 0</div>
+          <div id="board" class="board" aria-label="Community cards"></div>
+          <div id="phase" class="phase">MENUNGGU PEMAIN</div>
+        </div>
+        <div id="seats" class="seats"></div>
+      </div>
+
+      <aside id="notice" class="notice">Buat atau bagikan kode room.</aside>
+      <footer id="actionDock" class="action-dock">
+        <button id="startGame" class="primary hidden">Mulai Hand</button>
+        <div id="actions" class="actions hidden">
+          <button data-action="fold" class="danger">Fold</button>
+          <button data-action="check" id="checkCall">Check</button>
+          <button id="raiseOpen" class="primary">Raise</button>
+          <button data-action="all-in">All-in</button>
+        </div>
+        <div id="raisePanel" class="raise-panel hidden">
+          <input id="raiseAmount" type="range" min="20" max="1000" step="10" value="40">
+          <output id="raiseOutput">40</output>
+          <button id="raiseConfirm" class="primary">Konfirmasi Raise</button>
+        </div>
+      </footer>
+    </section>
+  </main>
+
+  <dialog id="mediaConsent">
+    <form method="dialog">
+      <h2>Voice & Video Room</h2>
+      <p>Media hanya terhubung ke pemain dalam room ini melalui WebRTC. Tidak direkam atau disimpan.</p>
+      <div class="dialog-actions"><button value="cancel">Batal</button><button id="consentConfirm" value="default" class="primary">Izinkan</button></div>
+    </form>
+  </dialog>
+  <div id="remoteMedia" aria-hidden="true"></div>
+  <script src="/poker/socket.io/socket.io.js"></script>
+  <script src="media.js?v=1"></script>
+  <script src="game.js?v=1"></script>
+</body>
+</html>
