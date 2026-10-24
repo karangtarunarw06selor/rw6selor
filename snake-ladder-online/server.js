@@ -43,7 +43,7 @@ const publicRoom = (room) => ({
   status: room.status,
   turn: room.turn,
   winner: room.winner,
-  players: room.players.map(({ id, name, color, position, connected }) => ({ id, name, color, position, connected })),
+  players: room.players.map(({ id, name, color, position, connected, voice }) => ({ id, name, color, position, connected, voice: Boolean(voice) })),
   lastMove: room.lastMove,
 });
 const findPlayer = (room, socket) => room.players.find((player) => player.socketId === socket.id);
@@ -55,6 +55,7 @@ const leaveVoice = (room, player) => {
   if (!room || !player?.voice) return;
   player.voice = false;
   io.to(room.code).emit("voice:peer-left", { peerId: player.id });
+  emitRoom(room);
 };
 const finishIfEmpty = (room) => {
   if (room.players.every((player) => !player.connected)) rooms.delete(room.code);
@@ -148,6 +149,7 @@ io.on("connection", (socket) => {
     const peers = voicePeers(room, player.id);
     player.voice = true;
     socket.to(room.code).emit("voice:peer-joined", { peerId: player.id, name: player.name });
+    emitRoom(room);
     reply({ ok: true, peers });
   });
 

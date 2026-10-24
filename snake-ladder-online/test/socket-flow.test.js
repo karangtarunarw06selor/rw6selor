@@ -67,7 +67,9 @@ test("voice signaling is limited to joined peers in the same room", async (conte
   assert.equal(joined.ok, true);
   assert.equal(otherRoom.ok, true);
 
+  const hostVoiceState = new Promise((resolve) => guest.once("room:state", resolve));
   assert.equal((await emit(host, "voice:join")).ok, true);
+  assert.equal((await hostVoiceState).players.find((player) => player.id === created.playerId).voice, true);
   const guestVoice = await emit(guest, "voice:join");
   assert.deepEqual(guestVoice.peers, [{ id: created.playerId, name: "Host" }]);
 

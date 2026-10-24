@@ -6,57 +6,71 @@
 
   const socket = game.socket;
   const peers = new Map();
-  const members = new Map();
+  const speaking = new Set();
   let localStream = null;
   let audioContext = null;
   let localMeter = null;
   let muted = false;
+  let joining = false;
 
   const $ = (selector) => document.querySelector(selector);
   const rtcConfig = { iceServers: [{ urls: "stun:stun.cloudflare.com:3478" }, { urls: "stun:stun.l.google.com:19302" }] };
+  const localPlayerId = () => game.getState().playerId;
+  const resumeAudioContext = () => {
+    audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
+    return audioContext.resume().catch(() => {});
+  };
 
-  const setStatus = (text) => { $("#voice-status").textContent = text; };
-  const renderMembers = () => {
+  const syncBadges = () => {
     const state = game.getState();
-    const local = state.room?.players.find((player) => player.id === state.playerId);
-    const entries = localStream ? [{ id: state.playerId, name: local?.name || "Kamu", local: true }, ...members.values()] : [...members.values()];
-    $("#voice-members").innerHTML = entries.length
-      ? entries.map((member) => `<span class="voice-member${member.speaking ? " speaking" : ""}" data-voice-member="${member.id}"><i></i>${member.local ? "Kamu" : escapeHtml(member.name)}</span>`).join("")
-      : '<small>Belum ada pemain di voice.</small>';
-  };
-  const escapeHtml = (value) => String(value || "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
-  const updateControls = () => {
-    const joined = Boolean(localStream);
-    $("#voice-join").hidden = joined;
-    $("#voice-mute").hidden = !joined;
-    $("#voice-leave").hidden = !joined;
-    $("#voice-mute").textContent = muted ? "Unmute" : "Mute";
-    $("#voice-mute").classList.toggle("active", muted);
-    setStatus(joined ? (muted ? "Mikrofon dimute" : "Mikrofon aktif") : "Belum terhubung");
-    renderMembers();
+    state.room?.players.forEach((player) => {
+      const row = $(`[data-player-id="${player.id}"]`);
+      const badge = row?.querySelector(".player-voice");
+      if (!badge) return;
+      const mine = player.id === state.playerId;
+      badge.classList.toggle("active", Boolean(player.voice));
+      badge.classList.toggle("muted", mine && muted);
+      badge.classList.toggle("pending", mine && joining);
+      badge.classList.toggle("speaking", speaking.has(player.id));
+      row.classList.toggle("voice-speaking", speaking.has(player.id));
+      if (mine) {
+        const label = !localStream ? "Aktifkan mikrofon" : muted ? "Aktifkan suara" : "Mute mikrofon";
+        badge.setAttribute("aria-label", label);
+        badge.setAttribute("title", label);
+      }
+    });
   };
 
-  const meter = (stream, peerId) => {
+  const meter = (stream, playerId) => {
     try {
       audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
       const source = audioContext.createMediaStreamSource(stream);
       const analyser = audioContext.createAnalyser();
       analyser.fftSize = 256;
       source.connect(analyser);
-      const values = new Uint8Array(analyser.frequencyBinCount);
+      const values = new Uint8Array(analyser.fftSize);
       let frame = 0;
+      let lastSpeaking = false;
       const tick = () => {
-        analyser.getByteFrequencyData(values);
-        const level = values.reduce((sum, value) => sum + value, 0) / values.length;
-        const member = peerId === "local" ? null : members.get(peerId);
-        const speaking = level > 18;
-        const node = peerId === "local" ? $(`[data-voice-member="${game.getState().playerId}"]`) : $(`[data-voice-member="${peerId}"]`);
-        node?.classList.toggle("speaking", speaking);
-        if (member) member.speaking = speaking;
+        analyser.getByteTimeDomainData(values);
+        const rms = Math.sqrt(values.reduce((sum, value) => sum + ((value - 128) / 128) ** 2, 0) / values.length);
+        const isLocalMuted = playerId === localPlayerId() && muted;
+        const isSpeaking = !isLocalMuted && rms > 0.035;
+        if (isSpeaking !== lastSpeaking) {
+          lastSpeaking = isSpeaking;
+          if (isSpeaking) speaking.add(playerId); else speaking.delete(playerId);
+          syncBadges();
+        }
         frame = requestAnimationFrame(tick);
       };
       tick();
-      return () => { cancelAnimationFrame(frame); source.disconnect(); analyser.disconnect(); };
+      return () => {
+        cancelAnimationFrame(frame);
+        speaking.delete(playerId);
+        source.disconnect();
+        analyser.disconnect();
+        syncBadges();
+      };
     } catch { return () => {}; }
   };
 
@@ -66,17 +80,16 @@
     entry?.connection.close();
     entry?.audio.remove();
     peers.delete(peerId);
-    members.delete(peerId);
-    renderMembers();
+    speaking.delete(peerId);
+    syncBadges();
   };
 
   const sendSignal = (targetId, signal) => socket.emit("voice:signal", { targetId, signal }, (reply) => {
     if (!reply?.ok) game.toast(reply?.error || "Signaling voice gagal.");
   });
 
-  const createPeer = async (peerId, name, initiator = false) => {
+  const createPeer = async (peerId, _name, initiator = false) => {
     if (!localStream || peers.has(peerId)) return peers.get(peerId)?.connection;
-    members.set(peerId, { id: peerId, name: name || "Pemain", speaking: false });
     const connection = new RTCPeerConnection(rtcConfig);
     const audio = document.createElement("audio");
     audio.autoplay = true;
@@ -97,7 +110,6 @@
     connection.onconnectionstatechange = () => {
       if (["failed", "closed"].includes(connection.connectionState)) removePeer(peerId);
     };
-    renderMembers();
     if (initiator) {
       const offer = await connection.createOffer();
       await connection.setLocalDescription(offer);
@@ -120,60 +132,65 @@
     if (signal.candidate) await connection.addIceCandidate(signal.candidate).catch(() => {});
   };
 
-  const joinVoice = async () => {
-    if (game.getState().mode !== "online") return;
-    if (!navigator.mediaDevices?.getUserMedia || !window.RTCPeerConnection) {
-      game.toast("Browser ini belum mendukung voice room.");
-      return;
-    }
-    $("#voice-join").disabled = true;
-    setStatus("Meminta izin mikrofon...");
-    try {
-      localStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: false });
-      localMeter = meter(localStream, "local");
-      socket.emit("voice:join", {}, (reply) => {
-        if (!reply?.ok) { leaveVoice(false); game.toast(reply?.error || "Gagal masuk voice."); return; }
-        (reply.peers || []).forEach((peer) => members.set(peer.id, { id: peer.id, name: peer.name, speaking: false }));
-        updateControls();
-      });
-    } catch (error) {
-      localStream = null;
-      setStatus(error?.name === "NotAllowedError" ? "Izin mikrofon ditolak" : "Mikrofon tidak tersedia");
-      game.toast("Aktifkan izin mikrofon untuk memakai voice room.");
-    } finally { $("#voice-join").disabled = false; }
-  };
-
   const leaveVoice = (notify = true) => {
-    if (notify) socket.emit("voice:leave", {});
-    peers.forEach((_entry, peerId) => removePeer(peerId));
+    if (notify && localStream) socket.emit("voice:leave", {});
+    [...peers.keys()].forEach(removePeer);
     localMeter?.();
     localMeter = null;
     localStream?.getTracks().forEach((track) => track.stop());
     localStream = null;
     muted = false;
-    members.clear();
-    updateControls();
+    joining = false;
+    speaking.clear();
+    syncBadges();
   };
 
-  const syncPanel = () => {
-    const online = game.getState().mode === "online";
-    $("#voice-panel").hidden = !online;
-    if (!online && localStream) leaveVoice();
+  const joinVoice = async () => {
+    if (joining || game.getState().mode !== "online") return;
+    if (!navigator.mediaDevices?.getUserMedia || !window.RTCPeerConnection) {
+      game.toast("Browser ini belum mendukung voice room.");
+      return;
+    }
+    joining = true;
+    syncBadges();
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: false });
+      localMeter = meter(localStream, localPlayerId());
+      socket.emit("voice:join", {}, (reply) => {
+        joining = false;
+        if (!reply?.ok) {
+          leaveVoice(false);
+          game.toast(reply?.error || "Gagal mengaktifkan mikrofon.");
+          return;
+        }
+        syncBadges();
+        game.toast("Mikrofon aktif.");
+      });
+    } catch (error) {
+      localStream = null;
+      joining = false;
+      syncBadges();
+      game.toast(error?.name === "NotAllowedError" ? "Izin mikrofon ditolak." : "Mikrofon tidak tersedia.");
+    }
   };
 
-  $("#voice-join").addEventListener("click", joinVoice);
-  $("#voice-mute").addEventListener("click", () => {
+  const toggleVoice = () => {
+    resumeAudioContext();
+    if (!localStream) return joinVoice();
     muted = !muted;
-    localStream?.getAudioTracks().forEach((track) => { track.enabled = !muted; });
-    updateControls();
+    localStream.getAudioTracks().forEach((track) => { track.enabled = !muted; });
+    if (muted) speaking.delete(localPlayerId());
+    syncBadges();
+    game.toast(muted ? "Mikrofon dimute." : "Mikrofon aktif.");
+  };
+
+  document.addEventListener("click", (event) => {
+    if (event.target.closest("[data-voice-toggle]")) toggleVoice();
   });
-  $("#voice-leave").addEventListener("click", () => leaveVoice());
   socket.on("voice:peer-joined", ({ peerId, name }) => createPeer(peerId, name, true).catch(() => removePeer(peerId)));
   socket.on("voice:peer-left", ({ peerId }) => removePeer(peerId));
   socket.on("voice:signal", (payload) => handleSignal(payload).catch(() => removePeer(payload.peerId)));
   socket.on("disconnect", () => leaveVoice(false));
   window.addEventListener("beforeunload", () => leaveVoice());
-  window.addEventListener("snake:game-started", syncPanel);
-  syncPanel();
-  updateControls();
+  window.addEventListener("snake:rendered", syncBadges);
 })();

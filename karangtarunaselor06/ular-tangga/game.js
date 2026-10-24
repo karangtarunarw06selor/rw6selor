@@ -3,6 +3,7 @@
   const ladders = { 3: 22, 5: 14, 9: 31, 20: 39, 27: 84, 51: 67, 72: 91, 73: 93, 88: 99 };
   const diceFaces = ["⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
   const colors = ["#f0b54b", "#4db8d0", "#ef6f6c", "#70c48f"];
+  const headsetIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13v-1a8 8 0 0 1 16 0v1"></path><path d="M4 13h3v7H5a2 2 0 0 1-2-2v-3a2 2 0 0 1 1-2ZM20 13h-3v7h2a2 2 0 0 0 2-2v-3a2 2 0 0 0-1-2ZM17 20c0 1-1 2-3 2h-2"></path></svg>';
   const $ = (selector) => document.querySelector(selector);
   const siteId = document.body.dataset.site || "MMS";
   const socket = typeof io === "function" ? io({ path: "/ular-tangga/socket.io" }) : null;
@@ -75,7 +76,11 @@
     const turn = room.players.find((player) => player.id === room.turn);
     $("#turn-name").textContent = room.status === "finished" ? "Selesai" : turn?.name || "Menunggu";
     $("#turn-dot").style.background = turn?.color || "#7894a2";
-    $("#players").innerHTML = room.players.map((player) => `<article class="player-row"><span class="player-color" style="background:${player.color}"></span><div><b>${escapeHtml(player.name)}</b><small>${player.id === state.playerId ? "Kamu" : player.connected === false ? "Terputus" : "Pemain"}</small></div><strong class="player-position">${player.position}</strong></article>`).join("");
+    $("#players").innerHTML = room.players.map((player) => {
+      const mine = player.id === state.playerId;
+      const voice = state.mode === "online" ? `${mine ? `<button class="player-voice${player.voice ? " active" : ""}" type="button" data-voice-toggle aria-label="${player.voice ? "Mute mikrofon" : "Aktifkan mikrofon"}" title="${player.voice ? "Mute mikrofon" : "Aktifkan mikrofon"}">${headsetIcon}</button>` : `<span class="player-voice${player.voice ? " active" : ""}" aria-label="${player.voice ? "Voice aktif" : "Voice tidak aktif"}">${headsetIcon}</span>`}` : "";
+      return `<article class="player-row" data-player-id="${player.id}"><span class="player-color" style="background:${player.color}"></span><div class="player-identity"><span class="player-name"><b>${escapeHtml(player.name)}</b>${voice}</span><small>${mine ? "Kamu" : player.connected === false ? "Terputus" : "Pemain"}</small></div><strong class="player-position">${player.position}</strong></article>`;
+    }).join("");
     $("#tokens").innerHTML = room.players.map((player, index) => {
       const point = coordinates(player.position);
       return `<span class="token offset-${index}" style="left:${point.left}%;top:${point.top}%;background:${player.color}" title="${escapeHtml(player.name)}">${index + 1}</span>`;
@@ -93,6 +98,7 @@
       if (room.lastMove.event === "ladder") playSound("#ladder-sound");
       if (room.lastMove.event === "snake") playSound("#snake-sound");
     }
+    window.dispatchEvent(new CustomEvent("snake:rendered"));
   };
   const escapeHtml = (value) => String(value || "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
   const rollAnimation = () => {
