@@ -4,6 +4,7 @@
   const diceFaces = ["⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
   const colors = ["#f0b54b", "#4db8d0", "#ef6f6c", "#70c48f"];
   const $ = (selector) => document.querySelector(selector);
+  const siteId = document.body.dataset.site || "MMS";
   const socket = typeof io === "function" ? io({ path: "/ular-tangga/socket.io" }) : null;
   const state = { mode: null, playerId: null, room: null, sound: true, busy: false };
   let setupMode = "solo";
@@ -162,7 +163,7 @@
     if (!socket?.connected) { feedback.textContent = "Server permainan belum terhubung."; return; }
     feedback.textContent = "Menghubungkan...";
     const action = setupMode === "create" ? "room:create" : "room:join";
-    socket.emit(action, { name, code: $("#room-code").value }, (reply) => {
+    socket.emit(action, { name, code: $("#room-code").value, siteId }, (reply) => {
       if (!reply?.ok) { feedback.textContent = reply?.error || "Room gagal dibuka."; return; }
       state.mode = "online";
       state.playerId = reply.playerId;

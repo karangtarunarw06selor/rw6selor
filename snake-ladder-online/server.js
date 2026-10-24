@@ -20,8 +20,10 @@ app.get("/", (_request, response) => response.redirect("/ular-tangga/"));
 
 const code = () => crypto.randomBytes(3).toString("hex").slice(0, 6).toUpperCase();
 const cleanName = (value) => String(value || "").trim().slice(0, 24);
+const cleanSiteId = (value) => String(value || "MMS").trim().toUpperCase() === "KT" ? "KT" : "MMS";
 const publicRoom = (room) => ({
   code: room.code,
+  siteId: room.siteId,
   status: room.status,
   turn: room.turn,
   winner: room.winner,
@@ -35,13 +37,14 @@ const finishIfEmpty = (room) => {
 };
 
 io.on("connection", (socket) => {
-  socket.on("room:create", ({ name } = {}, reply = () => {}) => {
+  socket.on("room:create", ({ name, siteId: rawSiteId } = {}, reply = () => {}) => {
     const playerName = cleanName(name);
+    const siteId = cleanSiteId(rawSiteId);
     if (!playerName) return reply({ ok: false, error: "Nama pemain wajib diisi." });
     let roomCode = code();
     while (rooms.has(roomCode)) roomCode = code();
     const player = { id: crypto.randomUUID(), socketId: socket.id, name: playerName, color: "#f0b54b", position: 1, connected: true };
-    const room = { code: roomCode, status: "waiting", turn: player.id, winner: null, players: [player], lastMove: null };
+    const room = { code: roomCode, siteId, status: "waiting", turn: player.id, winner: null, players: [player], lastMove: null };
     rooms.set(roomCode, room);
     socket.join(roomCode);
     socket.data.roomCode = roomCode;
@@ -49,12 +52,13 @@ io.on("connection", (socket) => {
     emitRoom(room);
   });
 
-  socket.on("room:join", ({ name, code: rawCode } = {}, reply = () => {}) => {
+  socket.on("room:join", ({ name, code: rawCode, siteId: rawSiteId } = {}, reply = () => {}) => {
     const playerName = cleanName(name);
+    const siteId = cleanSiteId(rawSiteId);
     const roomCode = String(rawCode || "").trim().toUpperCase();
     const room = rooms.get(roomCode);
     if (!playerName) return reply({ ok: false, error: "Nama pemain wajib diisi." });
-    if (!room) return reply({ ok: false, error: "Room tidak ditemukan." });
+    if (!room || room.siteId !== siteId) return reply({ ok: false, error: "Room tidak ditemukan untuk situs ini." });
     if (room.players.length >= 4) return reply({ ok: false, error: "Room sudah penuh." });
     if (room.status === "finished") return reply({ ok: false, error: "Permainan sudah selesai." });
     const colors = ["#f0b54b", "#4db8d0", "#ef6f6c", "#70c48f"];

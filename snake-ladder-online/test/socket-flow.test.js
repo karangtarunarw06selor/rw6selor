@@ -36,3 +36,19 @@ test("two players create, join, and receive a server-authoritative roll", async 
   assert.equal(rejected.ok, false);
   assert.match(rejected.error, /giliran/i);
 });
+
+test("rooms are isolated by site identity", async (context) => {
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const port = server.address().port;
+  const host = await connect(port);
+  const outsider = await connect(port);
+  context.after(() => { host.close(); outsider.close(); io.close(); server.close(); rooms.clear(); });
+
+  const created = await emit(host, "room:create", { name: "Karang Taruna", siteId: "KT" });
+  assert.equal(created.ok, true);
+  assert.equal(created.room.siteId, "KT");
+
+  const wrongSite = await emit(outsider, "room:join", { name: "Muda Mudi", code: created.room.code, siteId: "MMS" });
+  assert.equal(wrongSite.ok, false);
+  assert.match(wrongSite.error, /situs ini/i);
+});
