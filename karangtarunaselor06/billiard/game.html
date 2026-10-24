@@ -308,6 +308,58 @@
     opacity: .78;
   }
 
+  .mobileBallStatus {
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 50%;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    width: max-content;
+    min-height: 24px;
+    padding: 3px 7px 3px 4px;
+    border: 1px solid rgba(255,255,255,.24);
+    border-radius: 999px;
+    background: rgba(4,8,16,.9);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: .03em;
+    transform: translateX(-50%);
+    box-shadow: 0 5px 14px rgba(0,0,0,.38);
+    white-space: nowrap;
+  }
+
+  .mobileBallStatus[hidden] { display: none; }
+
+  .mobileBallStatusIcon {
+    display: grid;
+    place-items: center;
+    width: 17px;
+    height: 17px;
+    border: 1px solid rgba(255,255,255,.9);
+    border-radius: 50%;
+    background: var(--status-ball-color, #fbbf24);
+    color: #111;
+    font-size: 8px;
+    line-height: 1;
+    box-shadow: 0 1px 4px rgba(0,0,0,.45);
+  }
+
+  .mobileBallStatus.stripe .mobileBallStatusIcon {
+    background: linear-gradient(180deg,#fff 0 27%,var(--status-ball-color,#60a5fa) 27% 73%,#fff 73% 100%);
+  }
+
+  .mobileBallStatus.eight .mobileBallStatusIcon {
+    background: #111;
+    color: #fff;
+  }
+
+  .mobileCornerPlayer.me.mobileBottomLeft,
+  .mobileCornerPlayer.me.mobileBottomRight {
+    bottom: calc(env(safe-area-inset-bottom) + 50px) !important;
+  }
+
   .mobileTopLeft {
     left: 10px;
     top: 10px;
@@ -2067,7 +2119,17 @@ function updateMobileMenuContent() {
     if (scoreEl) {
       const score = Number(player.score || player.pocketed_count || 0);
       scoreEl.textContent = "Score " + score;
+      scoreEl.hidden = !!isMe && isEightBallMode();
     }
+
+    let ballStatus = slot.querySelector(".mobileBallStatus");
+    if (!ballStatus) {
+      ballStatus = document.createElement("div");
+      ballStatus.className = "mobileBallStatus";
+      slot.appendChild(ballStatus);
+    }
+
+    updateMobileBallStatus(ballStatus, player, !!isMe);
 
     let voice = slot.querySelector(".voiceToggle");
     if (!voice) {
@@ -2165,6 +2227,46 @@ function getEightBallTargetNumbersByGroup(group) {
   if (group === "solid") return [1, 2, 3, 4, 5, 6, 7];
   if (group === "stripe") return [9, 10, 11, 12, 13, 14, 15];
   return [];
+}
+
+function updateMobileBallStatus(element, player, isMe) {
+  if (!element) return;
+
+  if (!isMe || !isEightBallMode()) {
+    element.hidden = true;
+    return;
+  }
+
+  const group = getPlayerEightBallGroup(player.player_id);
+  let type = "open";
+  let number = "•";
+  let label = "BEBAS";
+  let color = "#f8fafc";
+
+  if (group === "solid" || group === "stripe") {
+    const remaining = getEightBallTargetNumbersByGroup(group)
+      .filter(ballNumber => {
+        const ball = getBallByNumber(ballNumber);
+        return !ball || !ball.pocketed;
+      }).length;
+
+    if (remaining === 0) {
+      type = "eight";
+      number = "8";
+      label = "TARGET • 8";
+      color = "#111";
+    } else {
+      type = group;
+      number = group === "solid" ? "1" : "9";
+      label = `${group === "solid" ? "KECIL" : "BESAR"} • ${remaining}`;
+      color = group === "solid" ? "#fbbf24" : "#60a5fa";
+    }
+  }
+
+  element.hidden = false;
+  element.className = `mobileBallStatus ${type}`;
+  element.style.setProperty("--status-ball-color", color);
+  element.innerHTML = `<span class="mobileBallStatusIcon">${number}</span><span>${label}</span>`;
 }
 
 function createEightBallTargetRailElement(number, group) {
