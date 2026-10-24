@@ -931,8 +931,8 @@
   }
 
   .mobileCornerPlayer {
-    width: 66px !important;
-    min-height: 58px !important;
+    width: 86px !important;
+    min-height: 86px !important;
     padding: 5px 4px !important;
     border-radius: 12px !important;
     font-size: 9px !important;
@@ -1215,8 +1215,8 @@
   .mobileCornerPlayer {
     display: flex !important;
     visibility: visible !important;
-    width: 66px !important;
-    min-height: 58px !important;
+    width: 86px !important;
+    min-height: 86px !important;
     padding: 5px 4px !important;
     border-radius: 12px !important;
     font-size: 9px !important;
@@ -1307,7 +1307,7 @@
 
 
 </style>
-  <link rel="stylesheet" href="voice.css?v=1">
+  <link rel="stylesheet" href="voice.css?v=2">
 
 
 </head>
@@ -1495,18 +1495,9 @@ let touchPowerTimer = null;
 let touchPowerArmed = false;
 let touchIsDraggingAim = false;
 let touchBallInHandMode = false;
+const MOBILE_SHOT_HOLD_MS = 1200;
+const MOBILE_SHOT_HOLD_SLOP = 12;
 
-const TOUCH_LONG_PRESS_TIME = 300;
-const TOUCH_MOVE_TOLERANCE = 10;
-const TOUCH_AIM_DRAG_DISTANCE = 12;
-
-// Touch aim guard
-
-let touchAimStartPoint = null;
-
-let touchAimMoved = false;
-
-let touchAimStartTime = 0;
 
 const TOUCH_SHOT_MIN_DISTANCE = 18;
 
@@ -6164,8 +6155,23 @@ if (bihActiveForMe && touchingCueBall) {
 
 // Sentuh bola putih tanpa ball-in-hand = power / pukul
 if (touchingCueBall) {
-  touchPowerArmed = true;
-  onAimStart(event);
+  touchPowerTimer = setTimeout(() => {
+    touchPowerTimer = null;
+    if (!touchStartPoint || !touchLastPoint || distanceBetween(touchStartPoint, touchLastPoint) > MOBILE_SHOT_HOLD_SLOP) return;
+
+    const cueBall = getCueBall();
+    if (!cueBall || !canShowStandbyStick()) return;
+
+    touchPowerArmed = true;
+    isAiming = true;
+    aimStart = { ...touchStartPoint };
+    aimCurrent = standbyAimPoint || { ...touchStartPoint };
+    power = 0;
+    lastShotResult = null;
+    sendRealtimeAim();
+    updateUI();
+    draw();
+  }, MOBILE_SHOT_HOLD_MS);
   return;
 }
 
@@ -6203,6 +6209,14 @@ function onTouchAimMove(event) {
 
   const point = getCanvasPoint(event);
   touchLastPoint = point;
+
+  if (!touchPowerArmed && touchPowerTimer && distanceBetween(touchStartPoint, point) > MOBILE_SHOT_HOLD_SLOP) {
+    clearTouchPowerTimer();
+    power = 0;
+    updateUI();
+    draw();
+    return;
+  }
 
  // Ball in hand: hanya aktif kalau touch dimulai di bola putih
 if (touchBallInHandMode) {
@@ -6267,7 +6281,16 @@ if (touchBallInHandMode) {
 window.addEventListener("touchstart", onTouchAimStart, { passive: false });
 window.addEventListener("touchmove", onTouchAimMove, { passive: false });
 window.addEventListener("touchend", onTouchAimEnd, { passive: false });
-window.addEventListener("touchcancel", onTouchAimEnd, { passive: false });
+window.addEventListener("touchcancel", (event) => {
+  event.preventDefault();
+  isAiming = false;
+  power = 0;
+  aimStart = null;
+  aimCurrent = null;
+  resetTouchState();
+  updateUI();
+  draw();
+}, { passive: false });
 
     async function boot() {
       await loadLocalPlayer();
