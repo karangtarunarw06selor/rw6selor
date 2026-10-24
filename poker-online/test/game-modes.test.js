@@ -58,50 +58,64 @@ test("capsa banting timeout opens with 3 diamonds and then auto-passes", () => {
   assert.equal(table.currentPlay, null);
 });
 
-test("cangkulan permits only matching rank or suit and keeps hands private", () => {
-  const table = new CangkulanTable({ code: "CANG01", siteId: "MMS" });
+test("minuman follows the system house and keeps opponents private", () => {
+  const table = new CangkulanTable({ code: "MINUM1", siteId: "MMS" });
   table.addPlayer({ id: "a", name: "A" });
   table.addPlayer({ id: "b", name: "B" });
-  table.startRound({ hands: { a: cards("7h", "2c"), b: cards("9s", "3d") }, stock: cards("4c"), discard: cards("9h") });
-  assert.equal(table.currentPlayer().id, "a");
-  assert.throws(() => table.act("a", { type: "play", cardIndex: 1, actionId: "bad" }), /tidak cocok/i);
+  table.startRound({ hands: { a: cards("7h", "2c"), b: cards("9h", "3d") }, stock: cards("4c"), openingCard: cards("5h")[0] });
+  assert.equal(table.houseSuit, "h");
+  assert.throws(() => table.act("a", { type: "play", cardIndex: 1, actionId: "bad" }), /house/i);
   table.act("a", { type: "play", cardIndex: 0, actionId: "good" });
-  assert.equal(table.topDiscard().rank, "7");
+  assert.equal(table.currentTrick[0].card.rank, "7");
   const bView = table.viewFor("b");
   assert.deepEqual(bView.players.find((p) => p.id === "a").hand, [null]);
-  assert.deepEqual(bView.players.find((p) => p.id === "b").hand, cards("9s", "3d"));
+  assert.deepEqual(bView.players.find((p) => p.id === "b").hand, cards("9h", "3d"));
 });
 
-test("cangkulan draws until playable, plays it, and advances turn", () => {
-  const table = new CangkulanTable({ code: "CANG02", siteId: "KT" });
+test("minuman draws until matching the house and plays the drawn card", () => {
+  const table = new CangkulanTable({ code: "MINUM2", siteId: "KT" });
   table.addPlayer({ id: "a", name: "A" });
   table.addPlayer({ id: "b", name: "B" });
-  table.startRound({ hands: { a: cards("2c"), b: cards("3d") }, stock: cards("6h", "5d", "4s"), discard: cards("9h") });
-  table.act("a", { type: "draw", actionId: "draw-a" });
-  assert.equal(table.players[0].hand.length, 3);
-  assert.equal(table.topDiscard().rank, "6");
+  table.startRound({ hands: { a: cards("2c"), b: cards("3h") }, stock: cards("6h", "5d", "4s"), openingCard: cards("9h")[0] });
+  table.act("a", { type: "draw", actionId: "drink-a" });
+  assert.deepEqual(table.players[0].hand, cards("2c", "4s", "5d"));
+  assert.equal(table.currentTrick[0].card.rank, "6");
   assert.equal(table.currentPlayer().id, "b");
 });
 
-test("cangkulan ends when a player empties their hand and action ids are idempotent", () => {
-  const table = new CangkulanTable({ code: "CANG03", siteId: "MMS" });
+test("minuman clears a completed trick and highest rank becomes bandar", () => {
+  const table = new CangkulanTable({ code: "MINUM3", siteId: "MMS" });
   table.addPlayer({ id: "a", name: "A" });
   table.addPlayer({ id: "b", name: "B" });
-  table.startRound({ hands: { a: cards("7h"), b: cards("3d") }, stock: cards("4s"), discard: cards("9h") });
-  const action = { type: "play", cardIndex: 0, actionId: "win" };
-  table.act("a", action);
-  assert.equal(table.phase, "finished");
-  assert.equal(table.lastResult.winners[0].id, "a");
-  const duplicate = table.act("a", action);
-  assert.equal(duplicate.duplicate, true);
+  table.addPlayer({ id: "c", name: "C" });
+  table.startRound({ hands: { a: cards("7h", "2c"), b: cards("Ah", "3d"), c: cards("Kh", "4s") }, stock: cards("6c"), openingCard: cards("9h")[0] });
+  table.act("a", { type: "play", cardIndex: 0, actionId: "a" });
+  table.act("b", { type: "play", cardIndex: 0, actionId: "b" });
+  table.act("c", { type: "play", cardIndex: 0, actionId: "c" });
+  assert.equal(table.currentTrick.length, 0);
+  assert.equal(table.houseSuit, null);
+  assert.equal(table.bandarId, "b");
+  assert.equal(table.currentPlayer().id, "b");
+  table.act("b", { type: "play", cardIndex: 0, actionId: "lead" });
+  assert.equal(table.houseSuit, "d");
 });
 
-test("cangkulan recycles the discard pile when stock runs out", () => {
-  const table = new CangkulanTable({ code: "CANG04", siteId: "MMS" });
+test("minuman records finish order, skips finished players, and ranks the last player as loser", () => {
+  const table = new CangkulanTable({ code: "MINUM4", siteId: "MMS" });
   table.addPlayer({ id: "a", name: "A" });
   table.addPlayer({ id: "b", name: "B" });
-  table.startRound({ hands: { a: cards("2c"), b: cards("3d") }, stock: [], discard: cards("4h", "9h") });
-  table.act("a", { type: "draw", actionId: "recycle" });
-  assert.equal(table.discard.length, 2);
-  assert.equal(table.topDiscard().rank, "4");
+  table.addPlayer({ id: "c", name: "C" });
+  table.startRound({ hands: { a: cards("2h"), b: cards("Ah", "3d"), c: cards("Kh", "4s") }, stock: cards("5c"), openingCard: cards("9h")[0] });
+  table.act("a", { type: "play", cardIndex: 0, actionId: "first" });
+  assert.deepEqual(table.rankings.map((entry) => entry.id), ["a"]);
+  assert.equal(table.currentPlayer().id, "b");
+  table.act("b", { type: "play", cardIndex: 0, actionId: "b-house" });
+  table.act("c", { type: "play", cardIndex: 0, actionId: "c-house" });
+  assert.equal(table.bandarId, "b");
+  assert.equal(table.currentPlayer().id, "b");
+  table.act("b", { type: "play", cardIndex: 0, actionId: "second" });
+  assert.equal(table.phase, "finished");
+  assert.deepEqual(table.lastResult.rankings.map((entry) => entry.id), ["a", "b", "c"]);
+  assert.equal(table.lastResult.rankings[2].rank, 3);
+  assert.equal(table.act("b", { type: "play", cardIndex: 0, actionId: "second" }).duplicate, true);
 });

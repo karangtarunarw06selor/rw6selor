@@ -15,6 +15,7 @@ const io = new Server(server, { path: socketPath, cors: { origin: false }, maxHt
 const PORT = Number(process.env.PORT) || 3051;
 const EMPTY_ROOM_TTL = Number(process.env.EMPTY_ROOM_TTL) || 10 * 60_000;
 const rooms = new Map();
+const lobbyChats = new Map([["MMS", []], ["KT", []]]);
 
 app.use("/poker", express.static(path.join(__dirname, "public")));
 app.get("/health", (_request, response) => response.json({ ok: true, rooms: rooms.size }));
@@ -25,6 +26,7 @@ const cleanSiteId = (value) => String(value || "MMS").trim().toUpperCase() === "
 const cleanCode = (value) => String(value || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
 const newCode = () => crypto.randomBytes(4).toString("hex").slice(0, 6).toUpperCase();
 const roomChannel = (room) => `poker:${room.siteId}:${room.code}`;
+const lobbyChannel = (siteId) => `poker:lobby:${siteId}`;
 const mediaView = (player) => ({ audio: Boolean(player.media?.audio), video: Boolean(player.media?.video) });
 const tokenDigest = (value) => crypto.createHash("sha256").update(String(value || "")).digest();
 const validToken = (expected, received) => expected === received && crypto.timingSafeEqual(tokenDigest(expected), tokenDigest(received));
@@ -144,7 +146,45 @@ function leaveMedia(room, player) {
   io.to(roomChannel(room)).emit("media:peer-left", { peerId: player.id });
 }
 
+function publishLobbyMessage(siteId, name, text, roomCode = null) {
+  const message = { id: crypto.randomUUID(), name, text, roomCode, createdAt: Date.now() };
+  const history = lobbyChats.get(siteId);
+  history.push(message);
+  if (history.length > 50) history.splice(0, history.length - 50);
+  io.to(lobbyChannel(siteId)).emit("lobby:chat:message", message);
+  return message;
+}
+
 io.on("connection", (socket) => {
+  socket.on("lobby:chat:join", ({ siteId: rawSiteId } = {}, reply = () => {}) => {
+    const siteId = cleanSiteId(rawSiteId);
+    socket.join(lobbyChannel(siteId));
+    socket.data.lobbySiteId = siteId;
+    reply({ ok: true, messages: lobbyChats.get(siteId) });
+  });
+
+  socket.on("lobby:chat:history", ({ siteId: rawSiteId } = {}, reply = () => {}) => {
+    const siteId = cleanSiteId(rawSiteId);
+    reply({ ok: true, messages: lobbyChats.get(siteId) });
+  });
+
+  socket.on("lobby:chat:send", ({ siteId: rawSiteId, name, text } = {}, reply = () => {}) => {
+    const siteId = cleanSiteId(rawSiteId);
+    if (socket.data.lobbySiteId !== siteId) return reply({ ok: false, error: "Gabung ke chat situs ini dahulu." });
+    const playerName = cleanName(name);
+    const messageText = String(text || "").trim().replace(/\s+/g, " ");
+    if (!playerName) return reply({ ok: false, error: "Isi nama sebelum mengirim chat." });
+    if (!messageText) return reply({ ok: false, error: "Pesan tidak boleh kosong." });
+    if (messageText.length > 280) return reply({ ok: false, error: "Pesan maksimal 280 karakter." });
+    const now = Date.now();
+    if (socket.data.lastLobbyChatAt && now - socket.data.lastLobbyChatAt < 1_500) return reply({ ok: false, error: "Tunggu sebentar sebelum mengirim lagi." });
+    socket.data.lastLobbyChatAt = now;
+    const candidate = messageText.toUpperCase().match(/(?:^|\s)([A-Z0-9]{6})(?=\s|$)/)?.[1] || null;
+    const roomCode = candidate && rooms.get(candidate)?.siteId === siteId ? candidate : null;
+    const message = publishLobbyMessage(siteId, playerName, messageText, roomCode);
+    reply({ ok: true, message });
+  });
+
   socket.on("room:create", ({ name, siteId: rawSiteId } = {}, reply = () => {}) => {
     if (socket.data.roomCode) return reply({ ok: false, error: "Socket sudah bergabung ke room." });
     const playerName = cleanName(name);
@@ -159,6 +199,7 @@ io.on("connection", (socket) => {
     const room = { code, siteId, mode: null, table, hostId: player.id, capsaVotes: new Map(), capsaVoteResult: null, emptyTimer: null, turnTimer: null, turnDeadline: null };
     rooms.set(code, room);
     attach(socket, room, player);
+    publishLobbyMessage(siteId, playerName, `${playerName} membuat room ${code}`, code);
     reply({ ok: true, room: publicView(room, player.id), playerId: player.id, token: player.token });
     emitRoom(room);
   });

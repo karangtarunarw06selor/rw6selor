@@ -13,11 +13,16 @@
     raiseAmount: $("#raiseAmount"), raiseOutput: $("#raiseOutput"),
   };
   const state = { room: null, playerId: null, token: null, busy: false, selectedCards: new Set() };
+  const lobbyMessages = [];
+  const chatMessages = $("#lobbyChatMessages");
+  const chatInput = $("#lobbyChatInput");
+  const chatError = $("#lobbyChatError");
   const storageKey = `rw06_poker_session_${siteId}`;
   const suit = { c: "♣", d: "♦", h: "♥", s: "♠" };
   const phaseLabel = { waiting: "LOBBY", playing: "BERMAIN", preflop: "PRE-FLOP", flop: "FLOP", turn: "TURN", river: "RIVER", finished: "RONDE SELESAI" };
-  const modeLabel = { holdem: "TEXAS HOLD’EM", "capsa-banting": "CAPSA BANTING", cangkulan: "CANGKULAN" };
+  const modeLabel = { holdem: "TEXAS HOLD’EM", "capsa-banting": "CAPSA BANTING", cangkulan: "MINUMAN" };
   let countdownTimer = null;
+  let selectionKey = "";
 
   function request(event, payload = {}) {
     return new Promise((resolve) => socket.emit(event, payload, resolve));
@@ -47,6 +52,7 @@
   }
   function resultText(room) {
     if (!room.lastResult) return room.phase === "waiting" ? "Bagikan kode room. Minimal dua pemain untuk mulai." : "";
+    if (room.lastResult.rankings) return room.lastResult.rankings.map((entry, index, all) => `${index + 1}. ${entry.name}${index === all.length - 1 ? " · KALAH" : ""}`).join(" · ");
     const winners = room.lastResult.winners.map((winner) => `${winner.name}${winner.amount ? ` +${winner.amount}` : ""}${winner.hand ? ` · ${winner.hand}` : ""}`).join(" · ");
     return `Pemenang: ${winners}`;
   }
@@ -59,12 +65,16 @@
     const cards = player.hole || player.hand || [];
     const seatCards = ["cangkulan", "capsa-banting"].includes(state.room.mode) ? [] : cards;
     const hole = seatCards.length ? `<div class="hole">${seatCards.map((card) => `<span>${cardHtml(card)}</span>`).join("")}</div>` : "";
+    const showStack = ["cangkulan", "capsa-banting"].includes(state.room.mode) && player.id !== state.playerId && player.cardCount > 0;
+    const stack = showStack ? `<div class="opponent-stack" aria-label="${player.cardCount} kartu tersisa">${Array.from({ length: Math.min(player.cardCount, 5) }, () => '<span class="playing-card back">?</span>').join("")}</div>` : "";
     return `<article class="${classes.join(" ")}" data-player-id="${player.id}" style="--seat:${index}">
-      ${hole}<div class="seat-box">
+      ${hole}${stack}<div class="seat-box">
         <span class="avatar" data-video-slot="${player.id}"><span>${initials}</span><i class="voice-dot"></i></span>
         <b class="seat-name">${escapeHtml(player.name)}${player.folded ? " · FOLD" : player.allIn ? " · ALL-IN" : ""}</b>
         <span class="seat-stack">${state.room.mode === "holdem" ? `♢ ${player.stack}` : `${player.cardCount ?? cards.length} KARTU`}</span>
         ${state.room.mode === "holdem" && player.id === state.room.dealerId ? `<i class="dealer">${state.room.players.length >= 3 ? "BANDAR" : "D"}</i>` : ""}
+        ${state.room.mode === "cangkulan" && player.id === state.room.bandarId ? '<i class="dealer">BANDAR</i>' : ""}
+        ${state.room.mode === "cangkulan" && player.rank ? `<i class="rank-badge">${player.rank === state.room.players.length ? "KALAH" : `#${player.rank}`}</i>` : ""}
         ${player.bet ? `<span class="seat-bet">BET ${player.bet}</span>` : ""}
       </div>
     </article>`;
@@ -74,20 +84,45 @@
     node.textContent = String(value);
     return node.innerHTML;
   }
+  function renderLobbyChat() {
+    chatMessages.innerHTML = lobbyMessages.map((message) => {
+      const time = new Date(message.createdAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+      const code = message.roomCode ? `<button type="button" data-room-code="${message.roomCode}">Pakai ${message.roomCode}</button>` : "";
+      return `<article><div><b>${escapeHtml(message.name)}</b><time>${time}</time></div><p>${escapeHtml(message.text)}</p>${code}</article>`;
+    }).join("") || '<p class="chat-empty">Belum ada pesan. Buat room lalu bagikan kodenya di sini.</p>';
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+  function addLobbyMessage(message) {
+    if (lobbyMessages.some((item) => item.id === message.id)) return;
+    lobbyMessages.push(message);
+    if (lobbyMessages.length > 50) lobbyMessages.shift();
+    renderLobbyChat();
+  }
   function render() {
     const room = state.room;
     if (!room) return;
     elements.copy.textContent = room.code;
     elements.pot.textContent = room.mode ? modeLabel[room.mode] : "PILIH MODE";
     elements.phase.textContent = phaseLabel[room.phase] || room.phase.toUpperCase();
-    if (room.mode === "cangkulan") elements.board.innerHTML = `${cardHtml(room.topDiscard)}<span class="stock-count">STOK ${room.stockCount}</span>`;
+    if (room.mode === "cangkulan") {
+      if (room.lastResult?.rankings) elements.board.innerHTML = `<ol class="ranking-list">${room.lastResult.rankings.map((entry, index, all) => `<li><b>#${index + 1}</b> ${escapeHtml(entry.name)}${index === all.length - 1 ? " · KALAH" : ""}</li>`).join("")}</ol>`;
+      else {
+        const trick = room.currentTrick?.length ? room.currentTrick.map((play) => cardHtml(play.card)).join("") : room.houseSuit ? cardHtml(room.openingCard) : "";
+        const house = room.houseSuit ? `HOUSE ${suit[room.houseSuit]}` : "BANDAR BUKA";
+        elements.board.innerHTML = `${trick}<span class="stock-count">${house} · DECK ${room.stockCount}</span>`;
+      }
+    }
     else if (room.mode === "capsa-banting") elements.board.innerHTML = room.currentPlay ? room.currentPlay.cards.map(cardHtml).join("") : '<span class="stock-count">BUKA PUTARAN</span>';
     else elements.board.innerHTML = [...(room.board || []), ...Array(Math.max(0, 5 - (room.board || []).length)).fill(undefined)].map(cardHtml).join("");
     elements.seats.innerHTML = orderedPlayers(room).map(renderSeat).join("");
     const me = room.players.find((player) => player.id === state.playerId);
     const dockHand = ["cangkulan", "capsa-banting"].includes(room.mode) ? (me?.hand || []) : [];
+    const nextSelectionKey = `${room.mode}|${room.phase}|${room.turnId}|${dockHand.map((card) => card ? `${card.rank}${card.suit}` : "").join(",")}`;
+    if (selectionKey && selectionKey !== nextSelectionKey) state.selectedCards.clear();
+    selectionKey = nextSelectionKey;
     elements.handDock.classList.toggle("hidden", !dockHand.length);
     elements.handDock.classList.toggle("capsa-hand", room.mode === "capsa-banting");
+    elements.handDock.classList.toggle("minuman-hand", room.mode === "cangkulan");
     elements.handDock.innerHTML = dockHand.map((card, cardIndex) => `<button data-card-index="${cardIndex}" class="${state.selectedCards.has(cardIndex) ? "selected" : ""}" ${room.turnId === state.playerId && card ? "" : "disabled"}>${cardHtml(card)}</button>`).join("");
     const isHost = room.hostId === state.playerId;
     const mayChooseMode = isHost && room.players.length >= 2 && ["waiting", "finished"].includes(room.phase);
@@ -105,6 +140,11 @@
     elements.cangkulanActions.classList.toggle("hidden", !cangkulanTurn);
     const capsaTurn = room.mode === "capsa-banting" && room.phase === "playing" && room.turnId === state.playerId;
     elements.capsaActions.classList.toggle("hidden", !capsaTurn);
+    $("#minumanPlay").disabled = state.selectedCards.size !== 1;
+    $("#minumanPlay").textContent = state.selectedCards.size ? "Pilih kartu ✓" : "Pilih kartu";
+    $("#capsaPlay").disabled = state.selectedCards.size < 1;
+    $("#capsaPlay").textContent = state.selectedCards.size ? `Mainkan ${state.selectedCards.size} kartu` : "Mainkan pilihan";
+    $("#drawCard").disabled = !room.houseSuit || (me?.hand || []).some((card) => card?.suit === room.houseSuit);
     elements.raisePanel.classList.add("hidden");
     if (myTurn && me) {
       const owed = Math.max(0, room.currentBet - me.bet);
@@ -135,6 +175,7 @@
     const response = await request(event, payload);
     state.busy = false;
     if (!response?.ok) elements.notice.textContent = response?.error || "Aksi gagal.";
+    return response;
   }
   async function createOrJoin(mode) {
     setError();
@@ -152,6 +193,20 @@
   elements.name.addEventListener("keydown", (event) => { if (event.key === "Enter") createOrJoin(elements.code.value ? "join" : "create"); });
   elements.code.addEventListener("input", () => { elements.code.value = elements.code.value.toUpperCase().replace(/[^A-Z0-9]/g, ""); });
   elements.code.addEventListener("keydown", (event) => { if (event.key === "Enter") createOrJoin("join"); });
+  $("#lobbyChatForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    chatError.textContent = "";
+    const response = await request("lobby:chat:send", { siteId, name: elements.name.value, text: chatInput.value });
+    if (!response?.ok) return chatError.textContent = response?.error || "Chat gagal dikirim.";
+    chatInput.value = "";
+  });
+  chatMessages.addEventListener("click", (event) => {
+    const code = event.target.closest("[data-room-code]")?.dataset.roomCode;
+    if (!code) return;
+    elements.code.value = code;
+    elements.code.focus();
+    chatError.textContent = `Kode ${code} siap digunakan.`;
+  });
   elements.start.addEventListener("click", () => roomAction("game:start"));
   elements.modePicker.addEventListener("click", (event) => {
     const mode = event.target.closest("[data-mode]")?.dataset.mode;
@@ -169,12 +224,17 @@
   elements.raiseAmount.addEventListener("input", () => { elements.raiseOutput.textContent = elements.raiseAmount.value; });
   $("#raiseConfirm").addEventListener("click", () => roomAction("game:action", { type: "raise", amount: Number(elements.raiseAmount.value), actionId: crypto.randomUUID() }));
   $("#drawCard").addEventListener("click", () => roomAction("game:action", { type: "draw", actionId: crypto.randomUUID() }));
+  $("#minumanPlay").addEventListener("click", async () => {
+    const [cardIndex] = state.selectedCards;
+    if (cardIndex === undefined) return elements.notice.textContent = "Pilih satu kartu dahulu.";
+    const response = await roomAction("game:action", { type: "play", cardIndex, actionId: crypto.randomUUID() });
+    if (response?.ok) { state.selectedCards.clear(); render(); }
+  });
   $("#capsaPass").addEventListener("click", () => roomAction("game:action", { type: "pass", actionId: crypto.randomUUID() }));
   $("#capsaPlay").addEventListener("click", async () => {
     const selected = [...state.selectedCards].sort((a, b) => a - b);
-    await roomAction("game:action", { type: "play", cardIndexes: selected, actionId: crypto.randomUUID() });
-    state.selectedCards.clear();
-    render();
+    const response = await roomAction("game:action", { type: "play", cardIndexes: selected, actionId: crypto.randomUUID() });
+    if (response?.ok) { state.selectedCards.clear(); render(); }
   });
   elements.handDock.addEventListener("click", (event) => {
     const cardIndex = event.target.closest("[data-card-index]")?.dataset.cardIndex;
@@ -184,17 +244,24 @@
       if (state.selectedCards.has(index)) state.selectedCards.delete(index);
       else if (state.selectedCards.size < 5) state.selectedCards.add(index);
       render();
-    } else roomAction("game:action", { type: "play", cardIndex: index, actionId: crypto.randomUUID() });
+    } else if (state.room.mode === "cangkulan") {
+      if (state.selectedCards.has(index)) state.selectedCards.clear();
+      else { state.selectedCards.clear(); state.selectedCards.add(index); }
+      render();
+    }
   });
   elements.copy.addEventListener("click", async () => { await navigator.clipboard?.writeText(state.room.code); elements.notice.textContent = "Kode room disalin."; });
   $("#leaveGame").addEventListener("click", () => { localStorage.removeItem(storageKey); window.PokerMedia?.leave(); location.reload(); });
   socket.on("room:state", (room) => { state.room = room; render(); });
+  socket.on("lobby:chat:message", addLobbyMessage);
   socket.on("session:replaced", () => {
     localStorage.removeItem(storageKey);
     alert("Sesi dipindahkan ke perangkat atau tab lain.");
     location.reload();
   });
   socket.on("connect", async () => {
+    const chat = await request("lobby:chat:join", { siteId });
+    if (chat?.ok) { lobbyMessages.splice(0, lobbyMessages.length, ...chat.messages); renderLobbyChat(); }
     const saved = JSON.parse(localStorage.getItem(storageKey) || "null");
     if (!saved || state.room) return;
     const response = await request("room:reconnect", { code: saved.code, token: saved.token, siteId });
@@ -205,4 +272,5 @@
   });
   socket.on("disconnect", () => { if (state.room) elements.notice.textContent = "Koneksi terputus. Mencoba menyambung kembali…"; });
   elements.name.value = localStorage.getItem("rw06_poker_name") || "";
+  renderLobbyChat();
 })();

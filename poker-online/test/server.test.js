@@ -30,6 +30,30 @@ test.before(async () => {
 test.afterEach(() => { while (clients.length) clients.pop().disconnect(); });
 test.after(async () => { await new Promise((resolve) => server.close(resolve)); });
 
+test("public lobby chat carries names, history, room codes, and stays site-isolated", async () => {
+  const mmsSender = await connect();
+  const mmsReader = await connect();
+  const ktReader = await connect();
+  assert.equal((await emit(mmsSender, "lobby:chat:join", { siteId: "MMS" })).ok, true);
+  assert.equal((await emit(mmsReader, "lobby:chat:join", { siteId: "MMS" })).ok, true);
+  assert.equal((await emit(ktReader, "lobby:chat:join", { siteId: "KT" })).ok, true);
+  const announced = new Promise((resolve) => mmsReader.once("lobby:chat:message", resolve));
+  const created = await emit(mmsSender, "room:create", { name: "Budi", siteId: "MMS" });
+  const code = created.room.code;
+  assert.equal((await announced).roomCode, code);
+  const received = new Promise((resolve) => mmsReader.once("lobby:chat:message", resolve));
+  const sent = await emit(mmsSender, "lobby:chat:send", { siteId: "MMS", name: "Budi", text: `Masuk room ${code}` });
+  assert.equal(sent.ok, true);
+  assert.equal(sent.message.name, "Budi");
+  assert.equal(sent.message.roomCode, code);
+  assert.equal((await received).text, `Masuk room ${code}`);
+  const history = await emit(mmsReader, "lobby:chat:history", { siteId: "MMS" });
+  assert.equal(history.messages.at(-1).roomCode, code);
+  assert.deepEqual((await emit(ktReader, "lobby:chat:history", { siteId: "KT" })).messages, []);
+  assert.equal((await emit(mmsSender, "lobby:chat:send", { siteId: "MMS", name: "", text: "halo" })).ok, false);
+  assert.equal((await emit(mmsSender, "lobby:chat:send", { siteId: "MMS", name: "Budi", text: "x".repeat(281) })).ok, false);
+});
+
 test("rooms are isolated by site and expose only viewer hole cards", async () => {
   const host = await connect();
   const guest = await connect();
@@ -117,11 +141,11 @@ test("capsa banting rejects selection when lobby has more than four players", as
   assert.match(denied.error, /maksimal empat/i);
 });
 
-test("cangkulan action uses server hand and rejects a nonmatching card", async () => {
+test("minuman enforces the house from server state and keeps hands private", async () => {
   const host = await connect();
   const guest = await connect();
   const created = await emit(host, "room:create", { name: "Host", siteId: "MMS" });
-  const joined = await emit(guest, "room:join", { name: "Guest", code: created.room.code, siteId: "MMS" });
+  await emit(guest, "room:join", { name: "Guest", code: created.room.code, siteId: "MMS" });
   await emit(host, "room:mode", { mode: "cangkulan" });
   await emit(host, "game:start");
   const state = (await emit(host, "room:get")).room;
@@ -130,16 +154,19 @@ test("cangkulan action uses server hand and rejects a nonmatching card", async (
   const actorId = state.turnId;
   const actorState = (await emit(actorSocket, "room:get")).room;
   const hand = actorState.players.find((player) => player.id === actorId).hand;
-  const top = actorState.topDiscard;
-  const playable = hand.findIndex((card) => card.rank === top.rank || card.suit === top.suit);
-  const blocked = hand.findIndex((card) => card.rank !== top.rank && card.suit !== top.suit);
+  assert.equal(Boolean(actorState.openingCard), true);
+  assert.equal(actorState.houseSuit, actorState.openingCard.suit);
+  assert.deepEqual(actorState.currentTrick, []);
+  const playable = hand.findIndex((card) => card.suit === actorState.houseSuit);
+  const blocked = hand.findIndex((card) => card.suit !== actorState.houseSuit);
   if (blocked >= 0) assert.equal((await emit(actorSocket, "game:action", { type: "play", cardIndex: blocked, actionId: "blocked-card" })).ok, false);
   const action = playable >= 0
     ? { type: "play", cardIndex: playable, actionId: "legal-card" }
-    : { type: "draw", actionId: "legal-draw" };
+    : { type: "draw", actionId: "legal-drink" };
   assert.equal((await emit(actorSocket, "game:action", action)).ok, true);
   const next = (await emit(host, "room:get")).room;
   assert.notEqual(next.turnId, actorId);
+  assert.equal(next.currentTrick.length, 1);
   const observerView = (await emit(observerSocket, "room:get")).room;
   const hidden = observerView.players.find((player) => player.id === actorId).hand;
   assert.equal(hidden.length > 0, true);
