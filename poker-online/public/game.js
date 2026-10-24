@@ -13,7 +13,7 @@
   const elements = {
     lobby: $("#lobby"), game: $("#game"), name: $("#playerName"), code: $("#roomCode"), error: $("#lobbyError"),
     copy: $("#copyCode"), seats: $("#seats"), board: $("#board"), pot: $("#pot"), phase: $("#phase"), handDock: $("#handDock"), notice: $("#notice"),
-    start: $("#startGame"), modePicker: $("#modePicker"), capsaVote: $("#capsaVote"), voteStatus: $("#voteStatus"), actions: $("#actions"), cangkulanActions: $("#cangkulanActions"), capsaActions: $("#capsaActions"), checkCall: $("#checkCall"), raisePanel: $("#raisePanel"),
+    start: $("#startGame"), modePicker: $("#modePicker"), capsaVote: $("#capsaVote"), voteStatus: $("#voteStatus"), actions: $("#actions"), cangkulanActions: $("#cangkulanActions"), capsaActions: $("#capsaActions"), samgongActions: $("#samgongActions"), checkCall: $("#checkCall"), raisePanel: $("#raisePanel"),
     raiseAmount: $("#raiseAmount"), raiseOutput: $("#raiseOutput"),
   };
   const state = { room: null, playerId: null, token: null, busy: false, selectedCards: new Set() };
@@ -24,12 +24,15 @@
   const storageKey = `rw06_poker_session_${siteId}`;
   const suit = { c: "♣", d: "♦", h: "♥", s: "♠" };
   const phaseLabel = { waiting: "LOBBY", playing: "BERMAIN", preflop: "PRE-FLOP", flop: "FLOP", turn: "TURN", river: "RIVER", finished: "RONDE SELESAI" };
-  const modeLabel = { holdem: "TEXAS HOLD’EM", "capsa-banting": "CAPSA BANTING", cangkulan: "MINUMAN" };
+  const modeLabel = { holdem: "TEXAS HOLD’EM", "capsa-banting": "CAPSA BANTING", cangkulan: "MINUMAN", samgong: "SAMGONG BANDAR" };
   let countdownTimer = null;
   let selectionKey = "";
 
   function request(event, payload = {}) {
     return new Promise((resolve) => socket.emit(event, payload, resolve));
+  }
+  function actionId() {
+    return globalThis.crypto?.randomUUID?.() || `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
   }
 
   function setError(message = "") { elements.error.textContent = message; }
@@ -67,17 +70,18 @@
     if (player.media?.audio || player.media?.video) classes.push("media-on");
     const initials = escapeHtml(player.name.slice(0, 2).toUpperCase());
     const cards = player.hole || player.hand || [];
-    const seatCards = ["cangkulan", "capsa-banting"].includes(state.room.mode) ? [] : cards;
+    const seatCards = ["cangkulan", "capsa-banting", "samgong"].includes(state.room.mode) ? [] : cards;
     const hole = seatCards.length ? `<div class="hole">${seatCards.map((card) => `<span>${cardHtml(card)}</span>`).join("")}</div>` : "";
-    const showStack = ["cangkulan", "capsa-banting"].includes(state.room.mode) && player.id !== state.playerId && player.cardCount > 0;
+    const showStack = ["cangkulan", "capsa-banting", "samgong"].includes(state.room.mode) && player.id !== state.playerId && player.cardCount > 0 && state.room.phase !== "finished";
     const stack = showStack ? `<div class="opponent-stack" aria-label="${player.cardCount} kartu tersisa">${Array.from({ length: Math.min(player.cardCount, 5) }, () => '<span class="playing-card back">?</span>').join("")}</div>` : "";
     return `<article class="${classes.join(" ")}" data-player-id="${player.id}" style="--seat:${index}">
       ${hole}${stack}<div class="seat-box">
         <span class="avatar" data-video-slot="${player.id}"><span>${initials}</span><i class="voice-dot"></i></span>
         <b class="seat-name">${escapeHtml(player.name)}${player.folded ? " · FOLD" : player.allIn ? " · ALL-IN" : ""}</b>
-        <span class="seat-stack">${state.room.mode === "holdem" ? `♢ ${player.stack}` : `${player.cardCount ?? cards.length} KARTU`}</span>
+        <span class="seat-stack">${state.room.mode === "holdem" ? `♢ ${player.stack}` : state.room.mode === "samgong" ? `${player.cardCount ?? cards.length} KARTU · SKOR ${player.score >= 0 ? "+" : ""}${player.score}` : `${player.cardCount ?? cards.length} KARTU`}</span>
         ${state.room.mode === "holdem" && player.id === state.room.dealerId ? `<i class="dealer">${state.room.players.length >= 3 ? "BANDAR" : "D"}</i>` : ""}
         ${state.room.mode === "cangkulan" && player.id === state.room.bandarId ? '<i class="dealer">BANDAR</i>' : ""}
+        ${state.room.mode === "samgong" && player.id === state.room.bandarId ? '<i class="dealer">BANDAR</i>' : ""}
         ${state.room.mode === "cangkulan" && player.rank ? `<i class="rank-badge">${player.rank === state.room.players.length ? "KALAH" : `#${player.rank}`}</i>` : ""}
         ${player.bet ? `<span class="seat-bet">BET ${player.bet}</span>` : ""}
       </div>
@@ -117,16 +121,24 @@
       }
     }
     else if (room.mode === "capsa-banting") elements.board.innerHTML = room.currentPlay ? room.currentPlay.cards.map(cardHtml).join("") : '<span class="stock-count">BUKA PUTARAN</span>';
+    else if (room.mode === "samgong") {
+      const outcomes = room.lastResult?.outcomes;
+      elements.board.innerHTML = outcomes ? `<ol class="ranking-list samgong-results">${outcomes.map((entry) => {
+        const player = room.players.find((item) => item.id === entry.id);
+        return `<li><span>${(player?.hand || []).map(cardHtml).join("")}</span><div><b>${entry.bandar ? "BANDAR" : entry.result === "win" ? "MENANG" : "KALAH"}</b><small>${escapeHtml(entry.name)} · ${entry.delta >= 0 ? "+" : ""}${entry.delta}</small></div></li>`;
+      }).join("")}</ol>` : '<span class="stock-count">3 KARTU · LAWAN BANDAR</span>';
+    }
     else elements.board.innerHTML = [...(room.board || []), ...Array(Math.max(0, 5 - (room.board || []).length)).fill(undefined)].map(cardHtml).join("");
     elements.seats.innerHTML = orderedPlayers(room).map(renderSeat).join("");
     const me = room.players.find((player) => player.id === state.playerId);
-    const dockHand = ["cangkulan", "capsa-banting"].includes(room.mode) ? (me?.hand || []) : [];
+    const dockHand = ["cangkulan", "capsa-banting"].includes(room.mode) || (room.mode === "samgong" && room.phase === "playing") ? (me?.hand || []) : [];
     const nextSelectionKey = `${room.mode}|${room.phase}|${room.turnId}|${dockHand.map((card) => card ? `${card.rank}${card.suit}` : "").join(",")}`;
     if (selectionKey && selectionKey !== nextSelectionKey) state.selectedCards.clear();
     selectionKey = nextSelectionKey;
     elements.handDock.classList.toggle("hidden", !dockHand.length);
     elements.handDock.classList.toggle("capsa-hand", room.mode === "capsa-banting");
     elements.handDock.classList.toggle("minuman-hand", room.mode === "cangkulan");
+    elements.handDock.classList.toggle("samgong-hand", room.mode === "samgong");
     elements.handDock.innerHTML = dockHand.map((card, cardIndex) => `<button data-card-index="${cardIndex}" class="${state.selectedCards.has(cardIndex) ? "selected" : ""}" ${room.turnId === state.playerId && card ? "" : "disabled"}>${cardHtml(card)}</button>`).join("");
     const isHost = room.hostId === state.playerId;
     const mayChooseMode = isHost && room.players.length >= 2 && ["waiting", "finished"].includes(room.phase);
@@ -144,6 +156,8 @@
     elements.cangkulanActions.classList.toggle("hidden", !cangkulanTurn);
     const capsaTurn = room.mode === "capsa-banting" && room.phase === "playing" && room.turnId === state.playerId;
     elements.capsaActions.classList.toggle("hidden", !capsaTurn);
+    const samgongTurn = room.mode === "samgong" && room.phase === "playing" && room.turnId === state.playerId;
+    elements.samgongActions.classList.toggle("hidden", !samgongTurn);
     $("#minumanPlay").disabled = state.selectedCards.size !== 1;
     $("#minumanPlay").textContent = state.selectedCards.size ? "Pilih kartu ✓" : "Pilih kartu";
     $("#capsaPlay").disabled = state.selectedCards.size < 1;
@@ -166,7 +180,7 @@
     const updateNotice = () => {
       const seconds = room.turnDeadline ? Math.max(0, Math.ceil((room.turnDeadline - Date.now()) / 1000)) : null;
       const timer = seconds === null ? "" : ` · ${seconds}d`;
-      const ownTurn = myTurn || cangkulanTurn || capsaTurn;
+      const ownTurn = myTurn || cangkulanTurn || capsaTurn || samgongTurn;
       elements.notice.textContent = resultText(room) || (!room.mode ? (isHost ? "Pilih mode setelah pemain lain bergabung." : "Menunggu host memilih mode.") : ownTurn ? `Giliranmu. Pilih aksi${timer}.` : room.turnId ? `Giliran ${room.players.find((p) => p.id === room.turnId)?.name || "pemain"}${timer}.` : `Mode ${modeLabel[room.mode]} dipilih.`);
     };
     updateNotice();
@@ -222,22 +236,23 @@
   });
   elements.actions.addEventListener("click", (event) => {
     const action = event.target.closest("[data-action]")?.dataset.action;
-    if (action) roomAction("game:action", { type: action, actionId: crypto.randomUUID() });
+    if (action) roomAction("game:action", { type: action, actionId: actionId() });
   });
   $("#raiseOpen").addEventListener("click", () => elements.raisePanel.classList.toggle("hidden"));
   elements.raiseAmount.addEventListener("input", () => { elements.raiseOutput.textContent = elements.raiseAmount.value; });
-  $("#raiseConfirm").addEventListener("click", () => roomAction("game:action", { type: "raise", amount: Number(elements.raiseAmount.value), actionId: crypto.randomUUID() }));
-  $("#drawCard").addEventListener("click", () => roomAction("game:action", { type: "draw", actionId: crypto.randomUUID() }));
+  $("#raiseConfirm").addEventListener("click", () => roomAction("game:action", { type: "raise", amount: Number(elements.raiseAmount.value), actionId: actionId() }));
+  $("#drawCard").addEventListener("click", () => roomAction("game:action", { type: "draw", actionId: actionId() }));
   $("#minumanPlay").addEventListener("click", async () => {
     const [cardIndex] = state.selectedCards;
     if (cardIndex === undefined) return elements.notice.textContent = "Pilih satu kartu dahulu.";
-    const response = await roomAction("game:action", { type: "play", cardIndex, actionId: crypto.randomUUID() });
+    const response = await roomAction("game:action", { type: "play", cardIndex, actionId: actionId() });
     if (response?.ok) { state.selectedCards.clear(); render(); }
   });
-  $("#capsaPass").addEventListener("click", () => roomAction("game:action", { type: "pass", actionId: crypto.randomUUID() }));
+  $("#capsaPass").addEventListener("click", () => roomAction("game:action", { type: "pass", actionId: actionId() }));
+  $("#samgongReveal").addEventListener("click", () => roomAction("game:action", { type: "reveal", actionId: actionId() }));
   $("#capsaPlay").addEventListener("click", async () => {
     const selected = [...state.selectedCards].sort((a, b) => a - b);
-    const response = await roomAction("game:action", { type: "play", cardIndexes: selected, actionId: crypto.randomUUID() });
+    const response = await roomAction("game:action", { type: "play", cardIndexes: selected, actionId: actionId() });
     if (response?.ok) { state.selectedCards.clear(); render(); }
   });
   elements.handDock.addEventListener("click", (event) => {

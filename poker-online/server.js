@@ -6,7 +6,7 @@ const path = require("path");
 const crypto = require("crypto");
 const { Server } = require("socket.io");
 const { PokerTable } = require("./poker-engine");
-const { BigTwoTable, CangkulanTable } = require("./game-modes");
+const { BigTwoTable, CangkulanTable, SamgongTable } = require("./game-modes");
 
 const app = express();
 const server = http.createServer(app);
@@ -56,6 +56,7 @@ function createTable(mode, room) {
   if (mode === "holdem") return new PokerTable({ code: room.code, siteId: room.siteId, smallBlind: 10, bigBlind: 20 });
   if (mode === "capsa-banting") return new BigTwoTable({ code: room.code, siteId: room.siteId, straightRule: room.capsaVoteResult || "classic" });
   if (mode === "cangkulan") return new CangkulanTable({ code: room.code, siteId: room.siteId });
+  if (mode === "samgong") return new SamgongTable({ code: room.code, siteId: room.siteId });
   throw new Error("Mode permainan tidak valid.");
 }
 
@@ -91,7 +92,7 @@ function scheduleTurn(room) {
   if (room.turnTimer) clearTimeout(room.turnTimer);
   room.turnTimer = null;
   room.turnDeadline = null;
-  const timedPhase = ["preflop", "flop", "turn", "river"].includes(room.table.phase) || (room.mode === "capsa-banting" && room.table.phase === "playing");
+  const timedPhase = ["preflop", "flop", "turn", "river"].includes(room.table.phase) || (["capsa-banting", "samgong"].includes(room.mode) && room.table.phase === "playing");
   if (!timedPhase || !room.table.currentPlayer()) return;
   room.turnDeadline = Date.now() + 30_000;
   room.turnTimer = setTimeout(() => {

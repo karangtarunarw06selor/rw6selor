@@ -2,9 +2,49 @@
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { BigTwoTable, evaluateBigTwoPlay, compareBigTwoPlays, CangkulanTable } = require("../game-modes");
+const { BigTwoTable, evaluateBigTwoPlay, compareBigTwoPlays, CangkulanTable, SamgongTable, evaluateSamgong, compareSamgong } = require("../game-modes");
 
 const cards = (...values) => values.map((value) => ({ rank: value.slice(0, -1), suit: value.slice(-1) }));
+
+test("samgong ranks three face cards above ordinary modulo-ten hands", () => {
+  const samgong = evaluateSamgong(cards("Js", "Qh", "Kd"));
+  const nine = evaluateSamgong(cards("9s", "Kh", "Qd"));
+  const five = evaluateSamgong(cards("7s", "8h", "Kd"));
+  assert.equal(samgong.samgong, true);
+  assert.equal(nine.value, 9);
+  assert.equal(five.value, 5);
+  assert.equal(compareSamgong(samgong, nine) > 0, true);
+});
+
+test("samgong keeps cards private until everyone reveals and dealer wins exact ties", () => {
+  const table = new SamgongTable({ code: "SAM001", siteId: "MMS" });
+  table.addPlayer({ id: "a", name: "Bandar" });
+  table.addPlayer({ id: "b", name: "Tamu" });
+  table.startRound({ hands: { a: cards("9s", "Kh", "Qd"), b: cards("9s", "Kh", "Qd") } });
+  assert.equal(table.bandarId, "a");
+  assert.deepEqual(table.viewFor("a").players.find((player) => player.id === "b").hand, [null, null, null]);
+  table.act("a", { type: "reveal", actionId: "open-a" });
+  assert.equal(table.phase, "playing");
+  table.act("b", { type: "reveal", actionId: "open-b" });
+  assert.equal(table.phase, "finished");
+  assert.equal(table.lastResult.outcomes.find((entry) => entry.id === "b").result, "lose");
+  assert.equal(table.players.find((player) => player.id === "a").score, 1);
+  assert.equal(table.players.find((player) => player.id === "b").score, -1);
+  assert.equal(table.viewFor("b").players.every((player) => player.hand.every(Boolean)), true);
+});
+
+test("samgong rotates dealer each round and timeout reveals the current player", () => {
+  const table = new SamgongTable({ code: "SAM002", siteId: "MMS" });
+  table.addPlayer({ id: "a", name: "A" });
+  table.addPlayer({ id: "b", name: "B" });
+  table.startRound({ hands: { a: cards("2s", "3h", "4d"), b: cards("As", "2h", "3d") } });
+  table.timeoutCurrentPlayer();
+  assert.equal(table.players[0].revealed, true);
+  table.timeoutCurrentPlayer();
+  assert.equal(table.phase, "finished");
+  table.startRound({ hands: { a: cards("2s", "3h", "4d"), b: cards("As", "2h", "3d") } });
+  assert.equal(table.bandarId, "b");
+});
 
 test("capsa banting ranks 2 above ace and spade above lower suits", () => {
   assert.equal(compareBigTwoPlays(evaluateBigTwoPlay(cards("2d")), evaluateBigTwoPlay(cards("As"))) > 0, true);

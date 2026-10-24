@@ -173,6 +173,28 @@ test("minuman enforces the house from server state and keeps hands private", asy
   assert.equal(hidden.every((card) => card === null), true);
 });
 
+test("samgong deals three private cards, reveals in turn, and settles virtual scores", async () => {
+  const host = await connect();
+  const guest = await connect();
+  const created = await emit(host, "room:create", { name: "Bandar", siteId: "MMS" });
+  const joined = await emit(guest, "room:join", { name: "Tamu", code: created.room.code, siteId: "MMS" });
+  assert.equal((await emit(host, "room:mode", { mode: "samgong" })).ok, true);
+  assert.equal((await emit(host, "game:start")).ok, true);
+  let hostState = await emit(host, "room:get");
+  let guestState = await emit(guest, "room:get");
+  assert.equal(hostState.room.players.find((player) => player.id === created.playerId).hand.every(Boolean), true);
+  assert.deepEqual(hostState.room.players.find((player) => player.id === joined.playerId).hand, [null, null, null]);
+  assert.deepEqual(guestState.room.players.find((player) => player.id === created.playerId).hand, [null, null, null]);
+  const firstSocket = hostState.room.turnId === created.playerId ? host : guest;
+  const secondSocket = firstSocket === host ? guest : host;
+  assert.equal((await emit(firstSocket, "game:action", { type: "reveal", actionId: "samgong-1" })).ok, true);
+  assert.equal((await emit(secondSocket, "game:action", { type: "reveal", actionId: "samgong-2" })).ok, true);
+  hostState = await emit(host, "room:get");
+  assert.equal(hostState.room.phase, "finished");
+  assert.equal(hostState.room.players.every((player) => player.hand.every(Boolean)), true);
+  assert.equal(hostState.room.players.reduce((sum, player) => sum + player.score, 0), 0);
+});
+
 test("only host starts and table accepts at most six players", async () => {
   const host = await connect();
   const created = await emit(host, "room:create", { name: "P1", siteId: "KT" });

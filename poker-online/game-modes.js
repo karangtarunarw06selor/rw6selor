@@ -203,6 +203,118 @@ class BigTwoTable extends BaseCardTable {
   }
 }
 
+const SAMGONG_RANKS = "A23456789TJQK";
+const SAMGONG_SUITS = "dchs";
+const samgongCardPower = (card) => SAMGONG_RANKS.indexOf(card.rank) * 4 + SAMGONG_SUITS.indexOf(card.suit);
+
+function evaluateSamgong(cards) {
+  if (!Array.isArray(cards) || cards.length !== 3) throw new Error("Samgong memakai tepat tiga kartu.");
+  const samgong = cards.every((card) => "JQK".includes(card.rank));
+  const value = cards.reduce((total, card) => total + (card.rank === "A" ? 1 : Number(card.rank) || 0), 0) % 10;
+  return { samgong, value, power: cards.map(samgongCardPower).sort((a, b) => b - a) };
+}
+
+function compareSamgong(a, b) {
+  if (a.samgong !== b.samgong) return a.samgong ? 1 : -1;
+  if (!a.samgong && a.value !== b.value) return a.value - b.value;
+  return compareVectors(a.power, b.power);
+}
+
+class SamgongTable extends BaseCardTable {
+  constructor(options) {
+    super({ ...options, mode: "samgong" });
+    this.bandarId = null;
+  }
+
+  addPlayer(player) {
+    const added = super.addPlayer(player);
+    added.score = 0;
+    added.revealed = false;
+    return added;
+  }
+
+  startRound({ hands, random } = {}) {
+    if (!["waiting", "finished"].includes(this.phase)) throw new Error("Ronde sedang berjalan.");
+    this.requirePlayers();
+    const deck = shuffle(createDeck(), random);
+    this.players.forEach((player) => {
+      player.hand = hands?.[player.id] ? [...hands[player.id]] : [deck.pop(), deck.pop(), deck.pop()];
+      player.revealed = false;
+    });
+    if (this.players.some((player) => player.hand.length !== 3)) throw new Error("Setiap pemain wajib mendapat tiga kartu.");
+    this.turnIndex = (this.roundNumber - 1) % this.players.length;
+    this.bandarId = this.currentPlayer().id;
+    this.phase = "playing";
+    return this.viewFor(null);
+  }
+
+  settle() {
+    const bandar = this.players.find((player) => player.id === this.bandarId);
+    const bandarHand = evaluateSamgong(bandar.hand);
+    const outcomes = [];
+    let bandarDelta = 0;
+    for (const player of this.players) {
+      if (player.id === bandar.id) continue;
+      const result = compareSamgong(evaluateSamgong(player.hand), bandarHand) > 0 ? "win" : "lose";
+      const delta = result === "win" ? 1 : -1;
+      player.score += delta;
+      bandarDelta -= delta;
+      outcomes.push({ id: player.id, name: player.name, result, delta });
+    }
+    bandar.score += bandarDelta;
+    outcomes.unshift({ id: bandar.id, name: bandar.name, result: bandarDelta >= 0 ? "win" : "lose", delta: bandarDelta, bandar: true });
+    this.phase = "finished";
+    this.turnIndex = -1;
+    this.lastResult = { reason: "showdown", winners: outcomes.filter((entry) => entry.result === "win"), outcomes };
+  }
+
+  act(playerId, action = {}) {
+    if (action.actionId && this.processedActions.has(action.actionId)) {
+      if (this.processedActions.get(action.actionId) !== playerId) throw new Error("ID aksi sudah dipakai pemain lain.");
+      return { duplicate: true, view: this.viewFor(playerId) };
+    }
+    if (this.phase !== "playing" || action.type !== "reveal") throw new Error("Aksi Samgong tidak valid.");
+    const player = this.players.find((item) => item.id === playerId);
+    if (!player || this.currentPlayer()?.id !== playerId) throw new Error("Belum giliranmu.");
+    player.revealed = true;
+    if (this.players.every((item) => item.revealed)) this.settle();
+    else {
+      do { this.turnIndex = (this.turnIndex + 1) % this.players.length; } while (this.currentPlayer().revealed);
+    }
+    if (action.actionId) this.processedActions.set(action.actionId, playerId);
+    return { duplicate: false, view: this.viewFor(playerId) };
+  }
+
+  timeoutCurrentPlayer() {
+    const player = this.currentPlayer();
+    if (player && this.phase === "playing") return this.act(player.id, { type: "reveal", actionId: `timeout-${this.roundNumber}-${player.id}` });
+  }
+
+  viewFor(viewerId) {
+    const revealAll = this.phase === "finished";
+    return {
+      code: this.code,
+      siteId: this.siteId,
+      mode: this.mode,
+      phase: this.phase,
+      roundNumber: this.roundNumber,
+      turnId: this.currentPlayer()?.id || null,
+      bandarId: this.bandarId,
+      lastResult: this.lastResult,
+      players: this.players.map((player) => ({
+        id: player.id,
+        name: player.name,
+        connected: player.connected,
+        cardCount: player.hand.length,
+        hand: player.id === viewerId || revealAll ? player.hand : player.hand.map(() => null),
+        score: player.score,
+        revealed: player.revealed,
+        evaluation: revealAll ? evaluateSamgong(player.hand) : null,
+      })),
+    };
+  }
+}
+
 class CangkulanTable extends BaseCardTable {
   constructor(options) {
     super({ ...options, mode: "cangkulan" });
@@ -339,4 +451,4 @@ class CangkulanTable extends BaseCardTable {
   }
 }
 
-module.exports = { BigTwoTable, evaluateBigTwoPlay, compareBigTwoPlays, CangkulanTable };
+module.exports = { BigTwoTable, evaluateBigTwoPlay, compareBigTwoPlays, CangkulanTable, SamgongTable, evaluateSamgong, compareSamgong };
