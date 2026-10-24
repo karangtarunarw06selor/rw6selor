@@ -1454,7 +1454,7 @@ let socketConnected = false;
 let socketJoinedRoom = false;
 let socketReconnectTimer = null;
 
-const REALTIME_URL = "wss://billiard-realtime-server-production.up.railway.app/";
+const REALTIME_URL = `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/billiard-realtime`;
 
 // Audio
 let audioContext = null;
