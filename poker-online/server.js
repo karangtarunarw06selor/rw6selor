@@ -6,7 +6,7 @@ const path = require("path");
 const crypto = require("crypto");
 const { Server } = require("socket.io");
 const { PokerTable } = require("./poker-engine");
-const { CapsaFiveTable, CangkulanTable } = require("./game-modes");
+const { BigTwoTable, CangkulanTable } = require("./game-modes");
 
 const app = express();
 const server = http.createServer(app);
@@ -34,6 +34,9 @@ function publicView(room, viewerId) {
   view.mode = room.mode;
   view.hostId = room.hostId;
   view.turnDeadline = room.turnDeadline || null;
+  view.voteCount = room.capsaVotes?.size || 0;
+  view.voteResult = room.capsaVoteResult || null;
+  view.myVote = room.capsaVotes?.get(viewerId) || null;
   view.players = view.players.map((player) => {
     const source = room.table.players.find((item) => item.id === player.id);
     return { ...player, media: mediaView(source) };
@@ -49,7 +52,7 @@ function emitRoom(room) {
 
 function createTable(mode, room) {
   if (mode === "holdem") return new PokerTable({ code: room.code, siteId: room.siteId, smallBlind: 10, bigBlind: 20 });
-  if (mode === "capsa-five") return new CapsaFiveTable({ code: room.code, siteId: room.siteId });
+  if (mode === "capsa-banting") return new BigTwoTable({ code: room.code, siteId: room.siteId, straightRule: room.capsaVoteResult || "classic" });
   if (mode === "cangkulan") return new CangkulanTable({ code: room.code, siteId: room.siteId });
   throw new Error("Mode permainan tidak valid.");
 }
@@ -68,16 +71,33 @@ function selectMode(room, mode) {
   });
   room.mode = mode;
   room.table = table;
+  room.capsaVotes = new Map();
+  room.capsaVoteResult = null;
+}
+
+function resolveCapsaVote(room) {
+  const players = room.table.players.filter((player) => player.connected);
+  if (players.some((player) => !room.capsaVotes.has(player.id))) return null;
+  const counts = { classic: 0, free: 0, wheel: 0 };
+  players.forEach((player) => { counts[room.capsaVotes.get(player.id)] += 1; });
+  const highest = Math.max(...Object.values(counts));
+  const winners = Object.keys(counts).filter((rule) => counts[rule] === highest);
+  return winners.length === 1 ? winners[0] : "classic";
 }
 
 function scheduleTurn(room) {
   if (room.turnTimer) clearTimeout(room.turnTimer);
   room.turnTimer = null;
   room.turnDeadline = null;
-  if (!["preflop", "flop", "turn", "river"].includes(room.table.phase) || !room.table.currentPlayer()) return;
+  const timedPhase = ["preflop", "flop", "turn", "river"].includes(room.table.phase) || (room.mode === "capsa-banting" && room.table.phase === "playing");
+  if (!timedPhase || !room.table.currentPlayer()) return;
   room.turnDeadline = Date.now() + 30_000;
   room.turnTimer = setTimeout(() => {
     room.table.timeoutCurrentPlayer();
+    if (room.mode === "capsa-banting" && room.table.phase === "finished") {
+      room.capsaVotes.clear();
+      room.capsaVoteResult = null;
+    }
     scheduleTurn(room);
     emitRoom(room);
   }, 30_000);
@@ -136,7 +156,7 @@ io.on("connection", (socket) => {
     const player = table.addPlayer({ id: crypto.randomUUID(), name: playerName });
     player.token = crypto.randomBytes(24).toString("base64url");
     player.media = { audio: false, video: false };
-    const room = { code, siteId, mode: null, table, hostId: player.id, emptyTimer: null, turnTimer: null, turnDeadline: null };
+    const room = { code, siteId, mode: null, table, hostId: player.id, capsaVotes: new Map(), capsaVoteResult: null, emptyTimer: null, turnTimer: null, turnDeadline: null };
     rooms.set(code, room);
     attach(socket, room, player);
     reply({ ok: true, room: publicView(room, player.id), playerId: player.id, token: player.token });
@@ -151,11 +171,14 @@ io.on("connection", (socket) => {
     const room = rooms.get(code);
     if (!playerName) return reply({ ok: false, error: "Nama pemain wajib diisi." });
     if (!room || room.siteId !== siteId) return reply({ ok: false, error: "Room tidak ditemukan untuk situs ini." });
+    if (room.mode === "capsa-banting" && room.table.players.length >= 4) return reply({ ok: false, error: "Capsa Banting maksimal empat pemain." });
     if (room.table.players.length >= 6) return reply({ ok: false, error: "Meja sudah penuh." });
     if (!["waiting", "finished"].includes(room.table.phase)) return reply({ ok: false, error: "Hand sedang berjalan. Tunggu hand selesai." });
     const player = room.table.addPlayer({ id: crypto.randomUUID(), name: playerName });
     player.token = crypto.randomBytes(24).toString("base64url");
     player.media = { audio: false, video: false };
+    room.capsaVotes.clear();
+    room.capsaVoteResult = null;
     attach(socket, room, player);
     reply({ ok: true, room: publicView(room, player.id), playerId: player.id, token: player.token });
     emitRoom(room);
@@ -197,16 +220,35 @@ io.on("connection", (socket) => {
     } catch (error) { reply({ ok: false, error: error.message }); }
   });
 
+  socket.on("capsa:vote", ({ rule } = {}, reply = () => {}) => {
+    const { room, player } = session(socket);
+    if (!room || !player) return reply({ ok: false, error: "Sesi tidak ditemukan." });
+    if (room.mode !== "capsa-banting") return reply({ ok: false, error: "Voting hanya tersedia untuk Capsa Banting." });
+    if (!["waiting", "finished"].includes(room.table.phase)) return reply({ ok: false, error: "Voting terkunci selama ronde berjalan." });
+    if (!["classic", "free", "wheel"].includes(rule)) return reply({ ok: false, error: "Pilihan voting tidak valid." });
+    room.capsaVotes.set(player.id, rule);
+    room.capsaVoteResult = resolveCapsaVote(room);
+    reply({ ok: true, result: room.capsaVoteResult });
+    emitRoom(room);
+  });
+
   socket.on("game:start", (_payload, reply = () => {}) => {
     const { room, player } = session(socket);
     if (!room || !player) return reply({ ok: false, error: "Sesi tidak ditemukan." });
     if (room.hostId !== player.id) return reply({ ok: false, error: "Hanya pembuat room yang bisa mulai." });
     if (!room.mode) return reply({ ok: false, error: "Pilih mode permainan dahulu." });
+    if (room.mode === "capsa-banting") {
+      room.capsaVoteResult = resolveCapsaVote(room);
+      if (!room.capsaVoteResult) return reply({ ok: false, error: "Tunggu semua pemain menyelesaikan voting aturan straight." });
+    }
     try {
       if (room.mode === "holdem") {
         room.table.players.forEach((item) => { if (item.connected && item.stack <= 0) item.stack = 1000; });
         room.table.startHand();
-      } else room.table.startRound();
+      } else {
+        if (room.mode === "capsa-banting") room.table.straightRule = room.capsaVoteResult;
+        room.table.startRound();
+      }
       scheduleTurn(room);
       reply({ ok: true });
       emitRoom(room);
@@ -223,8 +265,13 @@ io.on("connection", (socket) => {
         type: String(action.type || ""),
         amount: Number(action.amount),
         cardIndex: Number(action.cardIndex),
+        cardIndexes: Array.isArray(action.cardIndexes) ? action.cardIndexes.slice(0, 5).map(Number) : [],
         actionId,
       });
+      if (room.mode === "capsa-banting" && room.table.phase === "finished") {
+        room.capsaVotes.clear();
+        room.capsaVoteResult = null;
+      }
       if (!result?.duplicate) scheduleTurn(room);
       reply({ ok: true });
       emitRoom(room);
@@ -279,6 +326,7 @@ io.on("connection", (socket) => {
     leaveMedia(room, player);
     player.connected = false;
     player.socketId = null;
+    if (room.mode === "capsa-banting" && ["waiting", "finished"].includes(room.table.phase)) room.capsaVoteResult = resolveCapsaVote(room);
     emitRoom(room);
     if (room.table.players.every((item) => !item.connected)) {
       room.emptyTimer = setTimeout(() => rooms.delete(room.code), EMPTY_ROOM_TTL);

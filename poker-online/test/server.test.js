@@ -84,17 +84,37 @@ test("host selects a mode only after another player joins and mode locks during 
   assert.equal((await emit(host, "room:mode", { mode: "holdem" })).ok, false);
 });
 
-test("capsa five starts from a selected lobby and reveals five cards at showdown", async () => {
+test("capsa banting requires all votes, resolves a tie to classic, and deals 13 private cards", async () => {
   const host = await connect();
   const guest = await connect();
   const created = await emit(host, "room:create", { name: "Host", siteId: "KT" });
   const joined = await emit(guest, "room:join", { name: "Guest", code: created.room.code, siteId: "KT" });
-  assert.equal((await emit(host, "room:mode", { mode: "capsa-five" })).ok, true);
+  assert.equal((await emit(host, "room:mode", { mode: "capsa-banting" })).ok, true);
+  assert.equal((await emit(host, "game:start")).ok, false);
+  assert.equal((await emit(host, "capsa:vote", { rule: "free" })).ok, true);
+  assert.equal((await emit(host, "game:start")).ok, false);
+  assert.equal((await emit(guest, "capsa:vote", { rule: "wheel" })).ok, true);
+  const voted = (await emit(host, "room:get")).room;
+  assert.equal(voted.voteResult, "classic");
+  assert.equal(voted.voteCount, 2);
   assert.equal((await emit(host, "game:start")).ok, true);
   const hostState = (await emit(host, "room:get")).room;
-  assert.equal(hostState.mode, "capsa-five");
-  assert.equal(hostState.players.find((p) => p.id === created.playerId).hand.length, 5);
-  assert.equal(hostState.players.find((p) => p.id === joined.playerId).hand.every(Boolean), true);
+  assert.equal(hostState.mode, "capsa-banting");
+  assert.equal(hostState.straightRule, "classic");
+  assert.equal(hostState.players.find((p) => p.id === created.playerId).hand.length, 13);
+  assert.deepEqual(hostState.players.find((p) => p.id === joined.playerId).hand, Array(13).fill(null));
+});
+
+test("capsa banting rejects selection when lobby has more than four players", async () => {
+  const host = await connect();
+  const created = await emit(host, "room:create", { name: "Host", siteId: "MMS" });
+  for (let index = 1; index <= 4; index += 1) {
+    const guest = await connect();
+    assert.equal((await emit(guest, "room:join", { name: `P${index}`, code: created.room.code, siteId: "MMS" })).ok, true);
+  }
+  const denied = await emit(host, "room:mode", { mode: "capsa-banting" });
+  assert.equal(denied.ok, false);
+  assert.match(denied.error, /maksimal empat/i);
 });
 
 test("cangkulan action uses server hand and rejects a nonmatching card", async () => {
