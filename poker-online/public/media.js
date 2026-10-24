@@ -3,6 +3,8 @@
 (() => {
   const peers = new Map();
   const remoteStreams = new Map();
+  const analysers = new Map();
+  let audioContext;
   let socket;
   let request;
   let playerId;
@@ -29,6 +31,41 @@
     let audio = document.querySelector(`#remoteMedia audio[data-peer="${CSS.escape(id)}"]`);
     if (!audio) { audio = document.createElement("audio"); audio.dataset.peer = id; audio.autoplay = true; document.querySelector("#remoteMedia").append(audio); }
     audio.srcObject = stream;
+    playRemoteAudio(audio);
+    watchSpeaking(id, stream);
+  }
+  async function playRemoteAudio(audio) {
+    try { await audio.play(); audio.dataset.blocked = "false"; }
+    catch { audio.dataset.blocked = "true"; }
+    audioButton.classList.toggle("needs-tap", Boolean(document.querySelector('#remoteMedia audio[data-blocked="true"]')));
+    audioButton.title = audioButton.classList.contains("needs-tap") ? "Ketuk layar untuk menyalakan suara room" : "Voice room aktif";
+  }
+  function resumeRemoteAudio() {
+    if (audioContext?.state === "suspended") audioContext.resume();
+    document.querySelectorAll("#remoteMedia audio").forEach(playRemoteAudio);
+  }
+  function setSpeaking(id, speaking) {
+    document.querySelector(`.seat[data-player-id="${CSS.escape(id)}"]`)?.classList.toggle("speaking", speaking);
+  }
+  function watchSpeaking(id, stream) {
+    if (analysers.has(id) || !stream?.getAudioTracks().length) return;
+    audioContext ||= new AudioContext();
+    const source = audioContext.createMediaStreamSource(stream);
+    const analyser = audioContext.createAnalyser();
+    analyser.fftSize = 256;
+    analyser.smoothingTimeConstant = .65;
+    source.connect(analyser);
+    const values = new Uint8Array(analyser.frequencyBinCount);
+    let speakingFrames = 0;
+    const tick = () => {
+      if (!analysers.has(id)) return;
+      analyser.getByteFrequencyData(values);
+      const level = values.reduce((sum, value) => sum + value, 0) / values.length;
+      speakingFrames = level > 18 ? Math.min(4, speakingFrames + 1) : Math.max(0, speakingFrames - 1);
+      setSpeaking(id, speakingFrames >= 2);
+      analysers.get(id).frame = requestAnimationFrame(tick);
+    };
+    analysers.set(id, { source, analyser, frame: requestAnimationFrame(tick) });
   }
   function attachStream(id, stream) {
     remoteStreams.set(id, stream);
@@ -54,6 +91,9 @@
     peers.get(id)?.close();
     peers.delete(id);
     remoteStreams.delete(id);
+    const meter = analysers.get(id);
+    if (meter) { cancelAnimationFrame(meter.frame); meter.source.disconnect(); analysers.delete(id); }
+    setSpeaking(id, false);
     document.querySelector(`#remoteMedia audio[data-peer="${CSS.escape(id)}"]`)?.remove();
   }
   async function handleSignal({ peerId, signal }) {
@@ -99,6 +139,7 @@
       audioButton.classList.add("active");
       videoButton.classList.toggle("active", wantVideo);
       for (const peer of response.peers || []) await makePeer(peer.id, true);
+      resumeRemoteAudio();
     } catch (error) {
       if (wantVideo) {
         try { await acquire(false); const fallback = await request("media:join", { audio: true, video: false }); if (!fallback?.ok) throw new Error(fallback?.error); audioButton.classList.add("active"); videoButton.classList.remove("active"); }
@@ -108,6 +149,7 @@
   }
   async function toggleAudio() {
     if (!localStream) { pendingMode = "audio"; dialog.showModal(); return; }
+    if (document.querySelector('#remoteMedia audio[data-blocked="true"]')) { resumeRemoteAudio(); return; }
     audioEnabled = !audioEnabled;
     localStream.getAudioTracks().forEach((track) => { track.enabled = audioEnabled; });
     const response = await request("media:status", { audio: audioEnabled, video: videoEnabled });
@@ -174,6 +216,7 @@
   }
   audioButton.addEventListener("click", toggleAudio);
   videoButton.addEventListener("click", toggleVideo);
+  document.addEventListener("pointerdown", resumeRemoteAudio, { passive: true });
   confirm.addEventListener("click", (event) => { event.preventDefault(); dialog.close(); join(pendingMode === "video"); pendingMode = null; });
   window.addEventListener("beforeunload", () => { localStream?.getTracks().forEach((track) => track.stop()); });
   window.PokerMedia = { configure, syncSeats, leave };

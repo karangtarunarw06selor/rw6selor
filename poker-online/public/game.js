@@ -61,7 +61,7 @@
         <span class="avatar" data-video-slot="${player.id}"><span>${initials}</span><i class="voice-dot"></i></span>
         <b class="seat-name">${escapeHtml(player.name)}${player.folded ? " · FOLD" : player.allIn ? " · ALL-IN" : ""}</b>
         <span class="seat-stack">♢ ${player.stack}</span>
-        ${player.id === state.room.dealerId ? '<i class="dealer">D</i>' : ""}
+        ${player.id === state.room.dealerId ? `<i class="dealer">${state.room.players.length >= 3 ? "BANDAR" : "D"}</i>` : ""}
         ${player.bet ? `<span class="seat-bet">BET ${player.bet}</span>` : ""}
       </div>
     </article>`;
