@@ -5,6 +5,10 @@
   const socket = io({ path: "/poker/socket.io", transports: ["websocket", "polling"] });
   const siteId = /karangtaruna/i.test(location.hostname + location.pathname) ? "KT" : "MMS";
   document.body.dataset.site = siteId;
+  const siteBrand = siteId === "KT" ? "KT RW06" : "MMS 05";
+  document.title = `Game Kartu ${siteBrand}`;
+  document.querySelector("[data-site-brand]").textContent = `${siteBrand} SOCIAL GAME`;
+  document.querySelector("[data-game-brand]").textContent = `GAME KARTU ${siteBrand}`;
 
   const elements = {
     lobby: $("#lobby"), game: $("#game"), name: $("#playerName"), code: $("#roomCode"), error: $("#lobbyError"),
