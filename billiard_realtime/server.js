@@ -214,6 +214,6 @@ setInterval(() => {
   }
 }, 30000);
 
-server.listen(PORT, () => {
-  console.log(`Pocket Clash realtime server running on port ${PORT}`);
+server.listen(PORT, "127.0.0.1", () => {
+  console.log(`Pocket Clash realtime server running on 127.0.0.1:${PORT}`);
 });

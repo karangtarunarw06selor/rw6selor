@@ -34,7 +34,7 @@ before(async () => {
   await new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error("Server failed to start")), 3000);
     server.stdout.on("data", (chunk) => {
-      if (!chunk.toString().includes(`port ${port}`)) return;
+      if (!chunk.toString().includes(`127.0.0.1:${port}`)) return;
       clearTimeout(timer);
       resolve();
     });
