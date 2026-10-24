@@ -76,8 +76,10 @@
   }
 
   .player.active {
-    border-color: #ffe66b;
-    background: rgba(255,230,107,.15);
+    border-color: var(--turn-glow, #39c6f4);
+    background: var(--turn-tint, rgba(57,198,244,.16));
+    box-shadow: 0 0 0 2px var(--turn-ring, rgba(57,198,244,.35)), 0 0 18px var(--turn-glow, #39c6f4);
+    animation: turnGlow 1.35s ease-in-out infinite alternate;
   }
 
   .player .name {
@@ -254,10 +256,28 @@
   }
 
   .mobileCornerPlayer.activeTurn {
-    border-color: rgba(255, 214, 80, .95);
+    border-color: var(--turn-glow, #39c6f4);
     box-shadow:
-      0 0 0 2px rgba(255, 214, 80, .22),
+      0 0 0 2px var(--turn-ring, rgba(57,198,244,.35)),
+      0 0 18px var(--turn-glow, #39c6f4),
       0 8px 22px rgba(0,0,0,.45);
+    animation: turnGlow 1.35s ease-in-out infinite alternate;
+  }
+
+  body[data-site="KT"] {
+    --turn-glow: #39c6f4;
+    --turn-ring: rgba(57,198,244,.4);
+    --turn-tint: rgba(15,94,168,.22);
+  }
+
+  @keyframes turnGlow {
+    from { filter: brightness(1); }
+    to { filter: brightness(1.2); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .player.active,
+    .mobileCornerPlayer.activeTurn { animation: none; }
   }
 
   .mobileCornerPlayer.me {
@@ -1517,12 +1537,9 @@ let power = 0;
 // Mobile touch mode
 let touchStartPoint = null;
 let touchLastPoint = null;
-let touchPowerTimer = null;
 let touchPowerArmed = false;
 let touchIsDraggingAim = false;
 let touchBallInHandMode = false;
-const MOBILE_SHOT_HOLD_MS = 1200;
-const MOBILE_SHOT_HOLD_SLOP = 12;
 
 
 const TOUCH_SHOT_MIN_DISTANCE = 18;
@@ -2028,8 +2045,9 @@ function updateMobileMenuContent() {
     const isMe = localPlayer &&
       Number(player.player_id) === Number(localPlayer.id);
 
-    const isTurn = matchData.current_turn_player_id &&
-      Number(player.player_id) === Number(matchData.current_turn_player_id);
+    const currentTurnId = matchData.match?.current_turn_player_id;
+    const isTurn = currentTurnId &&
+      Number(player.player_id) === Number(currentTurnId);
 
     slot.classList.remove("hidden");
     slot.classList.toggle("me", !!isMe);
@@ -6026,13 +6044,6 @@ window.addEventListener("mouseup", onAimEnd);
 //window.addEventListener("touchend", onAimEnd, { passive: false });
 //window.addEventListener("touchcancel", onAimEnd, { passive: false });
 
-function clearTouchPowerTimer() {
-  if (touchPowerTimer) {
-    clearTimeout(touchPowerTimer);
-    touchPowerTimer = null;
-  }
-}
-
 function startMobileAimPreview(point) {
   const cueBall = getCueBall();
   if (!cueBall) return;
@@ -6072,8 +6083,6 @@ function updateMobileAimPreview(point) {
 }
 
 function resetTouchState() {
-  clearTouchPowerTimer();
-
   touchStartPoint = null;
   touchLastPoint = null;
   touchPowerArmed = false;
@@ -6163,8 +6172,6 @@ function onTouchAimStart(event) {
   touchIsDraggingAim = false;
   touchBallInHandMode = false;
 
-  clearTouchPowerTimer();
-
       const bihActiveForMe =
     typeof isBallInHandModeForMe === "function" && isBallInHandModeForMe();
 
@@ -6183,23 +6190,8 @@ if (bihActiveForMe && touchingCueBall) {
 
 // Sentuh bola putih tanpa ball-in-hand = power / pukul
 if (touchingCueBall) {
-  touchPowerTimer = setTimeout(() => {
-    touchPowerTimer = null;
-    if (!touchStartPoint || !touchLastPoint || distanceBetween(touchStartPoint, touchLastPoint) > MOBILE_SHOT_HOLD_SLOP) return;
-
-    const cueBall = getCueBall();
-    if (!cueBall || !canShowStandbyStick()) return;
-
-    touchPowerArmed = true;
-    isAiming = true;
-    aimStart = { ...touchStartPoint };
-    aimCurrent = standbyAimPoint || { ...touchStartPoint };
-    power = 0;
-    lastShotResult = null;
-    sendRealtimeAim();
-    updateUI();
-    draw();
-  }, MOBILE_SHOT_HOLD_MS);
+  touchPowerArmed = true;
+  onAimStart(event);
   return;
 }
 
@@ -6237,14 +6229,6 @@ function onTouchAimMove(event) {
 
   const point = getCanvasPoint(event);
   touchLastPoint = point;
-
-  if (!touchPowerArmed && touchPowerTimer && distanceBetween(touchStartPoint, point) > MOBILE_SHOT_HOLD_SLOP) {
-    clearTouchPowerTimer();
-    power = 0;
-    updateUI();
-    draw();
-    return;
-  }
 
  // Ball in hand: hanya aktif kalau touch dimulai di bola putih
 if (touchBallInHandMode) {
