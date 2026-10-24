@@ -1307,11 +1307,12 @@
 
 
 </style>
+  <link rel="stylesheet" href="voice.css?v=1">
 
 
 </head>
 
-<body>
+<body data-site="KT">
   <div id="rotateOverlay">
     <div>
       <h1>Putar ke Landscape</h1>
@@ -2016,6 +2017,7 @@ function updateMobileMenuContent() {
     slot.classList.remove("hidden");
     slot.classList.toggle("me", !!isMe);
     slot.classList.toggle("activeTurn", !!isTurn);
+    slot.dataset.playerId = player.player_id;
 
     const nameEl = slot.querySelector(".mobileCornerName");
     const scoreEl = slot.querySelector(".mobileCornerScore");
@@ -2029,6 +2031,19 @@ function updateMobileMenuContent() {
     if (scoreEl) {
       const score = Number(player.score || player.pocketed_count || 0);
       scoreEl.textContent = "Score " + score;
+    }
+
+    let voice = slot.querySelector(".voiceToggle");
+    if (!voice) {
+      voice = document.createElement(isMe ? "button" : "span");
+      voice.className = "voiceToggle mobileVoiceToggle";
+      voice.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13v-1a8 8 0 0 1 16 0v1"></path><path d="M4 13h3v7H5a2 2 0 0 1-2-2v-3a2 2 0 0 1 1-2ZM20 13h-3v7h2a2 2 0 0 0 2-2v-3a2 2 0 0 0-1-2ZM17 20c0 1-1 2-3 2h-2"></path></svg>`;
+      if (isMe) {
+        voice.type = "button";
+        voice.dataset.voiceToggle = "";
+        voice.setAttribute("aria-label", "Aktifkan mikrofon");
+      }
+      slot.appendChild(voice);
     }
   });
 
@@ -2405,10 +2420,12 @@ function animatePocketBallToRail(ball) {
 
   matchData.players.forEach(player => {
     const div = document.createElement("div");
+    const isMe = localPlayer && Number(player.player_id) === Number(localPlayer.id);
     div.className = "player" + (Number(player.player_id) === currentId ? " active" : "");
+    div.dataset.playerId = player.player_id;
 
     div.innerHTML = `
-      <div class="name">${player.username}</div>
+      <div class="name"><span>${player.username}</span>${isMe ? '<button class="voiceToggle" type="button" data-voice-toggle aria-label="Aktifkan mikrofon" title="Aktifkan mikrofon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13v-1a8 8 0 0 1 16 0v1"></path><path d="M4 13h3v7H5a2 2 0 0 1-2-2v-3a2 2 0 0 1 1-2ZM20 13h-3v7h2a2 2 0 0 0 2-2v-3a2 2 0 0 0-1-2ZM17 20c0 1-1 2-3 2h-2"></path></svg></button>' : '<span class="voiceToggle" aria-label="Voice tidak aktif"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13v-1a8 8 0 0 1 16 0v1"></path><path d="M4 13h3v7H5a2 2 0 0 1-2-2v-3a2 2 0 0 1 1-2ZM20 13h-3v7h2a2 2 0 0 0 2-2v-3a2 2 0 0 0-1-2ZM17 20c0 1-1 2-3 2h-2"></path></svg></span>'}</div>
       <div class="small">
         Score: ${player.score}<br>
         Foul: ${player.fouls}<br>
@@ -2416,7 +2433,7 @@ function animatePocketBallToRail(ball) {
       </div>
       ${Number(player.is_host) === 1 ? '<span class="badge">Host</span>' : ''}
       ${Number(player.player_id) === currentId ? '<span class="badge">Current Turn</span>' : ''}
-      ${localPlayer && Number(player.player_id) === Number(localPlayer.id) ? '<span class="badge">You</span>' : ''}
+      ${isMe ? '<span class="badge">You</span>' : ''}
       ${bih.active && Number(bih.player_id) === Number(player.player_id) ? '<span class="badge">Ball In Hand</span>' : ''}
     `;
 
@@ -2528,6 +2545,7 @@ if (isMatchFinished) {
 `;
   updateMobileHud();
   renderPocketRailHud();
+  window.dispatchEvent(new CustomEvent("billiard:rendered"));
 }
 
     function connectRealtime() {
@@ -2577,6 +2595,7 @@ if (isMatchFinished) {
       socket.send(JSON.stringify({
         type: "join_room",
         room_code: matchData.room.room_code,
+        site_id: "KT",
         player_id: localPlayer.id,
         username: localPlayer.username
       }));
@@ -6277,7 +6296,14 @@ function bindMobileBottomButtonsTouch() {
   }
 }
 
+    window.billiardVoiceContext = {
+      get socket() { return socket; },
+      get roomCode() { return getRoomCode(); },
+      get player() { return localPlayer; }
+    };
     boot();
   </script>
+  <div id="voiceAudio" hidden></div>
+  <script src="voice.js?v=1"></script>
 </body>
 </html>
