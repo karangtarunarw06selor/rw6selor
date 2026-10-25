@@ -8,7 +8,7 @@
   const siteId = document.body.dataset.site || "MMS";
   const socket = typeof io === "function" ? io({ path: "/ular-tangga/socket.io" }) : null;
   const roomSessionKey = `snake-room-session:${siteId}`;
-  const state = { mode: null, playerId: null, room: null, sound: true, busy: false, visualPositions: new Map(), animationQueue: Promise.resolve(), rollStartedAt: 0 };
+  const state = { mode: null, playerId: null, room: null, sound: true, busy: false, visualPositions: new Map(), animationQueue: Promise.resolve(), rollStartedAt: 0, winnerShownAt: null };
   let setupMode = "solo";
   let lobbyMessages = [];
 
@@ -145,6 +145,17 @@
     return state.animationQueue;
   };
   const currentPlayer = () => state.room?.players.find((player) => player.id === state.playerId);
+  const showWinner = (room) => {
+    if (room.status !== "finished" || !room.finishOrder?.length) return;
+    const signature = `${room.code}:${room.lastMove?.at || room.finishOrder.join(":")}`;
+    if (state.winnerShownAt === signature) return;
+    state.winnerShownAt = signature;
+    const ranked = room.finishOrder.map((id) => room.players.find((player) => player.id === id)).filter(Boolean);
+    $("#winner-name").textContent = ranked[0]?.name || "Pemenang";
+    $("#final-standings").innerHTML = ranked.map((player, index) => `<li class="rank-${index + 1}"><span>${index < 3 ? ["🥇", "🥈", "🥉"][index] : index + 1}</span><b>${escapeHtml(player.name)}</b><small>${index === ranked.length - 1 && player.position < 100 ? `Petak ${player.position} · otomatis terakhir` : player.position === 100 ? "Selesai" : `Petak ${player.position}`}</small></li>`).join("");
+    const dialog = $("#winner-dialog");
+    if (!dialog.open) dialog.showModal();
+  };
   const showSetup = (mode) => {
     setupMode = mode;
     $("#setup-kicker").textContent = mode === "join" ? "Gabung arena" : mode === "create" ? "Room baru" : "Lawan bot";
@@ -181,6 +192,10 @@
   const render = () => {
     const room = state.room;
     if (!room) return;
+    if (room.status !== "finished" && $("#winner-dialog").open) {
+      $("#winner-dialog").close();
+      state.winnerShownAt = null;
+    }
     const hasNewMove = room.lastMove && room.lastMove.at !== render.lastMove;
     if (hasNewMove) state.visualPositions.set(room.lastMove.playerId, room.lastMove.from);
     $("#room-code-display").textContent = room.code;
@@ -205,6 +220,7 @@
       queueMove(room.lastMove);
     }
     window.dispatchEvent(new CustomEvent("snake:rendered"));
+    if (room.status === "finished") state.animationQueue.then(() => showWinner(room));
   };
   const escapeHtml = (value) => String(value || "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
   const renderLobbyChat = () => {
@@ -253,6 +269,7 @@
     state.playerId = null;
     state.room = null;
     state.busy = false;
+    state.winnerShownAt = null;
     state.visualPositions.clear();
     document.body.classList.remove("game-active");
     $("#game").hidden = true;
@@ -278,6 +295,7 @@
       status: "playing",
       turn: "human",
       winner: null,
+      finishOrder: [],
       lastMove: null,
       players: [
         { id: "human", name, color: colors[0], position: 1, connected: true },
@@ -294,8 +312,11 @@
     player.position = result.to;
     room.lastMove = { playerId, playerName: player.name, dice, ...result, at: Date.now() };
     if (result.won) {
+      room.finishOrder = [playerId, ...room.players.filter((item) => item.id !== playerId).map((item) => item.id)];
       room.status = "finished";
       room.winner = playerId;
+      room.turn = null;
+      room.lastMove.finishRank = 1;
     } else {
       room.turn = playerId === "human" ? "bot" : "human";
     }
@@ -367,9 +388,12 @@
   });
   $("#cancel-leave").addEventListener("click", () => $("#leave-dialog").close());
   $("#confirm-leave").addEventListener("click", leaveRoom);
+  $("#close-winner").addEventListener("click", () => $("#winner-dialog").close());
   $("#roll-button").addEventListener("click", roll);
   $("#start-button").addEventListener("click", () => socket.emit("game:start", {}, (reply) => { if (!reply?.ok) toast(reply?.error); }));
   $("#reset-button").addEventListener("click", () => {
+    $("#winner-dialog").close();
+    state.winnerShownAt = null;
     if (state.mode === "solo") return createSolo(currentPlayer()?.name || "Pemain");
     socket.emit("game:reset", {}, (reply) => { if (!reply?.ok) toast(reply?.error); });
   });

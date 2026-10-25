@@ -47,12 +47,34 @@ const publicRoom = (room) => ({
   status: room.status,
   turn: room.turn,
   winner: room.winner,
+  finishOrder: room.finishOrder || [],
   players: room.players.map(({ id, name, color, position, connected, voice }) => ({ id, name, color, position, connected, voice: Boolean(voice) })),
   lastMove: room.lastMove,
 });
 const findPlayer = (room, socket) => room.players.find((player) => player.socketId === socket.id);
 const sessionReply = (room, player) => ({ ok: true, room: publicRoom(room), playerId: player.id, reconnectToken: player.reconnectToken });
 const emitRoom = (room) => io.to(room.code).emit("room:state", publicRoom(room));
+const nextRacer = (room, playerId) => {
+  const start = room.players.findIndex((player) => player.id === playerId);
+  for (let offset = 1; offset <= room.players.length; offset += 1) {
+    const candidate = room.players[(start + offset) % room.players.length];
+    if (candidate.connected && !room.finishOrder.includes(candidate.id)) return candidate;
+  }
+  return null;
+};
+const completeWithFinalRacer = (room) => {
+  const remaining = room.players.filter((player) => !room.finishOrder.includes(player.id));
+  if (remaining.length > 1) return false;
+  if (remaining[0]) room.finishOrder.push(remaining[0].id);
+  room.status = "finished";
+  room.winner = room.finishOrder[0] || null;
+  room.turn = null;
+  return true;
+};
+const recordFinish = (room, playerId) => {
+  if (!room.finishOrder.includes(playerId)) room.finishOrder.push(playerId);
+  return completeWithFinalRacer(room);
+};
 const voicePeers = (room, playerId) => room.players
   .filter((player) => player.connected && player.voice && player.id !== playerId)
   .map(({ id, name }) => ({ id, name }));
@@ -82,13 +104,15 @@ const scheduleDisconnectCleanup = (room, player) => {
   player.cleanupTimer = setTimeout(() => {
     if (player.connected) return;
     room.players = room.players.filter((item) => item.id !== player.id);
-    if (room.turn === player.id) room.turn = room.players.find((item) => item.connected)?.id || null;
+    room.finishOrder = room.finishOrder.filter((id) => id !== player.id);
     if (!room.players.length) {
       rooms.delete(room.code);
       removeRoomAnnouncement(room);
       return;
     }
-    room.status = room.players.length >= 2 ? room.status : "waiting";
+    if (room.status === "playing" && room.finishOrder.length) completeWithFinalRacer(room);
+    if (room.status !== "finished" && room.turn === player.id) room.turn = nextRacer(room, player.id)?.id || null;
+    if (room.status !== "finished" && room.players.length < 2) room.status = "waiting";
     emitRoom(room);
   }, RECONNECT_GRACE_MS);
   player.cleanupTimer.unref();
@@ -124,7 +148,7 @@ io.on("connection", (socket) => {
     let roomCode = code();
     while (rooms.has(roomCode)) roomCode = code();
     const player = { id: crypto.randomUUID(), reconnectToken: crypto.randomBytes(24).toString("base64url"), socketId: socket.id, name: playerName, color: "#f0b54b", position: 1, connected: true };
-    const room = { code: roomCode, siteId, status: "waiting", turn: player.id, winner: null, players: [player], lastMove: null };
+    const room = { code: roomCode, siteId, status: "waiting", turn: player.id, winner: null, finishOrder: [], players: [player], lastMove: null };
     rooms.set(roomCode, room);
     socket.join(roomCode);
     socket.data.roomCode = roomCode;
@@ -176,15 +200,17 @@ io.on("connection", (socket) => {
     clearTimeout(player.cleanupTimer);
     leaveVoice(room, player);
     room.players = room.players.filter((item) => item.id !== player.id);
+    room.finishOrder = room.finishOrder.filter((id) => id !== player.id);
     socket.leave(room.code);
     socket.data.roomCode = null;
     if (!room.players.length) {
       rooms.delete(room.code);
       removeRoomAnnouncement(room);
     } else {
-      if (room.turn === player.id) room.turn = room.players.find((item) => item.connected)?.id || room.players[0].id;
-      room.status = room.players.length >= 2 ? room.status : "waiting";
-      if (room.winner === player.id) room.winner = null;
+      if (room.status === "playing" && room.finishOrder.length) completeWithFinalRacer(room);
+      if (room.status !== "finished" && room.turn === player.id) room.turn = nextRacer(room, player.id)?.id || room.players.find((item) => item.connected)?.id || null;
+      if (room.status !== "finished" && room.players.length < 2) room.status = "waiting";
+      if (room.winner === player.id) room.winner = room.finishOrder[0] || null;
       emitRoom(room);
     }
     reply({ ok: true });
@@ -212,13 +238,10 @@ io.on("connection", (socket) => {
     player.position = result.to;
     room.lastMove = { playerId: player.id, playerName: player.name, dice, ...result, at: Date.now() };
     if (result.won) {
-      room.status = "finished";
-      room.winner = player.id;
-    } else {
-      const active = room.players.filter((item) => item.connected);
-      const index = active.findIndex((item) => item.id === player.id);
-      room.turn = active[(index + 1) % active.length].id;
+      recordFinish(room, player.id);
+      room.lastMove.finishRank = room.finishOrder.indexOf(player.id) + 1;
     }
+    if (room.status !== "finished") room.turn = nextRacer(room, player.id)?.id || null;
     emitRoom(room);
     reply({ ok: true, move: room.lastMove });
   });
@@ -231,6 +254,7 @@ io.on("connection", (socket) => {
     room.status = room.players.length >= 2 ? "playing" : "waiting";
     room.turn = room.players[0].id;
     room.winner = null;
+    room.finishOrder = [];
     room.lastMove = null;
     emitRoom(room);
     reply({ ok: true });

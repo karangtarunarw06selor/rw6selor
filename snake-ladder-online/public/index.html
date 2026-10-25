@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#082235">
   <title>Ular Tangga • Muda-Mudi Selor</title>
   <link rel="icon" href="assets/mms.avif">
-  <link rel="stylesheet" href="game.css?v=9">
+  <link rel="stylesheet" href="game.css?v=10">
 </head>
 <body data-site="MMS">
   <header class="game-header">
@@ -84,11 +84,12 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <dialog id="leave-dialog" class="leave-dialog"><h2>Keluar dari room?</h2><p>Kamu akan keluar dari permainan dan kembali ke lobby Ular Tangga.</p><div><button id="cancel-leave" class="secondary-button" type="button">Batal</button><button id="confirm-leave" class="primary-button" type="button">Keluar Room</button></div></dialog>
+  <dialog id="winner-dialog" class="winner-dialog"><div class="winner-burst" aria-hidden="true">🏆</div><p class="winner-kicker">Permainan Selesai</p><h2 id="winner-name">Pemenang</h2><p class="winner-copy">Selamat menjadi juara Ular Tangga!</p><h3>Klasemen Akhir</h3><ol id="final-standings" class="final-standings"></ol><button id="close-winner" class="primary-button" type="button">Tutup &amp; Lihat Papan</button></dialog>
   <audio id="dice-sound" src="assets/sound/dice-roll.mp3" preload="auto"></audio>
   <audio id="ladder-sound" src="assets/sound/ladder.mp3" preload="auto"></audio>
   <audio id="snake-sound" src="assets/sound/snake.mp3" preload="auto"></audio>
   <script src="/ular-tangga/socket.io/socket.io.js"></script>
-  <script src="game.js?v=9"></script>
+  <script src="game.js?v=10"></script>
   <script src="voice.js?v=3"></script>
 </body>
 </html>
