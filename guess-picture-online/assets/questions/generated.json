@@ -3478,5 +3478,1729 @@
       "Jumlah pemain",
       "Cara mendapat angka"
     ]
+  },
+  {
+    "id": "fox",
+    "answer": "Rubah",
+    "aliases": [
+      "Fox"
+    ],
+    "category": "Hewan",
+    "image": "fox.jpg",
+    "forbidden": [
+      "rubah"
+    ],
+    "examples": [
+      "Habitat",
+      "Warna tubuh",
+      "Makanan",
+      "Cara bergerak"
+    ]
+  },
+  {
+    "id": "wolf",
+    "answer": "Serigala",
+    "aliases": [],
+    "category": "Hewan",
+    "image": "wolf.jpg",
+    "forbidden": [
+      "serigala"
+    ],
+    "examples": [
+      "Habitat",
+      "Warna tubuh",
+      "Makanan",
+      "Cara bergerak"
+    ]
+  },
+  {
+    "id": "reindeer",
+    "answer": "Rusa Kutub",
+    "aliases": [
+      "Karibu"
+    ],
+    "category": "Hewan",
+    "image": "reindeer.jpg",
+    "forbidden": [
+      "rusa",
+      "kutub"
+    ],
+    "examples": [
+      "Habitat",
+      "Warna tubuh",
+      "Makanan",
+      "Cara bergerak"
+    ]
+  },
+  {
+    "id": "moose",
+    "answer": "Moose",
+    "aliases": [
+      "Rusa Besar"
+    ],
+    "category": "Hewan",
+    "image": "moose.jpg",
+    "forbidden": [
+      "moose"
+    ],
+    "examples": [
+      "Habitat",
+      "Warna tubuh",
+      "Makanan",
+      "Cara bergerak"
+    ]
+  },
+  {
+    "id": "bison",
+    "answer": "Bison",
+    "aliases": [],
+    "category": "Hewan",
+    "image": "bison.jpg",
+    "forbidden": [
+      "bison"
+    ],
+    "examples": [
+      "Habitat",
+      "Warna tubuh",
+      "Makanan",
+      "Cara bergerak"
+    ]
+  },
+  {
+    "id": "boar",
+    "answer": "Babi Hutan",
+    "aliases": [],
+    "category": "Hewan",
+    "image": "boar.jpg",
+    "forbidden": [
+      "babi",
+      "hutan"
+    ],
+    "examples": [
+      "Habitat",
+      "Warna tubuh",
+      "Makanan",
+      "Cara bergerak"
+    ]
+  },
+  {
+    "id": "meerkat",
+    "answer": "Meerkat",
+    "aliases": [],
+    "category": "Hewan",
+    "image": "meerkat.jpg",
+    "forbidden": [
+      "meerkat"
+    ],
+    "examples": [
+      "Habitat",
+      "Warna tubuh",
+      "Makanan",
+      "Cara bergerak"
+    ]
+  },
+  {
+    "id": "anteater",
+    "answer": "Trenggiling Semut",
+    "aliases": [
+      "Anteater"
+    ],
+    "category": "Hewan",
+    "image": "anteater.jpg",
+    "forbidden": [
+      "trenggiling",
+      "semut"
+    ],
+    "examples": [
+      "Habitat",
+      "Warna tubuh",
+      "Makanan",
+      "Cara bergerak"
+    ]
+  },
+  {
+    "id": "armadillo",
+    "answer": "Armadillo",
+    "aliases": [],
+    "category": "Hewan",
+    "image": "armadillo.jpg",
+    "forbidden": [
+      "armadillo"
+    ],
+    "examples": [
+      "Habitat",
+      "Warna tubuh",
+      "Makanan",
+      "Cara bergerak"
+    ]
+  },
+  {
+    "id": "platypus",
+    "answer": "Platipus",
+    "aliases": [],
+    "category": "Hewan",
+    "image": "platypus.jpg",
+    "forbidden": [
+      "platipus"
+    ],
+    "examples": [
+      "Habitat",
+      "Warna tubuh",
+      "Makanan",
+      "Cara bergerak"
+    ]
+  },
+  {
+    "id": "otter",
+    "answer": "Berang Berang",
+    "aliases": [
+      "Berang-berang"
+    ],
+    "category": "Hewan",
+    "image": "otter.jpg",
+    "forbidden": [
+      "berang",
+      "berang"
+    ],
+    "examples": [
+      "Habitat",
+      "Warna tubuh",
+      "Makanan",
+      "Cara bergerak"
+    ]
+  },
+  {
+    "id": "beaver",
+    "answer": "Biaver",
+    "aliases": [],
+    "category": "Hewan",
+    "image": "beaver.jpg",
+    "forbidden": [
+      "biaver"
+    ],
+    "examples": [
+      "Habitat",
+      "Warna tubuh",
+      "Makanan",
+      "Cara bergerak"
+    ]
+  },
+  {
+    "id": "iguana",
+    "answer": "Iguana",
+    "aliases": [],
+    "category": "Hewan",
+    "image": "iguana.jpg",
+    "forbidden": [
+      "iguana"
+    ],
+    "examples": [
+      "Habitat",
+      "Warna tubuh",
+      "Makanan",
+      "Cara bergerak"
+    ]
+  },
+  {
+    "id": "chameleon",
+    "answer": "Bunglon",
+    "aliases": [],
+    "category": "Hewan",
+    "image": "chameleon.jpg",
+    "forbidden": [
+      "bunglon"
+    ],
+    "examples": [
+      "Habitat",
+      "Warna tubuh",
+      "Makanan",
+      "Cara bergerak"
+    ]
+  },
+  {
+    "id": "gecko",
+    "answer": "Tokek",
+    "aliases": [],
+    "category": "Hewan",
+    "image": "gecko.jpg",
+    "forbidden": [
+      "tokek"
+    ],
+    "examples": [
+      "Habitat",
+      "Warna tubuh",
+      "Makanan",
+      "Cara bergerak"
+    ]
+  },
+  {
+    "id": "frog",
+    "answer": "Katak",
+    "aliases": [],
+    "category": "Hewan",
+    "image": "frog.jpg",
+    "forbidden": [
+      "katak"
+    ],
+    "examples": [
+      "Habitat",
+      "Warna tubuh",
+      "Makanan",
+      "Cara bergerak"
+    ]
+  },
+  {
+    "id": "salamander",
+    "answer": "Salamander",
+    "aliases": [],
+    "category": "Hewan",
+    "image": "salamander.jpg",
+    "forbidden": [
+      "salamander"
+    ],
+    "examples": [
+      "Habitat",
+      "Warna tubuh",
+      "Makanan",
+      "Cara bergerak"
+    ]
+  },
+  {
+    "id": "manta-ray",
+    "answer": "Ikan Pari Manta",
+    "aliases": [
+      "Pari Manta"
+    ],
+    "category": "Hewan",
+    "image": "manta-ray.jpg",
+    "forbidden": [
+      "ikan",
+      "pari",
+      "manta"
+    ],
+    "examples": [
+      "Habitat",
+      "Warna tubuh",
+      "Makanan",
+      "Cara bergerak"
+    ]
+  },
+  {
+    "id": "swordfish",
+    "answer": "Ikan Pedang",
+    "aliases": [],
+    "category": "Hewan",
+    "image": "swordfish.jpg",
+    "forbidden": [
+      "ikan",
+      "pedang"
+    ],
+    "examples": [
+      "Habitat",
+      "Warna tubuh",
+      "Makanan",
+      "Cara bergerak"
+    ]
+  },
+  {
+    "id": "clownfish",
+    "answer": "Ikan Badut",
+    "aliases": [
+      "Nemo"
+    ],
+    "category": "Hewan",
+    "image": "clownfish.jpg",
+    "forbidden": [
+      "ikan",
+      "badut"
+    ],
+    "examples": [
+      "Habitat",
+      "Warna tubuh",
+      "Makanan",
+      "Cara bergerak"
+    ]
+  },
+  {
+    "id": "apple",
+    "answer": "Apel",
+    "aliases": [],
+    "category": "Makanan",
+    "image": "apple.jpg",
+    "forbidden": [
+      "apel"
+    ],
+    "examples": [
+      "Asal daerah",
+      "Bahan utama",
+      "Rasa",
+      "Cara penyajian"
+    ]
+  },
+  {
+    "id": "orange",
+    "answer": "Jeruk",
+    "aliases": [],
+    "category": "Makanan",
+    "image": "orange.jpg",
+    "forbidden": [
+      "jeruk"
+    ],
+    "examples": [
+      "Asal daerah",
+      "Bahan utama",
+      "Rasa",
+      "Cara penyajian"
+    ]
+  },
+  {
+    "id": "papaya",
+    "answer": "Pepaya",
+    "aliases": [],
+    "category": "Makanan",
+    "image": "papaya.jpg",
+    "forbidden": [
+      "pepaya"
+    ],
+    "examples": [
+      "Asal daerah",
+      "Bahan utama",
+      "Rasa",
+      "Cara penyajian"
+    ]
+  },
+  {
+    "id": "kiwi-fruit",
+    "answer": "Buah Kiwi",
+    "aliases": [
+      "Kiwi"
+    ],
+    "category": "Makanan",
+    "image": "kiwi-fruit.jpg",
+    "forbidden": [
+      "buah",
+      "kiwi"
+    ],
+    "examples": [
+      "Asal daerah",
+      "Bahan utama",
+      "Rasa",
+      "Cara penyajian"
+    ]
+  },
+  {
+    "id": "coconut",
+    "answer": "Kelapa",
+    "aliases": [],
+    "category": "Makanan",
+    "image": "coconut.jpg",
+    "forbidden": [
+      "kelapa"
+    ],
+    "examples": [
+      "Asal daerah",
+      "Bahan utama",
+      "Rasa",
+      "Cara penyajian"
+    ]
+  },
+  {
+    "id": "carrot",
+    "answer": "Wortel",
+    "aliases": [],
+    "category": "Makanan",
+    "image": "carrot.jpg",
+    "forbidden": [
+      "wortel"
+    ],
+    "examples": [
+      "Asal daerah",
+      "Bahan utama",
+      "Rasa",
+      "Cara penyajian"
+    ]
+  },
+  {
+    "id": "broccoli",
+    "answer": "Brokoli",
+    "aliases": [],
+    "category": "Makanan",
+    "image": "broccoli.jpg",
+    "forbidden": [
+      "brokoli"
+    ],
+    "examples": [
+      "Asal daerah",
+      "Bahan utama",
+      "Rasa",
+      "Cara penyajian"
+    ]
+  },
+  {
+    "id": "corn",
+    "answer": "Jagung",
+    "aliases": [],
+    "category": "Makanan",
+    "image": "corn.jpg",
+    "forbidden": [
+      "jagung"
+    ],
+    "examples": [
+      "Asal daerah",
+      "Bahan utama",
+      "Rasa",
+      "Cara penyajian"
+    ]
+  },
+  {
+    "id": "mushroom",
+    "answer": "Jamur",
+    "aliases": [],
+    "category": "Makanan",
+    "image": "mushroom.jpg",
+    "forbidden": [
+      "jamur"
+    ],
+    "examples": [
+      "Asal daerah",
+      "Bahan utama",
+      "Rasa",
+      "Cara penyajian"
+    ]
+  },
+  {
+    "id": "bread",
+    "answer": "Roti",
+    "aliases": [],
+    "category": "Makanan",
+    "image": "bread.jpg",
+    "forbidden": [
+      "roti"
+    ],
+    "examples": [
+      "Asal daerah",
+      "Bahan utama",
+      "Rasa",
+      "Cara penyajian"
+    ]
+  },
+  {
+    "id": "cheese",
+    "answer": "Keju",
+    "aliases": [],
+    "category": "Makanan",
+    "image": "cheese.jpg",
+    "forbidden": [
+      "keju"
+    ],
+    "examples": [
+      "Asal daerah",
+      "Bahan utama",
+      "Rasa",
+      "Cara penyajian"
+    ]
+  },
+  {
+    "id": "kebab",
+    "answer": "Kebab",
+    "aliases": [],
+    "category": "Makanan",
+    "image": "kebab.jpg",
+    "forbidden": [
+      "kebab"
+    ],
+    "examples": [
+      "Asal daerah",
+      "Bahan utama",
+      "Rasa",
+      "Cara penyajian"
+    ]
+  },
+  {
+    "id": "sandwich",
+    "answer": "Roti Lapis",
+    "aliases": [
+      "Sandwich"
+    ],
+    "category": "Makanan",
+    "image": "sandwich.jpg",
+    "forbidden": [
+      "roti",
+      "lapis"
+    ],
+    "examples": [
+      "Asal daerah",
+      "Bahan utama",
+      "Rasa",
+      "Cara penyajian"
+    ]
+  },
+  {
+    "id": "spring-roll",
+    "answer": "Lumpia",
+    "aliases": [],
+    "category": "Makanan",
+    "image": "spring-roll.jpg",
+    "forbidden": [
+      "lumpia"
+    ],
+    "examples": [
+      "Asal daerah",
+      "Bahan utama",
+      "Rasa",
+      "Cara penyajian"
+    ]
+  },
+  {
+    "id": "bento",
+    "answer": "Bento",
+    "aliases": [],
+    "category": "Makanan",
+    "image": "bento.jpg",
+    "forbidden": [
+      "bento"
+    ],
+    "examples": [
+      "Asal daerah",
+      "Bahan utama",
+      "Rasa",
+      "Cara penyajian"
+    ]
+  },
+  {
+    "id": "macaron",
+    "answer": "Macaron",
+    "aliases": [],
+    "category": "Makanan",
+    "image": "macaron.jpg",
+    "forbidden": [
+      "macaron"
+    ],
+    "examples": [
+      "Asal daerah",
+      "Bahan utama",
+      "Rasa",
+      "Cara penyajian"
+    ]
+  },
+  {
+    "id": "churros",
+    "answer": "Churros",
+    "aliases": [],
+    "category": "Makanan",
+    "image": "churros.jpg",
+    "forbidden": [
+      "churros"
+    ],
+    "examples": [
+      "Asal daerah",
+      "Bahan utama",
+      "Rasa",
+      "Cara penyajian"
+    ]
+  },
+  {
+    "id": "pudding",
+    "answer": "Puding",
+    "aliases": [],
+    "category": "Makanan",
+    "image": "pudding.jpg",
+    "forbidden": [
+      "puding"
+    ],
+    "examples": [
+      "Asal daerah",
+      "Bahan utama",
+      "Rasa",
+      "Cara penyajian"
+    ]
+  },
+  {
+    "id": "cereal",
+    "answer": "Sereal",
+    "aliases": [],
+    "category": "Makanan",
+    "image": "cereal.jpg",
+    "forbidden": [
+      "sereal"
+    ],
+    "examples": [
+      "Asal daerah",
+      "Bahan utama",
+      "Rasa",
+      "Cara penyajian"
+    ]
+  },
+  {
+    "id": "honey",
+    "answer": "Madu",
+    "aliases": [],
+    "category": "Makanan",
+    "image": "honey.jpg",
+    "forbidden": [
+      "madu"
+    ],
+    "examples": [
+      "Asal daerah",
+      "Bahan utama",
+      "Rasa",
+      "Cara penyajian"
+    ]
+  },
+  {
+    "id": "acropolis",
+    "answer": "Akropolis Athena",
+    "aliases": [
+      "Acropolis"
+    ],
+    "category": "Tempat",
+    "image": "acropolis.jpg",
+    "forbidden": [
+      "akropolis",
+      "athena"
+    ],
+    "examples": [
+      "Negara atau kota",
+      "Bentuk bangunan",
+      "Ciri terkenal",
+      "Lokasi"
+    ]
+  },
+  {
+    "id": "chichen-itza",
+    "answer": "Chichen Itza",
+    "aliases": [],
+    "category": "Tempat",
+    "image": "chichen-itza.jpg",
+    "forbidden": [
+      "chichen",
+      "itza"
+    ],
+    "examples": [
+      "Negara atau kota",
+      "Bentuk bangunan",
+      "Ciri terkenal",
+      "Lokasi"
+    ]
+  },
+  {
+    "id": "neuschwanstein",
+    "answer": "Kastel Neuschwanstein",
+    "aliases": [
+      "Neuschwanstein"
+    ],
+    "category": "Tempat",
+    "image": "neuschwanstein.jpg",
+    "forbidden": [
+      "kastel",
+      "neuschwanstein"
+    ],
+    "examples": [
+      "Negara atau kota",
+      "Bentuk bangunan",
+      "Ciri terkenal",
+      "Lokasi"
+    ]
+  },
+  {
+    "id": "hagia-sophia",
+    "answer": "Hagia Sophia",
+    "aliases": [],
+    "category": "Tempat",
+    "image": "hagia-sophia.jpg",
+    "forbidden": [
+      "hagia",
+      "sophia"
+    ],
+    "examples": [
+      "Negara atau kota",
+      "Bentuk bangunan",
+      "Ciri terkenal",
+      "Lokasi"
+    ]
+  },
+  {
+    "id": "saint-basils",
+    "answer": "Katedral Santo Basil",
+    "aliases": [
+      "St Basil"
+    ],
+    "category": "Tempat",
+    "image": "saint-basils.jpg",
+    "forbidden": [
+      "katedral",
+      "santo",
+      "basil"
+    ],
+    "examples": [
+      "Negara atau kota",
+      "Bentuk bangunan",
+      "Ciri terkenal",
+      "Lokasi"
+    ]
+  },
+  {
+    "id": "burj-al-arab",
+    "answer": "Burj Al Arab",
+    "aliases": [],
+    "category": "Tempat",
+    "image": "burj-al-arab.jpg",
+    "forbidden": [
+      "burj",
+      "arab"
+    ],
+    "examples": [
+      "Negara atau kota",
+      "Bentuk bangunan",
+      "Ciri terkenal",
+      "Lokasi"
+    ]
+  },
+  {
+    "id": "empire-state",
+    "answer": "Empire State Building",
+    "aliases": [],
+    "category": "Tempat",
+    "image": "empire-state.jpg",
+    "forbidden": [
+      "empire",
+      "state",
+      "building"
+    ],
+    "examples": [
+      "Negara atau kota",
+      "Bentuk bangunan",
+      "Ciri terkenal",
+      "Lokasi"
+    ]
+  },
+  {
+    "id": "space-needle",
+    "answer": "Space Needle",
+    "aliases": [],
+    "category": "Tempat",
+    "image": "space-needle.jpg",
+    "forbidden": [
+      "space",
+      "needle"
+    ],
+    "examples": [
+      "Negara atau kota",
+      "Bentuk bangunan",
+      "Ciri terkenal",
+      "Lokasi"
+    ]
+  },
+  {
+    "id": "louvre-pyramid",
+    "answer": "Piramida Louvre",
+    "aliases": [
+      "Louvre"
+    ],
+    "category": "Tempat",
+    "image": "louvre-pyramid.jpg",
+    "forbidden": [
+      "piramida",
+      "louvre"
+    ],
+    "examples": [
+      "Negara atau kota",
+      "Bentuk bangunan",
+      "Ciri terkenal",
+      "Lokasi"
+    ]
+  },
+  {
+    "id": "mont-saint-michel",
+    "answer": "Mont Saint Michel",
+    "aliases": [],
+    "category": "Tempat",
+    "image": "mont-saint-michel.jpg",
+    "forbidden": [
+      "mont",
+      "saint",
+      "michel"
+    ],
+    "examples": [
+      "Negara atau kota",
+      "Bentuk bangunan",
+      "Ciri terkenal",
+      "Lokasi"
+    ]
+  },
+  {
+    "id": "kilimanjaro",
+    "answer": "Gunung Kilimanjaro",
+    "aliases": [
+      "Kilimanjaro"
+    ],
+    "category": "Tempat",
+    "image": "kilimanjaro.jpg",
+    "forbidden": [
+      "gunung",
+      "kilimanjaro"
+    ],
+    "examples": [
+      "Negara atau kota",
+      "Bentuk bangunan",
+      "Ciri terkenal",
+      "Lokasi"
+    ]
+  },
+  {
+    "id": "matterhorn",
+    "answer": "Gunung Matterhorn",
+    "aliases": [
+      "Matterhorn"
+    ],
+    "category": "Tempat",
+    "image": "matterhorn.jpg",
+    "forbidden": [
+      "gunung",
+      "matterhorn"
+    ],
+    "examples": [
+      "Negara atau kota",
+      "Bentuk bangunan",
+      "Ciri terkenal",
+      "Lokasi"
+    ]
+  },
+  {
+    "id": "uluru",
+    "answer": "Uluru",
+    "aliases": [
+      "Ayers Rock"
+    ],
+    "category": "Tempat",
+    "image": "uluru.jpg",
+    "forbidden": [
+      "uluru"
+    ],
+    "examples": [
+      "Negara atau kota",
+      "Bentuk bangunan",
+      "Ciri terkenal",
+      "Lokasi"
+    ]
+  },
+  {
+    "id": "pamukkale",
+    "answer": "Pamukkale",
+    "aliases": [],
+    "category": "Tempat",
+    "image": "pamukkale.jpg",
+    "forbidden": [
+      "pamukkale"
+    ],
+    "examples": [
+      "Negara atau kota",
+      "Bentuk bangunan",
+      "Ciri terkenal",
+      "Lokasi"
+    ]
+  },
+  {
+    "id": "kremlin",
+    "answer": "Kremlin Moskwa",
+    "aliases": [
+      "Kremlin"
+    ],
+    "category": "Tempat",
+    "image": "kremlin.jpg",
+    "forbidden": [
+      "kremlin",
+      "moskwa"
+    ],
+    "examples": [
+      "Negara atau kota",
+      "Bentuk bangunan",
+      "Ciri terkenal",
+      "Lokasi"
+    ]
+  },
+  {
+    "id": "tram",
+    "answer": "Trem",
+    "aliases": [
+      "Tram"
+    ],
+    "category": "Kendaraan",
+    "image": "tram.jpg",
+    "forbidden": [
+      "trem"
+    ],
+    "examples": [
+      "Tempat bergerak",
+      "Jumlah roda",
+      "Kegunaan",
+      "Sumber tenaga"
+    ]
+  },
+  {
+    "id": "cable-car",
+    "answer": "Kereta Gantung",
+    "aliases": [
+      "Gondola Lift"
+    ],
+    "category": "Kendaraan",
+    "image": "cable-car.jpg",
+    "forbidden": [
+      "kereta",
+      "gantung"
+    ],
+    "examples": [
+      "Tempat bergerak",
+      "Jumlah roda",
+      "Kegunaan",
+      "Sumber tenaga"
+    ]
+  },
+  {
+    "id": "steam-locomotive",
+    "answer": "Lokomotif Uap",
+    "aliases": [],
+    "category": "Kendaraan",
+    "image": "steam-locomotive.jpg",
+    "forbidden": [
+      "lokomotif",
+      "uap"
+    ],
+    "examples": [
+      "Tempat bergerak",
+      "Jumlah roda",
+      "Kegunaan",
+      "Sumber tenaga"
+    ]
+  },
+  {
+    "id": "pickup-truck",
+    "answer": "Mobil Pikap",
+    "aliases": [
+      "Pickup"
+    ],
+    "category": "Kendaraan",
+    "image": "pickup-truck.jpg",
+    "forbidden": [
+      "mobil",
+      "pikap"
+    ],
+    "examples": [
+      "Tempat bergerak",
+      "Jumlah roda",
+      "Kegunaan",
+      "Sumber tenaga"
+    ]
+  },
+  {
+    "id": "dump-truck",
+    "answer": "Truk Jungkit",
+    "aliases": [
+      "Dump Truck"
+    ],
+    "category": "Kendaraan",
+    "image": "dump-truck.jpg",
+    "forbidden": [
+      "truk",
+      "jungkit"
+    ],
+    "examples": [
+      "Tempat bergerak",
+      "Jumlah roda",
+      "Kegunaan",
+      "Sumber tenaga"
+    ]
+  },
+  {
+    "id": "forklift",
+    "answer": "Forklift",
+    "aliases": [],
+    "category": "Kendaraan",
+    "image": "forklift.jpg",
+    "forbidden": [
+      "forklift"
+    ],
+    "examples": [
+      "Tempat bergerak",
+      "Jumlah roda",
+      "Kegunaan",
+      "Sumber tenaga"
+    ]
+  },
+  {
+    "id": "mobile-crane",
+    "answer": "Mobil Derek",
+    "aliases": [
+      "Crane"
+    ],
+    "category": "Kendaraan",
+    "image": "mobile-crane.jpg",
+    "forbidden": [
+      "mobil",
+      "derek"
+    ],
+    "examples": [
+      "Tempat bergerak",
+      "Jumlah roda",
+      "Kegunaan",
+      "Sumber tenaga"
+    ]
+  },
+  {
+    "id": "armored-vehicle",
+    "answer": "Kendaraan Lapis Baja",
+    "aliases": [
+      "Mobil Lapis Baja"
+    ],
+    "category": "Kendaraan",
+    "image": "armored-vehicle.jpg",
+    "forbidden": [
+      "kendaraan",
+      "lapis",
+      "baja"
+    ],
+    "examples": [
+      "Tempat bergerak",
+      "Jumlah roda",
+      "Kegunaan",
+      "Sumber tenaga"
+    ]
+  },
+  {
+    "id": "rocket",
+    "answer": "Roket",
+    "aliases": [],
+    "category": "Kendaraan",
+    "image": "rocket.jpg",
+    "forbidden": [
+      "roket"
+    ],
+    "examples": [
+      "Tempat bergerak",
+      "Jumlah roda",
+      "Kegunaan",
+      "Sumber tenaga"
+    ]
+  },
+  {
+    "id": "glider",
+    "answer": "Pesawat Layang",
+    "aliases": [
+      "Glider"
+    ],
+    "category": "Kendaraan",
+    "image": "glider.jpg",
+    "forbidden": [
+      "pesawat",
+      "layang"
+    ],
+    "examples": [
+      "Tempat bergerak",
+      "Jumlah roda",
+      "Kegunaan",
+      "Sumber tenaga"
+    ]
+  },
+  {
+    "id": "jet-ski",
+    "answer": "Jet Ski",
+    "aliases": [],
+    "category": "Kendaraan",
+    "image": "jet-ski.jpg",
+    "forbidden": [
+      "jet",
+      "ski"
+    ],
+    "examples": [
+      "Tempat bergerak",
+      "Jumlah roda",
+      "Kegunaan",
+      "Sumber tenaga"
+    ]
+  },
+  {
+    "id": "gondola-boat",
+    "answer": "Perahu Gondola",
+    "aliases": [
+      "Gondola Venesia"
+    ],
+    "category": "Kendaraan",
+    "image": "gondola-boat.jpg",
+    "forbidden": [
+      "perahu",
+      "gondola"
+    ],
+    "examples": [
+      "Tempat bergerak",
+      "Jumlah roda",
+      "Kegunaan",
+      "Sumber tenaga"
+    ]
+  },
+  {
+    "id": "hovercraft",
+    "answer": "Hovercraft",
+    "aliases": [],
+    "category": "Kendaraan",
+    "image": "hovercraft.jpg",
+    "forbidden": [
+      "hovercraft"
+    ],
+    "examples": [
+      "Tempat bergerak",
+      "Jumlah roda",
+      "Kegunaan",
+      "Sumber tenaga"
+    ]
+  },
+  {
+    "id": "atv",
+    "answer": "Motor ATV",
+    "aliases": [
+      "ATV"
+    ],
+    "category": "Kendaraan",
+    "image": "atv.jpg",
+    "forbidden": [
+      "motor",
+      "atv"
+    ],
+    "examples": [
+      "Tempat bergerak",
+      "Jumlah roda",
+      "Kegunaan",
+      "Sumber tenaga"
+    ]
+  },
+  {
+    "id": "school-bus",
+    "answer": "Bus Sekolah",
+    "aliases": [],
+    "category": "Kendaraan",
+    "image": "school-bus.jpg",
+    "forbidden": [
+      "bus",
+      "sekolah"
+    ],
+    "examples": [
+      "Tempat bergerak",
+      "Jumlah roda",
+      "Kegunaan",
+      "Sumber tenaga"
+    ]
+  },
+  {
+    "id": "wristwatch",
+    "answer": "Jam Tangan",
+    "aliases": [],
+    "category": "Benda",
+    "image": "wristwatch.jpg",
+    "forbidden": [
+      "jam",
+      "tangan"
+    ],
+    "examples": [
+      "Tempat digunakan",
+      "Bahan",
+      "Bentuk",
+      "Fungsi"
+    ]
+  },
+  {
+    "id": "eyeglasses",
+    "answer": "Kacamata",
+    "aliases": [],
+    "category": "Benda",
+    "image": "eyeglasses.jpg",
+    "forbidden": [
+      "kacamata"
+    ],
+    "examples": [
+      "Tempat digunakan",
+      "Bahan",
+      "Bentuk",
+      "Fungsi"
+    ]
+  },
+  {
+    "id": "sunglasses",
+    "answer": "Kacamata Hitam",
+    "aliases": [],
+    "category": "Benda",
+    "image": "sunglasses.jpg",
+    "forbidden": [
+      "kacamata",
+      "hitam"
+    ],
+    "examples": [
+      "Tempat digunakan",
+      "Bahan",
+      "Bentuk",
+      "Fungsi"
+    ]
+  },
+  {
+    "id": "chair",
+    "answer": "Kursi",
+    "aliases": [],
+    "category": "Benda",
+    "image": "chair.jpg",
+    "forbidden": [
+      "kursi"
+    ],
+    "examples": [
+      "Tempat digunakan",
+      "Bahan",
+      "Bentuk",
+      "Fungsi"
+    ]
+  },
+  {
+    "id": "sofa",
+    "answer": "Sofa",
+    "aliases": [
+      "Kursi Sofa"
+    ],
+    "category": "Benda",
+    "image": "sofa.jpg",
+    "forbidden": [
+      "sofa"
+    ],
+    "examples": [
+      "Tempat digunakan",
+      "Bahan",
+      "Bentuk",
+      "Fungsi"
+    ]
+  },
+  {
+    "id": "bed",
+    "answer": "Tempat Tidur",
+    "aliases": [
+      "Ranjang"
+    ],
+    "category": "Benda",
+    "image": "bed.jpg",
+    "forbidden": [
+      "tempat",
+      "tidur"
+    ],
+    "examples": [
+      "Tempat digunakan",
+      "Bahan",
+      "Bentuk",
+      "Fungsi"
+    ]
+  },
+  {
+    "id": "fan",
+    "answer": "Kipas Angin",
+    "aliases": [],
+    "category": "Benda",
+    "image": "fan.jpg",
+    "forbidden": [
+      "kipas",
+      "angin"
+    ],
+    "examples": [
+      "Tempat digunakan",
+      "Bahan",
+      "Bentuk",
+      "Fungsi"
+    ]
+  },
+  {
+    "id": "air-conditioner",
+    "answer": "Pendingin Udara",
+    "aliases": [
+      "AC"
+    ],
+    "category": "Benda",
+    "image": "air-conditioner.jpg",
+    "forbidden": [
+      "pendingin",
+      "udara"
+    ],
+    "examples": [
+      "Tempat digunakan",
+      "Bahan",
+      "Bentuk",
+      "Fungsi"
+    ]
+  },
+  {
+    "id": "cash-register",
+    "answer": "Mesin Kasir",
+    "aliases": [
+      "Kasir"
+    ],
+    "category": "Benda",
+    "image": "cash-register.jpg",
+    "forbidden": [
+      "mesin",
+      "kasir"
+    ],
+    "examples": [
+      "Tempat digunakan",
+      "Bahan",
+      "Bentuk",
+      "Fungsi"
+    ]
+  },
+  {
+    "id": "clothes-iron",
+    "answer": "Setrika",
+    "aliases": [],
+    "category": "Benda",
+    "image": "clothes-iron.jpg",
+    "forbidden": [
+      "setrika"
+    ],
+    "examples": [
+      "Tempat digunakan",
+      "Bahan",
+      "Bentuk",
+      "Fungsi"
+    ]
+  },
+  {
+    "id": "kettle",
+    "answer": "Ketel",
+    "aliases": [],
+    "category": "Benda",
+    "image": "kettle.jpg",
+    "forbidden": [
+      "ketel"
+    ],
+    "examples": [
+      "Tempat digunakan",
+      "Bahan",
+      "Bentuk",
+      "Fungsi"
+    ]
+  },
+  {
+    "id": "toaster",
+    "answer": "Pemanggang Roti",
+    "aliases": [],
+    "category": "Benda",
+    "image": "toaster.jpg",
+    "forbidden": [
+      "pemanggang",
+      "roti"
+    ],
+    "examples": [
+      "Tempat digunakan",
+      "Bahan",
+      "Bentuk",
+      "Fungsi"
+    ]
+  },
+  {
+    "id": "blender",
+    "answer": "Blender",
+    "aliases": [],
+    "category": "Benda",
+    "image": "blender.jpg",
+    "forbidden": [
+      "blender"
+    ],
+    "examples": [
+      "Tempat digunakan",
+      "Bahan",
+      "Bentuk",
+      "Fungsi"
+    ]
+  },
+  {
+    "id": "rice-cooker",
+    "answer": "Penanak Nasi",
+    "aliases": [
+      "Rice Cooker"
+    ],
+    "category": "Benda",
+    "image": "rice-cooker.jpg",
+    "forbidden": [
+      "penanak",
+      "nasi"
+    ],
+    "examples": [
+      "Tempat digunakan",
+      "Bahan",
+      "Bentuk",
+      "Fungsi"
+    ]
+  },
+  {
+    "id": "hair-dryer",
+    "answer": "Pengering Rambut",
+    "aliases": [
+      "Hair Dryer"
+    ],
+    "category": "Benda",
+    "image": "hair-dryer.jpg",
+    "forbidden": [
+      "pengering",
+      "rambut"
+    ],
+    "examples": [
+      "Tempat digunakan",
+      "Bahan",
+      "Bentuk",
+      "Fungsi"
+    ]
+  },
+  {
+    "id": "suitcase",
+    "answer": "Koper",
+    "aliases": [],
+    "category": "Benda",
+    "image": "suitcase.jpg",
+    "forbidden": [
+      "koper"
+    ],
+    "examples": [
+      "Tempat digunakan",
+      "Bahan",
+      "Bentuk",
+      "Fungsi"
+    ]
+  },
+  {
+    "id": "wallet",
+    "answer": "Dompet",
+    "aliases": [],
+    "category": "Benda",
+    "image": "wallet.jpg",
+    "forbidden": [
+      "dompet"
+    ],
+    "examples": [
+      "Tempat digunakan",
+      "Bahan",
+      "Bentuk",
+      "Fungsi"
+    ]
+  },
+  {
+    "id": "helmet",
+    "answer": "Helm",
+    "aliases": [],
+    "category": "Benda",
+    "image": "helmet.jpg",
+    "forbidden": [
+      "helm"
+    ],
+    "examples": [
+      "Tempat digunakan",
+      "Bahan",
+      "Bentuk",
+      "Fungsi"
+    ]
+  },
+  {
+    "id": "shopping-cart",
+    "answer": "Troli Belanja",
+    "aliases": [
+      "Keranjang Belanja"
+    ],
+    "category": "Benda",
+    "image": "shopping-cart.jpg",
+    "forbidden": [
+      "troli",
+      "belanja"
+    ],
+    "examples": [
+      "Tempat digunakan",
+      "Bahan",
+      "Bentuk",
+      "Fungsi"
+    ]
+  },
+  {
+    "id": "watering-can",
+    "answer": "Penyiram Tanaman",
+    "aliases": [],
+    "category": "Benda",
+    "image": "watering-can.jpg",
+    "forbidden": [
+      "penyiram",
+      "tanaman"
+    ],
+    "examples": [
+      "Tempat digunakan",
+      "Bahan",
+      "Bentuk",
+      "Fungsi"
+    ]
+  },
+  {
+    "id": "rugby",
+    "answer": "Rugbi",
+    "aliases": [
+      "Rugby"
+    ],
+    "category": "Olahraga",
+    "image": "rugby.jpg",
+    "forbidden": [
+      "rugbi"
+    ],
+    "examples": [
+      "Arena",
+      "Peralatan",
+      "Jumlah pemain",
+      "Cara mendapat angka"
+    ]
+  },
+  {
+    "id": "pole-vault",
+    "answer": "Lompat Galah",
+    "aliases": [],
+    "category": "Olahraga",
+    "image": "pole-vault.jpg",
+    "forbidden": [
+      "lompat",
+      "galah"
+    ],
+    "examples": [
+      "Arena",
+      "Peralatan",
+      "Jumlah pemain",
+      "Cara mendapat angka"
+    ]
+  },
+  {
+    "id": "high-jump",
+    "answer": "Lompat Tinggi",
+    "aliases": [],
+    "category": "Olahraga",
+    "image": "high-jump.jpg",
+    "forbidden": [
+      "lompat",
+      "tinggi"
+    ],
+    "examples": [
+      "Arena",
+      "Peralatan",
+      "Jumlah pemain",
+      "Cara mendapat angka"
+    ]
+  },
+  {
+    "id": "javelin",
+    "answer": "Lempar Lembing",
+    "aliases": [],
+    "category": "Olahraga",
+    "image": "javelin.jpg",
+    "forbidden": [
+      "lempar",
+      "lembing"
+    ],
+    "examples": [
+      "Arena",
+      "Peralatan",
+      "Jumlah pemain",
+      "Cara mendapat angka"
+    ]
+  },
+  {
+    "id": "rowing",
+    "answer": "Dayung",
+    "aliases": [],
+    "category": "Olahraga",
+    "image": "rowing.jpg",
+    "forbidden": [
+      "dayung"
+    ],
+    "examples": [
+      "Arena",
+      "Peralatan",
+      "Jumlah pemain",
+      "Cara mendapat angka"
+    ]
+  },
+  {
+    "id": "horse-racing",
+    "answer": "Pacuan Kuda",
+    "aliases": [],
+    "category": "Olahraga",
+    "image": "horse-racing.jpg",
+    "forbidden": [
+      "pacuan",
+      "kuda"
+    ],
+    "examples": [
+      "Arena",
+      "Peralatan",
+      "Jumlah pemain",
+      "Cara mendapat angka"
+    ]
+  },
+  {
+    "id": "motor-racing",
+    "answer": "Balap Motor",
+    "aliases": [],
+    "category": "Olahraga",
+    "image": "motor-racing.jpg",
+    "forbidden": [
+      "balap",
+      "motor"
+    ],
+    "examples": [
+      "Arena",
+      "Peralatan",
+      "Jumlah pemain",
+      "Cara mendapat angka"
+    ]
+  },
+  {
+    "id": "hurdling",
+    "answer": "Lari Gawang",
+    "aliases": [],
+    "category": "Olahraga",
+    "image": "hurdling.jpg",
+    "forbidden": [
+      "lari",
+      "gawang"
+    ],
+    "examples": [
+      "Arena",
+      "Peralatan",
+      "Jumlah pemain",
+      "Cara mendapat angka"
+    ]
+  },
+  {
+    "id": "lacrosse",
+    "answer": "Lacrosse",
+    "aliases": [],
+    "category": "Olahraga",
+    "image": "lacrosse.jpg",
+    "forbidden": [
+      "lacrosse"
+    ],
+    "examples": [
+      "Arena",
+      "Peralatan",
+      "Jumlah pemain",
+      "Cara mendapat angka"
+    ]
+  },
+  {
+    "id": "water-polo",
+    "answer": "Polo Air",
+    "aliases": [],
+    "category": "Olahraga",
+    "image": "water-polo.jpg",
+    "forbidden": [
+      "polo",
+      "air"
+    ],
+    "examples": [
+      "Arena",
+      "Peralatan",
+      "Jumlah pemain",
+      "Cara mendapat angka"
+    ]
   }
 ]

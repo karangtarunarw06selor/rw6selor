@@ -1654,5 +1654,805 @@
     "retrieved": "2026-10-25",
     "license": "See source page",
     "artist": "See source page"
+  },
+  "fox.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Red_fox",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d2/Portrait_of_a_red_fox_in_Rautas_fj%C3%A4llurskog_%28cropped%29.jpg/1280px-Portrait_of_a_red_fox_in_Rautas_fj%C3%A4llurskog_%28cropped%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Portrait_of_a_red_fox_in_Rautas_fjällurskog_(cropped).jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "wolf.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Wolf",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/68/Eurasian_wolf_2.jpg/1280px-Eurasian_wolf_2.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Eurasian_wolf_2.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "moose.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Moose",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e0/Alaska_moose.jpg/1280px-Alaska_moose.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Alaska_moose.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "bison.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Bison",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8d/American_bison_k5680-1.jpg/1280px-American_bison_k5680-1.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "American_bison_k5680-1.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "boar.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Wild_boar",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d2/Wildschwein%2C_N%C3%A4he_Pulverstampftor_%28cropped%29.jpg/1280px-Wildschwein%2C_N%C3%A4he_Pulverstampftor_%28cropped%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Wildschwein,_Nähe_Pulverstampftor_(cropped).jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "meerkat.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Meerkat",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9a/Meerkat_%28Suricata_suricatta%29_Tswalu.jpg/1280px-Meerkat_%28Suricata_suricatta%29_Tswalu.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Meerkat_(Suricata_suricatta)_Tswalu.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "anteater.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Giant_anteater",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/3/3b/Myresluger2.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "pageImage": "Myresluger2.jpg",
+    "retrieved": "2026-10-25",
+    "license": "CC BY-SA 3.0",
+    "artist": "Malene Thyssen"
+  },
+  "armadillo.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Armadillo",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b4/Nine-banded_Armadillo.jpg/1280px-Nine-banded_Armadillo.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Nine-banded_Armadillo.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "platypus.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Platypus",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1a/Duck-billed_platypus_%28Ornithorhynchus_anatinus%29_Scottsdale.jpg/1280px-Duck-billed_platypus_%28Ornithorhynchus_anatinus%29_Scottsdale.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Duck-billed_platypus_(Ornithorhynchus_anatinus)_Scottsdale.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "otter.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Otter",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/d/d3/Fischotter%2C_Lutra_Lutra.JPG?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "pageImage": "Fischotter,_Lutra_Lutra.JPG",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "beaver.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Beaver",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/6/6b/American_Beaver.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "pageImage": "American_Beaver.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "iguana.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Iguana",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4d/Green_Iguana_In_Florida.jpg/1280px-Green_Iguana_In_Florida.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Green_Iguana_In_Florida.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "chameleon.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Chameleon",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8a/Panther_Chameleon_738367_%28cropped%29.jpg/1280px-Panther_Chameleon_738367_%28cropped%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Panther_Chameleon_738367_(cropped).jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "gecko.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Tokay_gecko",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/8/86/Gekko_gecko_192144834.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "pageImage": "Gekko_gecko_192144834.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "frog.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Frog",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/f/f5/Red-eyed_Leaf_Frog_%2849661076226%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "pageImage": "Red-eyed_Leaf_Frog_(49661076226).jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "salamander.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Salamander",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/b/b2/SpottedSalamander.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "pageImage": "SpottedSalamander.jpg",
+    "retrieved": "2026-10-25",
+    "license": "CC BY-SA 3.0",
+    "artist": "Camazine at English Wikipedia) (Scott Camazine web.mac.com/camazine)"
+  },
+  "manta-ray.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Manta_ray",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/3/30/Dharavandhoo_Thila_-_Manata_Black_Pearl.JPG?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "pageImage": "Dharavandhoo_Thila_-_Manata_Black_Pearl.JPG",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "swordfish.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Swordfish",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5b/Xiphias_gladius_Linnaeus%2C_1758_2599925021.jpg/1280px-Xiphias_gladius_Linnaeus%2C_1758_2599925021.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Xiphias_gladius_Linnaeus,_1758_2599925021.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "clownfish.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Clownfish",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ad/Amphiprion_ocellaris_%28Clown_anemonefish%29_by_Nick_Hobgood.jpg/1280px-Amphiprion_ocellaris_%28Clown_anemonefish%29_by_Nick_Hobgood.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Amphiprion_ocellaris_(Clown_anemonefish)_by_Nick_Hobgood.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "apple.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Apple",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a6/Pink_lady_and_cross_section.jpg/1280px-Pink_lady_and_cross_section.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Pink_lady_and_cross_section.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "orange.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Orange_(fruit)",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e3/Oranges_-_whole-halved-segment.jpg/1280px-Oranges_-_whole-halved-segment.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Oranges_-_whole-halved-segment.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "papaya.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Papaya",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/84/Carica_papaya_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-029.jpg/1280px-Carica_papaya_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-029.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Carica_papaya_-_Köhler–s_Medizinal-Pflanzen-029.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "kiwi-fruit.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Kiwifruit",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/0/0a/Actinidia_fruits.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "pageImage": "Actinidia_fruits.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "coconut.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Coconut",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/32/Cocos_nucifera_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-187.jpg/1280px-Cocos_nucifera_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-187.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Cocos_nucifera_-_Köhler–s_Medizinal-Pflanzen-187.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "carrot.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Carrot",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a2/Vegetable-Carrot-Bundle-wStalks.jpg/1280px-Vegetable-Carrot-Bundle-wStalks.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Vegetable-Carrot-Bundle-wStalks.jpg",
+    "retrieved": "2026-10-25",
+    "license": "Public domain",
+    "artist": "Evan-Amos"
+  },
+  "broccoli.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Broccoli",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/03/Broccoli_and_cross_section_edit.jpg/1280px-Broccoli_and_cross_section_edit.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Broccoli_and_cross_section_edit.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "corn.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Maize",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/e/e3/Zea_mays_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-283.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "pageImage": "Zea_mays_-_Köhler–s_Medizinal-Pflanzen-283.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "mushroom.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Edible_mushroom",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/18/Edible_fungi_in_basket_2009_G1_%28cropped%29.jpg/1280px-Edible_fungi_in_basket_2009_G1_%28cropped%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Edible_fungi_in_basket_2009_G1_(cropped).jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "bread.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Bread",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c7/Korb_mit_Br%C3%B6tchen.JPG/1280px-Korb_mit_Br%C3%B6tchen.JPG?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Korb_mit_Brötchen.JPG",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "cheese.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Cheese",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/a/a8/Cheese_platter.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "pageImage": "Cheese_platter.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "kebab.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Kebab",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5b/Lula_kebab_2.jpg/1280px-Lula_kebab_2.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Lula_kebab_2.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "sandwich.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Sandwich",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0b/Bacon%2C_lettuce%2C_tomato%2C_and_avocado.jpg/1280px-Bacon%2C_lettuce%2C_tomato%2C_and_avocado.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Bacon,_lettuce,_tomato,_and_avocado.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "spring-roll.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Spring_roll",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1e/Spring_Rolls_%283357696061%29.jpg/1280px-Spring_Rolls_%283357696061%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Spring_Rolls_(3357696061).jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "bento.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Bento",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1d/Bento_box_from_a_grocery_store.jpg/1280px-Bento_box_from_a_grocery_store.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Bento_box_from_a_grocery_store.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "macaron.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Macaron",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/11/VanillaMacaron.jpg/1280px-VanillaMacaron.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "VanillaMacaron.jpg",
+    "retrieved": "2026-10-25",
+    "license": "CC BY-SA 4.0",
+    "artist": "Michelle Naherny"
+  },
+  "churros.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Churro",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c6/Chocolate_con_churros_%2827343655726%29.jpg/1280px-Chocolate_con_churros_%2827343655726%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Chocolate_con_churros_(27343655726).jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "pudding.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Pudding",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/26/Blanc-manger_on_glass_platter%2C_full_view.jpg/1280px-Blanc-manger_on_glass_platter%2C_full_view.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Blanc-manger_on_glass_platter,_full_view.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "cereal.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Breakfast_cereal",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9b/NCI_Visuals_Food_Meal_Breakfast.jpg/1280px-NCI_Visuals_Food_Meal_Breakfast.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "NCI_Visuals_Food_Meal_Breakfast.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "honey.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Honey",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cc/Runny_hunny.jpg/1280px-Runny_hunny.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Runny_hunny.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "acropolis.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Acropolis_of_Athens",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2c/1029_Acropolis_of_Athens_in_Greece_at_night_Photo_by_Giles_Laurent.jpg/1280px-1029_Acropolis_of_Athens_in_Greece_at_night_Photo_by_Giles_Laurent.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "1029_Acropolis_of_Athens_in_Greece_at_night_Photo_by_Giles_Laurent.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "chichen-itza.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Chichen_Itza",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/51/Chichen_Itza_3.jpg/1280px-Chichen_Itza_3.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Chichen_Itza_3.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "neuschwanstein.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Neuschwanstein_Castle",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f8/Schloss_Neuschwanstein_2013.jpg/1280px-Schloss_Neuschwanstein_2013.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Schloss_Neuschwanstein_2013.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "hagia-sophia.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Hagia_Sophia",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4a/Hagia_Sophia_%28228968325%29.jpeg/1280px-Hagia_Sophia_%28228968325%29.jpeg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Hagia_Sophia_(228968325).jpeg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "saint-basils.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Saint_Basil%27s_Cathedral",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/18/Saint_Basil%27s_Cathedral_in_Moscow.jpg/1280px-Saint_Basil%27s_Cathedral_in_Moscow.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Saint_Basil's_Cathedral_in_Moscow.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "space-needle.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Space_Needle",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/23/Space_Needle_2011-07-04.jpg/1280px-Space_Needle_2011-07-04.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Space_Needle_2011-07-04.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "louvre-pyramid.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Louvre_Pyramid",
+    "image": "https://thumb.wikimedia.org/wikipedia/en/thumb/4/42/Louvre_Pyramid.jpg/1280px-Louvre_Pyramid.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Louvre_Pyramid.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "kilimanjaro.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Mount_Kilimanjaro",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6c/Kilimanjaro_from_Amboseli.jpg/1280px-Kilimanjaro_from_Amboseli.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Kilimanjaro_from_Amboseli.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "matterhorn.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Matterhorn",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/60/Matterhorn_from_Domh%C3%BCtte_-_2.jpg/1280px-Matterhorn_from_Domh%C3%BCtte_-_2.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Matterhorn_from_Domhütte_-_2.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "uluru.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Uluru",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a8/ULURU.jpg/1280px-ULURU.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "ULURU.jpg",
+    "retrieved": "2026-10-25",
+    "license": "CC BY-SA 4.0",
+    "artist": "Ek2030372672"
+  },
+  "pamukkale.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Pamukkale",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5d/Pamukkale%2C_Denizli_2026_68.jpg/1280px-Pamukkale%2C_Denizli_2026_68.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Pamukkale,_Denizli_2026_68.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "kremlin.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Kremlin",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/46/Moscow_Kremlin_%288281675670%29.jpg/1280px-Moscow_Kremlin_%288281675670%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Moscow_Kremlin_(8281675670).jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "tram.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Tram",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/60/Muzeum_MHD%2C_tramvaje_T3_8084_a_6149%2C_zep%C5%99edu.jpg/1280px-Muzeum_MHD%2C_tramvaje_T3_8084_a_6149%2C_zep%C5%99edu.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Muzeum_MHD,_tramvaje_T3_8084_a_6149,_zepředu.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "cable-car.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Aerial_lift",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4c/Funivia_del_Plateau_Rosa%27.JPG/1280px-Funivia_del_Plateau_Rosa%27.JPG?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Funivia_del_Plateau_Rosa'.JPG",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "steam-locomotive.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Steam_locomotive",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5a/Number_4468_Mallard_in_York.jpg/1280px-Number_4468_Mallard_in_York.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Number_4468_Mallard_in_York.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "pickup-truck.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Pickup_truck",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8d/1994_Toyota_T100_Deluxe%2C_rear_left.jpg/1280px-1994_Toyota_T100_Deluxe%2C_rear_left.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "1994_Toyota_T100_Deluxe,_rear_left.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "dump-truck.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Dump_truck",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/11/Freightliner_M2_106_6x4_2014_%2814240376744%29.jpg/1280px-Freightliner_M2_106_6x4_2014_%2814240376744%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Freightliner_M2_106_6x4_2014_(14240376744).jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "forklift.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Forklift",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/02/Forklift_Truck-no_lines.svg/1280px-Forklift_Truck-no_lines.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Forklift_Truck-no_lines.svg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "mobile-crane.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Mobile_crane",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4d/20100225-Liebherr_LTM_1200-5.jpg/1280px-20100225-Liebherr_LTM_1200-5.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "20100225-Liebherr_LTM_1200-5.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "rocket.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Rocket",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9a/Soyuz_TMA-9_launch.jpg/1280px-Soyuz_TMA-9_launch.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Soyuz_TMA-9_launch.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "glider.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Glider_(aircraft)",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/4/4c/Dg800.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "pageImage": "Dg800.jpg",
+    "retrieved": "2026-10-25",
+    "license": "Copyrighted free use",
+    "artist": "DG Flugzeugbau"
+  },
+  "jet-ski.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Jet_ski",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/17/Couple_of_teenagers_riding_a_jetski_splashing_on_the_Mekong_in_Laos.jpg/1280px-Couple_of_teenagers_riding_a_jetski_splashing_on_the_Mekong_in_Laos.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Couple_of_teenagers_riding_a_jetski_splashing_on_the_Mekong_in_Laos.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "gondola-boat.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Gondola",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c8/Gondola_Ride.jpg/1280px-Gondola_Ride.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Gondola_Ride.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "hovercraft.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Hovercraft",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/0/05/Formel1_hovercraft.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "pageImage": "Formel1_hovercraft.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "atv.jpg": {
+    "page": "https://en.wikipedia.org/wiki/All-terrain_vehicle",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/08/Four_wheeler.jpg/1280px-Four_wheeler.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Four_wheeler.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "school-bus.jpg": {
+    "page": "https://en.wikipedia.org/wiki/School_bus",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/90/IC_CE_school_bus_%28shortened_chassis%29.jpg/1280px-IC_CE_school_bus_%28shortened_chassis%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "IC_CE_school_bus_(shortened_chassis).jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "wristwatch.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Watch",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d9/Rolex_Oyster_Perpetual_with_a_%22Jubliee%22_dial.jpg/1280px-Rolex_Oyster_Perpetual_with_a_%22Jubliee%22_dial.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Rolex_Oyster_Perpetual_with_a_\"Jubliee\"_dial.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "eyeglasses.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Glasses",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d7/2023_Okulary_korekcyjne.jpg/1280px-2023_Okulary_korekcyjne.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "2023_Okulary_korekcyjne.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "sunglasses.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Sunglasses",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/89/Allef_Vinicius_2016-10-20_%28Unsplash%29_%28cropped%29.jpg/1280px-Allef_Vinicius_2016-10-20_%28Unsplash%29_%28cropped%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Allef_Vinicius_2016-10-20_(Unsplash)_(cropped).jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "chair.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Chair",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c6/Set_of_fourteen_side_chairs_MET_DP110780.jpg/1280px-Set_of_fourteen_side_chairs_MET_DP110780.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Set_of_fourteen_side_chairs_MET_DP110780.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "sofa.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Couch",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c2/2009-05-16_Main_office_lobby_at_Hampton_Forest_Apartments.jpg/1280px-2009-05-16_Main_office_lobby_at_Hampton_Forest_Apartments.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "2009-05-16_Main_office_lobby_at_Hampton_Forest_Apartments.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "bed.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Bed",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/04/2008-04-12_Freilichtmuseum_Detmold_%2811%29.jpg/1280px-2008-04-12_Freilichtmuseum_Detmold_%2811%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "2008-04-12_Freilichtmuseum_Detmold_(11).jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "fan.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Fan_(machine)",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1a/Hatari_18_inch_fan.jpg/1280px-Hatari_18_inch_fan.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Hatari_18_inch_fan.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "air-conditioner.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Air_conditioning",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8b/MITSUBISHI_ELECTRIC_WINDOW_TYPE_AIR_CONDITIONER_OUTDOOR_UNIT.jpg/1280px-MITSUBISHI_ELECTRIC_WINDOW_TYPE_AIR_CONDITIONER_OUTDOOR_UNIT.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "MITSUBISHI_ELECTRIC_WINDOW_TYPE_AIR_CONDITIONER_OUTDOOR_UNIT.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "clothes-iron.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Clothes_iron",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/ca/Teal_and_white_electric_steam_iron_-_side_view.jpg/1280px-Teal_and_white_electric_steam_iron_-_side_view.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Teal_and_white_electric_steam_iron_-_side_view.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "kettle.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Kettle",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c8/Bernadotte_Wasserkessel.jpg/1280px-Bernadotte_Wasserkessel.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Bernadotte_Wasserkessel.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "toaster.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Toaster",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ec/Consumer_Reports_-_Hamilton_Beach_Digital_toaster.tiff/lossless-page1-960px-Consumer_Reports_-_Hamilton_Beach_Digital_toaster.tiff.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Consumer_Reports_-_Hamilton_Beach_Digital_toaster.tiff",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "blender.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Blender_(appliance)",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/dd/Vitamix_Blender.jpg/1280px-Vitamix_Blender.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Vitamix_Blender.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "rice-cooker.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Rice_cooker",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/d/d6/Rice_Cooker_1.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "pageImage": "Rice_Cooker_1.png",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "hair-dryer.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Hair_dryer",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/11/Braun_hair_dryer.jpg/1280px-Braun_hair_dryer.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Braun_hair_dryer.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "suitcase.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Suitcase",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/c/c0/Suitcase1.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "pageImage": "Suitcase1.jpg",
+    "retrieved": "2026-10-25",
+    "license": "CC BY-SA 3.0",
+    "artist": "JEXP"
+  },
+  "wallet.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Wallet",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3c/WalletMpegMan.jpg/1280px-WalletMpegMan.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "WalletMpegMan.jpg",
+    "retrieved": "2026-10-25",
+    "license": "CC BY-SA 3.0",
+    "artist": "The original uploader was TheArmadillo at English Wikipedia.. Uploaded to Commons by Körnerbrötchen."
+  },
+  "helmet.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Motorcycle_helmet",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/e/e0/Valentino_Rossi%27s_AGV_helmets.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "pageImage": "Valentino_Rossi's_AGV_helmets.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "watering-can.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Watering_can",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1b/MetalwateringcansDec08.jpg/1280px-MetalwateringcansDec08.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "MetalwateringcansDec08.jpg",
+    "retrieved": "2026-10-25",
+    "license": "CC BY-SA 2.0",
+    "artist": "Bas Leenders at https://www.flickr.com/photos/basl/"
+  },
+  "rugby.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Rugby_union",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5b/2014_Women%27s_Six_Nations_Championship_-_France_Italy_%2851%29.jpg/1280px-2014_Women%27s_Six_Nations_Championship_-_France_Italy_%2851%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "2014_Women's_Six_Nations_Championship_-_France_Italy_(51).jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "pole-vault.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Pole_vault",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/9/9c/Pole_Vault_Sequence_3.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "pageImage": "Pole_Vault_Sequence_3.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "high-jump.jpg": {
+    "page": "https://en.wikipedia.org/wiki/High_jump",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/ca/Nicole_Forrester.JPG/1280px-Nicole_Forrester.JPG?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Nicole_Forrester.JPG",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "javelin.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Javelin_throw",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f1/Thomas_R%C3%B6hler_2011.jpg/1280px-Thomas_R%C3%B6hler_2011.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Thomas_Röhler_2011.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "rowing.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Rowing_(sport)",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0b/Harvard_Rowing_Crew_at_Henley_2004_-2.JPG/1280px-Harvard_Rowing_Crew_at_Henley_2004_-2.JPG?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Harvard_Rowing_Crew_at_Henley_2004_-2.JPG",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "horse-racing.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Horse_racing",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/48/GGF_Race5.jpg/1280px-GGF_Race5.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "GGF_Race5.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "motor-racing.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Motorcycle_racing",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b0/MotoGP_-_Sachsenring_2018_%2830094664128%29.jpg/1280px-MotoGP_-_Sachsenring_2018_%2830094664128%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "MotoGP_-_Sachsenring_2018_(30094664128).jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "lacrosse.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Lacrosse",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/78/UNC_Lacrosse.jpg/1280px-UNC_Lacrosse.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "UNC_Lacrosse.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "reindeer.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Reindeer",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/96/Reinbukken_p%C3%A5_frisk_gr%C3%B8nt_beite._-_panoramio.jpg/1280px-Reinbukken_p%C3%A5_frisk_gr%C3%B8nt_beite._-_panoramio.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Reinbukken_på_frisk_grønt_beite._-_panoramio.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "empire-state.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Empire_State_Building",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/1/10/Empire_State_Building_%28aerial_view%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "pageImage": "Empire_State_Building_(aerial_view).jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "mont-saint-michel.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Mont-Saint-Michel",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/78/Mont-Saint-Michel_vu_du_ciel.jpg/1280px-Mont-Saint-Michel_vu_du_ciel.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Mont-Saint-Michel_vu_du_ciel.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "armored-vehicle.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Armoured_fighting_vehicle",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5f/WW1_Tank_Mark_V%2C_Bovington.jpg/1280px-WW1_Tank_Mark_V%2C_Bovington.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "WW1_Tank_Mark_V,_Bovington.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "cash-register.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Cash_register",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e7/Old_National_Cash_Register.jpg/1280px-Old_National_Cash_Register.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Old_National_Cash_Register.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "shopping-cart.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Shopping_cart",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b7/Frau_mit_Einkaufswagen_%2837939692236%29.jpg/1280px-Frau_mit_Einkaufswagen_%2837939692236%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Frau_mit_Einkaufswagen_(37939692236).jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "water-polo.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Water_polo",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e5/WaterPolo.JPG/1280px-WaterPolo.JPG?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "WaterPolo.JPG",
+    "retrieved": "2026-10-25",
+    "license": "CC BY-SA 2.0 it",
+    "artist": "Massimo Finizio"
+  },
+  "burj-al-arab.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Burj_Al_Arab",
+    "image": "https://thumb.wikimedia.org/wikipedia/en/thumb/2/2a/Burj_Al_Arab%2C_Dubai%2C_by_Joi_Ito_Dec2007.jpg/1280px-Burj_Al_Arab%2C_Dubai%2C_by_Joi_Ito_Dec2007.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Burj_Al_Arab,_Dubai,_by_Joi_Ito_Dec2007.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
+  },
+  "hurdling.jpg": {
+    "page": "https://en.wikipedia.org/wiki/Hurdling",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ee/Leichtathletik_Gala_Linz_2018_men%C2%B4s_110m_hurdles_Okafor-6401.jpg/1280px-Leichtathletik_Gala_Linz_2018_men%C2%B4s_110m_hurdles_Okafor-6401.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "pageImage": "Leichtathletik_Gala_Linz_2018_men´s_110m_hurdles_Okafor-6401.jpg",
+    "retrieved": "2026-10-25",
+    "license": "See source page",
+    "artist": "See source page"
   }
 }
