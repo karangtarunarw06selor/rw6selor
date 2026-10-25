@@ -7,6 +7,12 @@
   const state = { playerId: null, room: null, secret: null, activeClue: 0, drawing: false, points: [], lastStatus: null, correctShown: null };
   const canvas = $("#clue-canvas"), context = canvas.getContext("2d");
   const toast = (text) => { $("#toast").textContent = text; $("#toast").classList.add("show"); setTimeout(() => $("#toast").classList.remove("show"), 2200); };
+  const lobbyNameKey = `guess-picture-name:${siteId}`;
+  const roomButton = (code, label = `Gabung ${code}`) => { const button = document.createElement("button"); button.type = "button"; button.className = "join-room-code"; button.textContent = label; button.addEventListener("click", () => { $("#code-wrap").hidden = false; $("#room-code").value = code; $("#room-code").focus(); $("#room-form").scrollIntoView({ behavior: "smooth", block: "center" }); }); return button; };
+  const renderLobbyRooms = (rooms = []) => { const container = $("#public-rooms"); container.replaceChildren(); if (!rooms.length) { const empty = document.createElement("p"); empty.textContent = "Belum ada room terbuka. Buat room agar pemain lain bisa bergabung."; container.append(empty); return; } rooms.forEach((room) => { const card = document.createElement("article"); const text = document.createElement("div"); const name = document.createElement("b"); const meta = document.createElement("small"); name.textContent = room.host; meta.textContent = `${room.players}/${room.capacity} pemain`; text.append(name, meta); card.append(text, roomButton(room.code, room.code)); container.append(card); }); };
+  const appendLobbyMessage = (message) => { const container = $("#lobby-messages"); container.querySelector(".empty-chat")?.remove(); if (container.querySelector(`[data-message-id="${CSS.escape(message.id)}"]`)) return; const row = document.createElement("article"); row.dataset.messageId = message.id; const head = document.createElement("div"); const name = document.createElement("b"); const time = document.createElement("time"); const text = document.createElement("p"); name.textContent = message.name; time.textContent = new Date(message.createdAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }); text.textContent = message.text; head.append(name, time); row.append(head, text); (message.roomCodes || []).forEach((code) => row.append(roomButton(code))); container.append(row); while (container.children.length > 50) container.firstElementChild.remove(); container.scrollTop = container.scrollHeight; };
+  const renderLobby = ({ rooms = [], messages = [] } = {}) => { renderLobbyRooms(rooms); const container = $("#lobby-messages"); container.replaceChildren(); if (!messages.length) { const empty = document.createElement("p"); empty.className = "empty-chat"; empty.textContent = "Belum ada pesan. Ajak pemain membuat room."; container.append(empty); } else messages.forEach(appendLobbyMessage); };
+  const joinPublicLobby = () => socket.emit("lobby:join", { siteId }, (reply) => { $("#lobby-online").textContent = reply?.ok ? "Online" : "Terputus"; if (reply?.ok) renderLobby(reply); });
   const saveSession = (reply) => sessionStorage.setItem(sessionKey, JSON.stringify({ code: reply.room.code, playerId: reply.playerId, reconnectToken: reply.reconnectToken }));
   const isDrawer = () => state.room?.drawerId === state.playerId;
   const currentPlayer = () => state.room?.players.find((player) => player.id === state.playerId);
@@ -73,9 +79,13 @@
   };
   $("#room-form").addEventListener("submit", (event) => {
     event.preventDefault(); const action = event.submitter?.value; const name = $("#player-name").value.trim();
+    if (name) localStorage.setItem(lobbyNameKey, name);
     if (action === "join" && $("#code-wrap").hidden) { $("#code-wrap").hidden = false; $("#room-code").focus(); return; }
     socket.emit(action === "create" ? "room:create" : "room:join", { name, code: $("#room-code").value, siteId }, (reply) => { $("#room-error").textContent = reply?.ok ? "" : reply?.error || "Gagal masuk room."; if (!reply?.ok) return; state.playerId = reply.playerId; state.room = reply.room; saveSession(reply); render(); });
   });
+  $("#player-name").value = localStorage.getItem(lobbyNameKey) || "";
+  $("#player-name").addEventListener("change", () => { const name = $("#player-name").value.trim(); if (name) localStorage.setItem(lobbyNameKey, name); });
+  $("#lobby-chat-form").addEventListener("submit", (event) => { event.preventDefault(); const name = $("#player-name").value.trim(); const input = $("#lobby-chat-input"); socket.emit("lobby:chat", { siteId, name, text: input.value }, (reply) => { $("#lobby-chat-error").textContent = reply?.ok ? "Pesan terkirim." : reply?.error || "Pesan gagal dikirim."; if (reply?.ok) { input.value = ""; if (name) localStorage.setItem(lobbyNameKey, name); } }); });
   $("#back-button").addEventListener("click", () => {
     if (!state.room) return location.assign("/");
     $("#leave-dialog").showModal();
@@ -110,8 +120,11 @@
   socket.on("round:secret", showSecret);
   socket.on("clue:stroke", (stroke) => { if (!state.room) return; state.room.strokes[stroke.clueIndex].push(stroke); if (stroke.clueIndex === state.activeClue) redraw(); });
   socket.on("clue:clear", ({ clueIndex }) => { if (!state.room) return; state.room.strokes[clueIndex] = []; if (clueIndex === state.activeClue) redraw(); });
-  socket.on("connect", reconnect);
+  socket.on("lobby:state", renderLobby);
+  socket.on("lobby:chat", appendLobbyMessage);
+  socket.on("disconnect", () => { $("#lobby-online").textContent = "Terputus"; });
+  socket.on("connect", () => { joinPublicLobby(); reconnect(); });
   setInterval(() => { if (!state.room?.deadline) return $("#timer").textContent = "--:--"; const seconds = Math.max(0, Math.ceil((state.room.deadline - Date.now()) / 1000)); $("#timer").textContent = `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`; }, 250);
   window.guessGame = { socket, state, toast, currentPlayer };
-  if (socket.connected) reconnect();
+  if (socket.connected) { joinPublicLobby(); reconnect(); }
 })();

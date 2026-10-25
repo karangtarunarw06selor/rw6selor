@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#24104f">
-  <title>Tebak Gambar • RW06 Selor</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext y='.9em' font-size='56'%3E🎨%3C/text%3E%3C/svg%3E"><link rel="stylesheet" href="game.css?v=3">
+  <title>Tebak Gambar • RW06 Selor</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext y='.9em' font-size='56'%3E🎨%3C/text%3E%3C/svg%3E"><link rel="stylesheet" href="game.css?v=4">
 </head>
 <body data-site="MMS">
 <header class="topbar"><button id="back-button" class="back-link" type="button">← Kembali</button><div><b>TEBAK GAMBAR</b><small>Clue kreatif, jawaban tercepat</small></div><button id="media-toggle" type="button">Voice / Video</button></header>
@@ -10,6 +10,13 @@
   <section id="welcome" class="welcome">
     <div class="hero"><span>GAME SOSIAL RW06</span><h1>Gambar clue.<br><em>Tebak tercepat.</em></h1><p>Jawaban rahasia hanya terlihat oleh penggambar. Buat clue tidak langsung dan kumpulkan poin.</p></div>
     <form id="room-form" class="room-card"><label>Nama pemain<input id="player-name" maxlength="24" required autocomplete="nickname"></label><div class="room-actions"><button name="action" value="create">Buat Room</button><button name="action" value="join" class="secondary">Gabung Room</button></div><label id="code-wrap" hidden>Kode room<input id="room-code" maxlength="6" autocomplete="off"></label><small id="room-error"></small></form>
+    <section class="public-lobby" aria-labelledby="public-lobby-title">
+      <div class="public-lobby-head"><div><span>LOBBY PUBLIK</span><h2 id="public-lobby-title">Cari pemain & room</h2></div><small id="lobby-online">Menghubungkan…</small></div>
+      <div class="public-lobby-grid">
+        <section class="room-browser"><h3>Room siap digabung</h3><div id="public-rooms" class="public-rooms"><p>Belum ada room terbuka.</p></div></section>
+        <section class="lobby-chat"><h3>Chat lobby</h3><div id="lobby-messages" class="lobby-messages" aria-live="polite"><p class="empty-chat">Belum ada pesan. Ajak pemain membuat room.</p></div><form id="lobby-chat-form"><input id="lobby-chat-input" maxlength="180" autocomplete="off" placeholder="Contoh: ayo main, room saya sudah dibuat"><button type="submit">Kirim</button></form><small id="lobby-chat-error">Gunakan nama pemain di atas untuk chat.</small></section>
+      </div>
+    </section>
     <aside class="rules"><b>Aturan cepat</b><ol><li>Setiap pemain menggambar 2 ronde.</li><li>Objek utama jawaban tidak boleh digambar.</li><li>Poin turun dari 4 ke 1 setiap clue dibuka.</li><li>Tidak tertebak: semua 0. Asal-asalan bisa −1.</li></ol></aside>
   </section>
 
@@ -29,5 +36,5 @@
 <dialog id="leave-dialog" class="leave-dialog"><h2>Keluar dari room?</h2><p>Kamu akan keluar dari permainan dan kembali ke lobby awal Tebak Gambar.</p><div><button id="cancel-leave" class="secondary" type="button">Batal</button><button id="confirm-leave" type="button">Keluar Room</button></div></dialog>
 <dialog id="media-dialog"><button class="close-dialog">×</button><h2>Voice & Video</h2><p>Opsional. Media tidak direkam. Maksimal empat kamera.</p><button id="voice-only">Aktifkan Voice</button><button id="voice-video">Voice + Kamera</button><button id="media-off" class="secondary">Matikan Media</button><small id="media-error"></small></dialog>
 <div id="toast" class="toast"></div>
-<script src="/tebak-gambar/socket.io/socket.io.js"></script><script src="game.js?v=3"></script><script src="media.js?v=2"></script>
+<script src="/tebak-gambar/socket.io/socket.io.js"></script><script src="game.js?v=4"></script><script src="media.js?v=2"></script>
 </body></html>

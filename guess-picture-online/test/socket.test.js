@@ -2,7 +2,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { io: Client } = require("socket.io-client");
-const { server, io, rooms } = require("../server");
+const { server, io, rooms, lobbyMessages } = require("../server");
 const emit = (socket, event, payload = {}) => new Promise((resolve) => socket.emit(event, payload, resolve));
 const waitFor = (socket, event, predicate) => new Promise((resolve) => {
   const listener = (payload) => { if (predicate(payload)) { socket.off(event, listener); resolve(payload); } };
@@ -14,11 +14,42 @@ const setup = async (context) => {
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   const port = server.address().port;
   const host = await connect(port), guest = await connect(port);
-  context.after(() => { host.close(); guest.close(); io.close(); server.close(); rooms.clear(); });
+  lobbyMessages.clear();
+  context.after(() => { host.close(); guest.close(); io.close(); server.close(); rooms.clear(); lobbyMessages.clear(); });
   const created = await emit(host, "room:create", { name: "Ayu", siteId: "MMS" });
   const joined = await emit(guest, "room:join", { name: "Bima", code: created.room.code, siteId: "MMS" });
   return { host, guest, created, joined };
 };
+
+test("public lobby chat discovers active same-site rooms without cross-tenant leaks", async (context) => {
+  const { host, guest, created } = await setup(context);
+  const kt = await connect(server.address().port);
+  context.after(() => kt.close());
+  const hostLobby = await emit(host, "lobby:join", { siteId: "MMS" });
+  const guestLobby = await emit(guest, "lobby:join", { siteId: "MMS" });
+  const ktLobby = await emit(kt, "lobby:join", { siteId: "KT" });
+  assert.deepEqual(hostLobby.rooms.map((room) => room.code), [created.room.code]);
+  assert.deepEqual(guestLobby.rooms.map((room) => room.code), [created.room.code]);
+  assert.deepEqual(ktLobby.rooms, []);
+
+  const received = waitFor(guest, "lobby:chat", (message) => message.text.includes(created.room.code));
+  let leaked = false; kt.on("lobby:chat", () => { leaked = true; });
+  const sent = await emit(host, "lobby:chat", { siteId: "MMS", name: "<Ayu>", text: `Ayo gabung ${created.room.code} <img src=x>` });
+  assert.equal(sent.ok, true);
+  const message = await received;
+  assert.equal(message.name, "Ayu");
+  assert.equal(message.text, `Ayo gabung ${created.room.code} <img src=x>`);
+  assert.deepEqual(message.roomCodes, [created.room.code]);
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  assert.equal(leaked, false);
+
+  const limited = await emit(host, "lobby:chat", { siteId: "MMS", name: "Ayu", text: "pesan kedua" });
+  assert.equal(limited.ok, false);
+  assert.match(limited.error, /Tunggu/);
+  const removed = waitFor(guest, "lobby:state", (state) => state.rooms.length === 0);
+  assert.equal((await emit(host, "game:start")).ok, true);
+  assert.deepEqual((await removed).rooms, []);
+});
 
 test("only the drawer receives the secret question", async (context) => {
   const { host, guest } = await setup(context);
