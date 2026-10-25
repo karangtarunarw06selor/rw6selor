@@ -9,6 +9,7 @@
   const socket = typeof io === "function" ? io({ path: "/ular-tangga/socket.io" }) : null;
   const state = { mode: null, playerId: null, room: null, sound: true, busy: false, visualPositions: new Map(), animationQueue: Promise.resolve(), rollStartedAt: 0 };
   let setupMode = "solo";
+  let lobbyMessages = [];
 
   const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
   const snakePaths = {
@@ -190,6 +191,24 @@
     window.dispatchEvent(new CustomEvent("snake:rendered"));
   };
   const escapeHtml = (value) => String(value || "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
+  const renderLobbyChat = () => {
+    const container = $("#lobby-chat-messages");
+    container.innerHTML = lobbyMessages.map((message) => {
+      const time = new Date(message.createdAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+      const codeButton = message.roomCode ? `<button type="button" data-room-code="${escapeHtml(message.roomCode)}">Gabung ${escapeHtml(message.roomCode)}</button>` : "";
+      return `<article><div><b>${escapeHtml(message.name)}</b><time>${time}</time></div><p>${escapeHtml(message.text)}</p>${codeButton}</article>`;
+    }).join("") || '<p class="chat-empty">Belum ada pesan. Ajak teman main di sini.</p>';
+    container.scrollTop = container.scrollHeight;
+  };
+  const joinLobbyChat = () => {
+    if (!socket?.connected) return;
+    socket.emit("lobby:chat:join", { siteId }, (reply) => {
+      $("#lobby-chat-status").textContent = reply?.ok ? "Online" : "Terputus";
+      if (!reply?.ok) return;
+      lobbyMessages = reply.messages || [];
+      renderLobbyChat();
+    });
+  };
   const rollAnimation = () => {
     state.busy = true;
     $("#roll-button").disabled = true;
@@ -246,6 +265,30 @@
   };
 
   document.querySelectorAll("[data-mode]").forEach((button) => button.addEventListener("click", () => showSetup(button.dataset.mode)));
+  $("#lobby-chat-name").value = localStorage.getItem(`snake-chat-name:${siteId}`) || "";
+  $("#lobby-chat-messages").addEventListener("click", (event) => {
+    const roomCode = event.target.closest("[data-room-code]")?.dataset.roomCode;
+    if (!roomCode) return;
+    $("#room-code").value = roomCode;
+    const chatName = $("#lobby-chat-name").value.trim();
+    if (chatName) $("#player-name").value = chatName;
+    showSetup("join");
+  });
+  $("#lobby-chat-form").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const name = $("#lobby-chat-name").value.trim();
+    const input = $("#lobby-chat-input");
+    const error = $("#lobby-chat-error");
+    if (!socket?.connected) { error.textContent = "Chat belum terhubung."; return; }
+    socket.emit("lobby:chat:send", { siteId, name, text: input.value }, (reply) => {
+      error.textContent = reply?.ok ? "" : reply?.error || "Pesan gagal dikirim.";
+      if (!reply?.ok) return;
+      localStorage.setItem(`snake-chat-name:${siteId}`, name);
+      $("#player-name").value = name;
+      input.value = "";
+      input.focus();
+    });
+  });
   $(".dialog-close").addEventListener("click", () => { $("#setup").hidden = true; });
   $("#setup-form").addEventListener("submit", (event) => {
     event.preventDefault();
@@ -280,5 +323,10 @@
     $("#sound-toggle").classList.toggle("off", !state.sound);
   });
   socket?.on("room:state", (room) => { state.room = room; render(); });
+  socket?.on("connect", joinLobbyChat);
+  socket?.on("disconnect", () => { $("#lobby-chat-status").textContent = "Terputus"; });
+  socket?.on("lobby:chat:message", (message) => { lobbyMessages.push(message); lobbyMessages = lobbyMessages.slice(-50); renderLobbyChat(); });
+  socket?.on("lobby:chat:remove-room", ({ roomCode }) => { lobbyMessages = lobbyMessages.filter((message) => message.roomCode !== roomCode); renderLobbyChat(); });
   socket?.on("connect_error", () => { if (state.mode === "online") toast("Koneksi permainan terputus."); });
+  if (socket?.connected) joinLobbyChat();
 })();

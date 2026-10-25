@@ -13,6 +13,7 @@ const socketPath = process.env.SOCKET_PATH || "/ular-tangga/socket.io";
 const io = new Server(server, { path: socketPath, cors: { origin: false } });
 const PORT = Number(process.env.PORT) || 3016;
 const rooms = new Map();
+const lobbyChats = new Map([["MMS", []], ["KT", []]]);
 
 app.use("/ular-tangga", express.static(path.join(__dirname, "public")));
 app.get("/health", (_request, response) => response.json({ ok: true, rooms: rooms.size }));
@@ -21,6 +22,8 @@ app.get("/", (_request, response) => response.redirect("/ular-tangga/"));
 const code = () => crypto.randomBytes(3).toString("hex").slice(0, 6).toUpperCase();
 const cleanName = (value) => String(value || "").trim().slice(0, 24);
 const cleanSiteId = (value) => String(value || "MMS").trim().toUpperCase() === "KT" ? "KT" : "MMS";
+const lobbyChannel = (siteId) => `lobby:${siteId}`;
+const cleanChatText = (value) => String(value || "").trim().replace(/\s+/g, " ").slice(0, 280);
 const cleanVoiceSignal = (signal) => {
   if (!signal || typeof signal !== "object") return null;
   if (JSON.stringify(signal).length > 16_384) return null;
@@ -57,11 +60,50 @@ const leaveVoice = (room, player) => {
   io.to(room.code).emit("voice:peer-left", { peerId: player.id });
   emitRoom(room);
 };
+const publishLobbyMessage = (siteId, name, text, roomCode = null) => {
+  const message = { id: crypto.randomUUID(), name, text, roomCode, createdAt: Date.now() };
+  const history = lobbyChats.get(siteId);
+  history.push(message);
+  if (history.length > 50) history.splice(0, history.length - 50);
+  io.to(lobbyChannel(siteId)).emit("lobby:chat:message", message);
+  return message;
+};
+const removeRoomAnnouncement = (room) => {
+  const history = lobbyChats.get(room.siteId);
+  const remaining = history.filter((message) => message.roomCode !== room.code);
+  if (remaining.length === history.length) return;
+  lobbyChats.set(room.siteId, remaining);
+  io.to(lobbyChannel(room.siteId)).emit("lobby:chat:remove-room", { roomCode: room.code });
+};
 const finishIfEmpty = (room) => {
-  if (room.players.every((player) => !player.connected)) rooms.delete(room.code);
+  if (!room.players.every((player) => !player.connected)) return;
+  rooms.delete(room.code);
+  removeRoomAnnouncement(room);
 };
 
 io.on("connection", (socket) => {
+  socket.on("lobby:chat:join", ({ siteId: rawSiteId } = {}, reply = () => {}) => {
+    const siteId = cleanSiteId(rawSiteId);
+    socket.join(lobbyChannel(siteId));
+    socket.data.lobbySiteId = siteId;
+    reply({ ok: true, messages: lobbyChats.get(siteId) });
+  });
+
+  socket.on("lobby:chat:send", ({ siteId: rawSiteId, name, text } = {}, reply = () => {}) => {
+    const siteId = cleanSiteId(rawSiteId);
+    if (socket.data.lobbySiteId !== siteId) return reply({ ok: false, error: "Gabung ke chat situs ini dahulu." });
+    const playerName = cleanName(name);
+    const messageText = cleanChatText(text);
+    if (!playerName) return reply({ ok: false, error: "Nama chat wajib diisi." });
+    if (!messageText) return reply({ ok: false, error: "Pesan tidak boleh kosong." });
+    const now = Date.now();
+    if (socket.data.lastLobbyChatAt && now - socket.data.lastLobbyChatAt < 1_500) return reply({ ok: false, error: "Tunggu sebentar sebelum mengirim lagi." });
+    socket.data.lastLobbyChatAt = now;
+    const candidate = messageText.toUpperCase().match(/(?:^|\s)([A-F0-9]{6})(?=\s|$)/)?.[1] || null;
+    const roomCode = candidate && rooms.get(candidate)?.siteId === siteId ? candidate : null;
+    reply({ ok: true, message: publishLobbyMessage(siteId, playerName, messageText, roomCode) });
+  });
+
   socket.on("room:create", ({ name, siteId: rawSiteId } = {}, reply = () => {}) => {
     const playerName = cleanName(name);
     const siteId = cleanSiteId(rawSiteId);
@@ -75,6 +117,7 @@ io.on("connection", (socket) => {
     socket.data.roomCode = roomCode;
     reply({ ok: true, room: publicRoom(room), playerId: player.id });
     emitRoom(room);
+    publishLobbyMessage(siteId, playerName, `${playerName} membuat room ${roomCode}. Tekan kode untuk gabung.`, roomCode);
   });
 
   socket.on("room:join", ({ name, code: rawCode, siteId: rawSiteId } = {}, reply = () => {}) => {
@@ -186,4 +229,4 @@ io.on("connection", (socket) => {
 });
 
 if (require.main === module) server.listen(PORT, "127.0.0.1", () => console.log(`Ular Tangga MMS listening on ${PORT}`));
-module.exports = { app, server, io, rooms };
+module.exports = { app, server, io, rooms, lobbyChats };

@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0f5ea8">
   <title>Ular Tangga • Karang Taruna RW06</title>
   <link rel="icon" href="assets/karangtaruna.avif">
-  <link rel="stylesheet" href="game.css?v=6">
+  <link rel="stylesheet" href="game.css?v=7">
 </head>
 <body data-site="KT">
   <header class="game-header">
@@ -27,6 +27,16 @@
         <button class="mode-card" data-mode="create"><span aria-hidden="true">＋</span><b>Buat Room</b><small>Undang maksimal tiga teman</small></button>
         <button class="mode-card" data-mode="join"><span aria-hidden="true">→</span><b>Gabung Room</b><small>Masukkan kode enam karakter</small></button>
       </div>
+      <section class="lobby-chat" aria-label="Chat cari teman main">
+        <header><div><b>Chat Cari Teman</b><small>Bagikan jadwal atau buat room, tanpa janjian lewat WA</small></div><span id="lobby-chat-status">Menghubungkan…</span></header>
+        <div id="lobby-chat-messages" class="lobby-chat-messages" aria-live="polite"><p class="chat-empty">Belum ada pesan. Ajak teman main di sini.</p></div>
+        <form id="lobby-chat-form" class="lobby-chat-form">
+          <input id="lobby-chat-name" maxlength="24" autocomplete="nickname" placeholder="Nama" required>
+          <input id="lobby-chat-input" maxlength="280" autocomplete="off" placeholder="Contoh: main jam 8, siapa ikut?" required>
+          <button type="submit">Kirim</button>
+        </form>
+        <small id="lobby-chat-error" class="lobby-chat-error" role="alert"></small>
+      </section>
       <p class="credit">Papan dan audio diadaptasi dari proyek ghofur135/ular-dan-tangga.</p>
     </section>
 
@@ -77,7 +87,7 @@
   <audio id="ladder-sound" src="assets/sound/ladder.mp3" preload="auto"></audio>
   <audio id="snake-sound" src="assets/sound/snake.mp3" preload="auto"></audio>
   <script src="/ular-tangga/socket.io/socket.io.js"></script>
-  <script src="game.js?v=6"></script>
+  <script src="game.js?v=7"></script>
   <script src="voice.js?v=2"></script>
 </body>
 </html>

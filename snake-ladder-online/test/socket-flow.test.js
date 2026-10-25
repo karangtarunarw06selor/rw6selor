@@ -3,7 +3,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { io: Client } = require("socket.io-client");
-const { server, io, rooms } = require("../server");
+const { server, io, rooms, lobbyChats } = require("../server");
 
 const emit = (socket, event, payload = {}) => new Promise((resolve) => socket.emit(event, payload, resolve));
 const connect = (port) => new Promise((resolve, reject) => {
@@ -51,6 +51,48 @@ test("rooms are isolated by site identity", async (context) => {
   const wrongSite = await emit(outsider, "room:join", { name: "Muda Mudi", code: created.room.code, siteId: "MMS" });
   assert.equal(wrongSite.ok, false);
   assert.match(wrongSite.error, /situs ini/i);
+});
+
+test("public lobby chat is realtime, validated, and site-isolated", async (context) => {
+  lobbyChats.set("MMS", []); lobbyChats.set("KT", []);
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const port = server.address().port;
+  const mms = await connect(port);
+  const mmsPeer = await connect(port);
+  const kt = await connect(port);
+  context.after(() => {
+    mms.close(); mmsPeer.close(); kt.close(); io.close(); server.close(); rooms.clear();
+    lobbyChats.set("MMS", []); lobbyChats.set("KT", []);
+  });
+
+  assert.equal((await emit(mms, "lobby:chat:join", { siteId: "MMS" })).ok, true);
+  assert.equal((await emit(mmsPeer, "lobby:chat:join", { siteId: "MMS" })).ok, true);
+  assert.equal((await emit(kt, "lobby:chat:join", { siteId: "KT" })).ok, true);
+  const received = new Promise((resolve) => mmsPeer.once("lobby:chat:message", resolve));
+  const sent = await emit(mms, "lobby:chat:send", { siteId: "MMS", name: "Ayu", text: "  Ayo main nanti malam  " });
+  assert.equal(sent.ok, true);
+  assert.equal((await received).text, "Ayo main nanti malam");
+  assert.equal(lobbyChats.get("KT").length, 0);
+  assert.equal((await emit(mms, "lobby:chat:send", { siteId: "MMS", name: "Ayu", text: "spam" })).ok, false);
+  assert.equal((await emit(kt, "lobby:chat:send", { siteId: "MMS", name: "Luar", text: "salah situs" })).ok, false);
+});
+
+test("creating a room publishes a clickable lobby announcement only for its site", async (context) => {
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const port = server.address().port;
+  const host = await connect(port);
+  const watcher = await connect(port);
+  context.after(() => {
+    host.close(); watcher.close(); io.close(); server.close(); rooms.clear();
+    lobbyChats.set("MMS", []); lobbyChats.set("KT", []);
+  });
+  await emit(watcher, "lobby:chat:join", { siteId: "KT" });
+  const announced = new Promise((resolve) => watcher.once("lobby:chat:message", resolve));
+  const created = await emit(host, "room:create", { name: "Bima", siteId: "KT" });
+  const message = await announced;
+  assert.equal(message.roomCode, created.room.code);
+  assert.match(message.text, new RegExp(created.room.code));
+  assert.equal(lobbyChats.get("MMS").length, 0);
 });
 
 test("voice signaling is limited to joined peers in the same room", async (context) => {
