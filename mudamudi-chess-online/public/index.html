@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Mudamudiselor Chess</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/chess/style.css?v=2026062818">
+</head>
+<body>
+    <a class="website-home-toggle" href="/" title="Kembali ke homepage website">
+        <span>←</span>
+        <strong>Homepage</strong>
+    </a>
+
+    <main class="landing-shell">
+        <section class="landing-card">
+            <div class="brand-logo">
+                <div class="brand-mark">MS</div>
+                <div>
+                    <p>MUDAMUDISELOR</p>
+                    <strong>Chess Online</strong>
+                </div>
+            </div>
+
+            <div class="landing-hero">
+                <p class="eyebrow">Realtime Multiplayer</p>
+                <h1>Main Catur Online Bareng Teman</h1>
+                <p class="landing-desc">
+                    Masuk ke lobby untuk bermain public match atau private match menggunakan kode room.
+                </p>
+            </div>
+
+            <div class="landing-actions">
+                <a class="primary-link" href="/chess/lobby.html">Masuk Lobby</a>
+                <button class="ghost-btn" type="button" onclick="showHowToPlay()">Cara Main</button>
+            </div>
+
+            <div class="landing-note" id="howToPlay">
+                Pilih <strong>Public Match</strong> untuk cari lawan otomatis, atau <strong>Private Match</strong> untuk bermain menggunakan kode room.
+            </div>
+        </section>
+    </main>
+
+    <script>
+        function showHowToPlay() {
+            const el = document.getElementById("howToPlay");
+            el.classList.toggle("show");
+        }
+    </script>
+
+</body>
+</html>

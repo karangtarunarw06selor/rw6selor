@@ -1,0 +1,116 @@
+
+<!DOCTYPE html>
+
+<html lang="id">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>Chess Online Lobby</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="/chess/style.css?v=2026062817">
+
+</head>
+
+<body>
+    <a class="back-menu-toggle" href="/chess/" title="Kembali ke menu awal">
+        <span>←</span>
+        <strong>Menu Awal</strong>
+    </a>
+
+    <main class="app-shell lobby-shell">
+
+        <section class="game-card lobby-card">
+
+            <header class="game-header lobby-header">
+
+                <div>
+
+                    <p class="eyebrow">Realtime Multiplayer</p>
+
+                    <h1>Chess Lobby</h1>
+
+                </div>
+
+                <div class="connection-pill" id="connectionStatus">Connecting...</div>
+
+            </header>
+
+            <section class="lobby-grid">
+
+                <article class="match-card computer-card">
+
+                    <div class="match-icon">♟</div>
+
+                    <p class="match-label">Single Player</p>
+
+                    <h2>Vs Computer</h2>
+
+                    <p class="match-desc">Main langsung sebagai Putih. Computer akan bergerak otomatis sebagai Hitam.</p>
+
+                    <button type="button" onclick="window.location.href='/chess/game.html?mode=computer'">Main Vs Computer</button>
+
+                </article>
+
+                <article class="match-card public-card">
+
+                    <div class="match-icon">⚡</div>
+
+                    <p class="match-label">Quick Match</p>
+
+                    <h2>Public Match</h2>
+
+                    <p class="match-desc">Cari lawan otomatis. Sistem akan mencocokkan kamu dengan player lain yang sedang menunggu.</p>
+
+                    <button id="findPublicBtn" onclick="findPublicMatch()">Find Match</button>
+
+                    <p id="publicStatus" class="mini-status">Ready.</p>
+
+                </article>
+
+                <article class="match-card private-card">
+
+                    <div class="match-icon">🔒</div>
+
+                    <p class="match-label">Invite Only</p>
+
+                    <h2>Private Match</h2>
+
+                    <p class="match-desc">Buat room khusus atau masuk menggunakan kode room dari teman.</p>
+
+                    <div class="private-actions">
+
+                        <button onclick="createPrivateRoom()">Create Private Room</button>
+
+                        <div class="join-private-row">
+
+                            <input id="privateRoomInput" type="text" placeholder="Kode room, contoh: ABC123">
+
+                            <button onclick="joinPrivateRoom()">Join</button>
+
+                        </div>
+
+                    </div>
+
+                    <p id="privateStatus" class="mini-status">Gunakan kode room untuk bermain dengan teman.</p>
+
+                </article>
+
+            </section>
+
+        </section>
+
+    </main>
+
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+
+    <script src="/chess/lobby.js?v=2026062817"></script>
+
+</body>
+
+</html>

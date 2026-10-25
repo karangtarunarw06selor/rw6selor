@@ -1,0 +1,107 @@
+
+<!DOCTYPE html>
+
+<html lang="id">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>Chess Online Multiplayer</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="/chess/style.css?v=2026062833">
+
+</head>
+
+<body>
+    <button class="home-toggle lobby-back-btn" type="button" onclick="openLeaveConfirm()" title="Kembali ke lobby">
+        <span>←</span>
+        <strong>Kembali Lobby</strong>
+    </button>
+
+    <main class="app-shell">
+
+        <section class="game-card">
+
+            <header class="game-header">
+
+                <div>
+
+                    <p class="eyebrow">Realtime Multiplayer</p>
+
+                    <h1>Chess Online</h1>
+
+                </div>
+
+                <div class="connection-pill" id="connectionStatus">Connecting...</div>
+
+            </header>
+
+            <section class="room-panel">
+
+                <input id="roomCodeInput" type="text" placeholder="Masukkan kode room, contoh: TEST123">
+
+                <button onclick="joinRoom()">Join Room</button>
+
+            </section>
+
+            <section class="status-card">
+
+                <div id="status">Connecting socket...</div>
+
+                <div id="playerInfo"></div>
+
+            </section>
+
+            <section class="board-wrap">
+
+                <div id="board"></div>
+
+            </section>
+
+            <section class="controls">
+
+                <button class="secondary-btn" onclick="resetGame()">Reset Game</button>
+
+            </section>
+
+        </section>
+
+    </main>
+
+    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+
+    <script src="/chess/chess-core.js?v=1"></script>
+
+    <script src="/chess/game.js?v=20261025-ai1"></script>
+
+    <div id="toastContainer" class="toast-container"></div>
+
+    <div id="gameResultOverlay" class="game-result-overlay">
+        <div class="game-result-card">
+            <div id="gameResultBadge" class="game-result-badge">GAME OVER</div>
+            <h2 id="gameResultTitle">Game Over</h2>
+            <p id="gameResultMessage">Pertandingan selesai.</p>
+            <div class="game-result-actions">
+                <button type="button" class="rematch-btn" onclick="requestRematch()">Tanding Ulang</button>
+                <button type="button" class="lobby-btn" onclick="goToLobby()">Kembali ke Lobby</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="leaveConfirmOverlay" class="leave-confirm-overlay">
+        <div class="leave-confirm-card">
+            <div class="leave-confirm-icon">←</div>
+            <h2>Kembali ke Lobby?</h2>
+            <p>Game yang sedang berjalan akan ditinggalkan. Kamu bisa membuat room baru atau masuk lagi dari lobby.</p>
+            <div class="leave-confirm-actions">
+                <button type="button" class="ghost-btn confirm-stay-btn" onclick="closeLeaveConfirm()">Tetap di Game</button>
+                <button type="button" class="confirm-leave-btn" onclick="goToLobby()">Kembali Lobby</button>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
