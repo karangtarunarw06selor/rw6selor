@@ -4,7 +4,7 @@
   const socket = io({ path: "/tebak-gambar/socket.io" });
   const siteId = document.body.dataset.site || "MMS";
   const sessionKey = `guess-picture-session:${siteId}`;
-  const state = { playerId: null, room: null, secret: null, activeClue: 0, drawing: false, points: [], lastStatus: null };
+  const state = { playerId: null, room: null, secret: null, activeClue: 0, drawing: false, points: [], lastStatus: null, correctShown: null };
   const canvas = $("#clue-canvas"), context = canvas.getContext("2d");
   const toast = (text) => { $("#toast").textContent = text; $("#toast").classList.add("show"); setTimeout(() => $("#toast").classList.remove("show"), 2200); };
   const saveSession = (reply) => sessionStorage.setItem(sessionKey, JSON.stringify({ code: reply.room.code, playerId: reply.playerId, reconnectToken: reply.reconnectToken }));
@@ -45,9 +45,20 @@
     $("#secret-panel").hidden = !isDrawer() || !state.secret || room.status !== "playing";
     $("#moderation").hidden = room.hostId !== state.playerId || room.reports < Math.max(2, Math.ceil((room.players.length - 1) / 2));
     $("#round-result").hidden = !["result", "finished"].includes(room.status);
+    if (room.status === "playing" && $("#correct-dialog").open) $("#correct-dialog").close();
     if (room.status === "result") {
       const winner = room.players.find((player) => player.id === room.result?.winnerId);
       $("#round-result").innerHTML = winner ? `<b>${winner.name} tercepat!</b><p>${room.answerReveal}</p><small>${(room.result.elapsedMs / 1000).toFixed(3)} detik · +${room.result.guessPoints}; penggambar ${room.result.drawerPoints > 0 ? "+" : ""}${room.result.drawerPoints}</small>` : `<b>Tidak tertebak</b><p>${room.answerReveal}</p><small>Ronde ini tanpa poin.</small>`;
+      const resultKey = `${room.round}:${room.result?.winnerId || "none"}`;
+      if (winner && state.correctShown !== resultKey) {
+        state.correctShown = resultKey;
+        $("#correct-player").textContent = winner.name;
+        $("#correct-answer").textContent = room.answerReveal;
+        const seconds = (room.result.elapsedMs / 1000).toLocaleString("id-ID", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+        $("#correct-time").textContent = `Waktu tercepat ${seconds} detik · Bonus +${room.result.guessPoints} poin`;
+        $("#correct-dialog").showModal();
+        $("#correct-dialog").focus();
+      }
     } else if (room.status === "finished") {
       const winner = room.players.find((player) => player.id === room.winnerId); $("#round-result").innerHTML = `<b>${winner?.name || "Tidak ada"} menang!</b><p>Skor tertinggi: ${winner?.score || 0}</p>`;
     }
@@ -67,6 +78,7 @@
   });
   $("#start-game").addEventListener("click", () => socket.emit("game:start", {}, (reply) => { if (!reply?.ok) toast(reply.error); }));
   $("#room-display").addEventListener("click", () => navigator.clipboard?.writeText(state.room?.code));
+  $("#close-correct").addEventListener("click", () => $("#correct-dialog").close());
   $("#next-clue").addEventListener("click", () => socket.emit("clue:unlock", {}, (reply) => { if (!reply?.ok) toast(reply.error); else { state.activeClue = state.room.clueCount; } }));
   $("#clear-clue").addEventListener("click", () => socket.emit("clue:clear", { clueIndex: state.activeClue }));
   $("#hide-secret").addEventListener("click", () => { $("#secret-panel").hidden = true; });

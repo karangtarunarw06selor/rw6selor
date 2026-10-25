@@ -4,6 +4,10 @@ const assert = require("node:assert/strict");
 const { io: Client } = require("socket.io-client");
 const { server, io, rooms } = require("../server");
 const emit = (socket, event, payload = {}) => new Promise((resolve) => socket.emit(event, payload, resolve));
+const waitFor = (socket, event, predicate) => new Promise((resolve) => {
+  const listener = (payload) => { if (predicate(payload)) { socket.off(event, listener); resolve(payload); } };
+  socket.on(event, listener);
+});
 const connect = (port) => new Promise((resolve, reject) => { const socket = Client(`http://127.0.0.1:${port}`, { path: "/tebak-gambar/socket.io", transports: ["websocket"] }); socket.once("connect", () => resolve(socket)); socket.once("connect_error", reject); });
 
 const setup = async (context) => {
@@ -25,6 +29,8 @@ test("only the drawer receives the secret question", async (context) => {
   assert.equal(started.ok, true);
   const [value, guestState] = await Promise.all([secret, guestStatePromise]);
   assert.ok(value.answer); assert.ok(value.image); assert.ok(value.forbidden.length);
+  assert.ok(guestState.deadline - Date.now() > 59_000);
+  assert.ok(guestState.deadline - Date.now() <= 60_000);
   await new Promise((resolve) => setTimeout(resolve, 20));
   assert.equal(leaked, false);
   const encoded = JSON.stringify(guestState).toLowerCase();
@@ -39,8 +45,15 @@ test("fastest normalized answer wins and points are recorded immediately", async
   const secretPromise = new Promise((resolve) => host.once("round:secret", resolve));
   await emit(host, "game:start"); const secret = await secretPromise;
   const answer = `  ${secret.answer.toUpperCase().replace(/ /g, "---")}!! `;
+  const hostResult = waitFor(host, "room:state", (room) => room.status === "result");
+  const guestResult = waitFor(guest, "room:state", (room) => room.status === "result");
   const result = await emit(guest, "guess:submit", { text: answer });
   assert.equal(result.correct, true);
+  const [hostState, guestState] = await Promise.all([hostResult, guestResult]);
+  assert.equal(hostState.result.winnerId, joined.playerId);
+  assert.equal(guestState.result.winnerId, joined.playerId);
+  assert.equal(hostState.answerReveal, secret.answer);
+  assert.deepEqual(hostState.result, guestState.result);
   const room = [...rooms.values()][0];
   assert.equal(room.status, "result");
   assert.equal(room.players.find((p) => p.id === joined.playerId).score, 4);
