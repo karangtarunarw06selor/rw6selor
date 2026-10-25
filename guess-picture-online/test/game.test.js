@@ -12,11 +12,12 @@ test("scores decrease as more clues are opened", () => {
   assert.deepEqual([1, 2, 3, 4].map(drawerScoreFor), [3, 2, 1, 1]);
 });
 
-test("question bank adds 100 unique private reference images for 108 total", () => {
+test("question bank adds another 100 unique private images for 208 total", () => {
   const fs = require("node:fs");
   const path = require("node:path");
   const crypto = require("node:crypto");
   const questions = require("../questions");
+  const sources = require("../assets/questions/sources.json");
   const ids = new Set(questions.map((question) => question.id));
   const answers = new Set(questions.map((question) => normalize(question.answer)));
   const images = new Set(questions.map((question) => question.image));
@@ -26,16 +27,22 @@ test("question bank adds 100 unique private reference images for 108 total", () 
     assert.ok(fs.statSync(file).size > 4_000, `Gambar terlalu kecil: ${question.image}`);
     return crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex");
   }));
-  assert.equal(questions.length, 108);
-  assert.equal(ids.size, 108);
-  assert.equal(answers.size, 108);
-  assert.equal(images.size, 108);
-  assert.equal(hashes.size, 108);
+  assert.equal(questions.length, 208);
+  assert.equal(ids.size, 208);
+  assert.equal(answers.size, 208);
+  assert.equal(images.size, 208);
+  assert.equal(hashes.size, 208);
+  assert.equal(Object.keys(sources).length, 208);
   const answerOwners = new Map(questions.map((question) => [normalize(question.answer), question.id]));
   questions.forEach((question) => {
     assert.ok(question.aliases instanceof Array);
     assert.ok(question.forbidden.length > 0);
     assert.equal(question.examples.length, 4);
+    const source = sources[question.image];
+    assert.ok(source, `Sumber tidak ditemukan: ${question.image}`);
+    ["page", "image", "artist", "license", "retrieved"].forEach((field) => {
+      assert.ok(source[field], `Metadata ${field} kosong: ${question.image}`);
+    });
     question.aliases.forEach((alias) => {
       const owner = answerOwners.get(normalize(alias));
       assert.ok(!owner || owner === question.id, `Alias ${alias} bertabrakan dengan ${owner}`);
