@@ -37,6 +37,28 @@ test("two players create, join, and receive a server-authoritative roll", async 
   assert.match(rejected.error, /giliran/i);
 });
 
+test("leaving a room removes the seat and reconnect session immediately", async (context) => {
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const port = server.address().port;
+  const host = await connect(port);
+  const guest = await connect(port);
+  context.after(() => { host.close(); guest.close(); io.close(); server.close(); rooms.clear(); });
+
+  const created = await emit(host, "room:create", { name: "Host", siteId: "MMS" });
+  const joined = await emit(guest, "room:join", { name: "Teman", code: created.room.code, siteId: "MMS" });
+  assert.equal(joined.ok, true);
+  const left = await emit(host, "room:leave");
+  assert.equal(left.ok, true);
+  assert.equal(rooms.get(created.room.code).players.some((player) => player.id === created.playerId), false);
+  const reconnect = await emit(host, "room:reconnect", {
+    code: created.room.code,
+    playerId: created.playerId,
+    reconnectToken: created.reconnectToken,
+    siteId: "MMS",
+  });
+  assert.equal(reconnect.ok, false);
+});
+
 test("rooms are isolated by site identity", async (context) => {
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   const port = server.address().port;

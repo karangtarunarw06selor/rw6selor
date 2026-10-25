@@ -192,5 +192,6 @@
   socket.on("voice:signal", (payload) => handleSignal(payload).catch(() => removePeer(payload.peerId)));
   socket.on("disconnect", () => leaveVoice(false));
   window.addEventListener("beforeunload", () => leaveVoice());
+  window.addEventListener("snake:game-left", () => leaveVoice());
   window.addEventListener("snake:rendered", syncBadges);
 })();

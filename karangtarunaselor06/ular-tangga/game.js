@@ -1,5 +1,5 @@
 (() => {
-  const snakes = { 17: 6, 54: 14, 62: 19, 95: 36, 99: 83 };
+  const snakes = { 17: 6, 54: 34, 62: 19, 95: 36, 99: 83 };
   const ladders = { 3: 22, 5: 14, 9: 31, 20: 39, 27: 84, 51: 67, 72: 91, 73: 93, 88: 99 };
   const diceFaces = ["⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
   const colors = ["#f0b54b", "#4db8d0", "#ef6f6c", "#70c48f"];
@@ -15,7 +15,7 @@
   const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
   const snakePaths = {
     17: [[43, 84], [50, 87], [57, 92], [66, 91], [62, 96]],
-    54: [[70, 49], [67, 55], [61, 58], [68, 64], [66, 70], [61, 75], [68, 81]],
+    54: [[70, 49], [67, 54], [61, 58], [64, 64]],
     62: [[20, 39], [18, 47], [13, 53], [17, 61], [20, 68], [14, 75], [18, 82]],
     95: [[65, 10], [66, 18], [60, 24], [57, 31], [61, 39], [56, 47], [49, 53], [52, 59]],
     99: [[10, 9], [13, 16], [20, 20], [24, 27], [17, 30], [12, 25], [17, 18]],
@@ -38,9 +38,25 @@
   };
   window.snakeGame = { socket, getState: () => state, toast };
   const moveResult = (position, dice) => {
-    const stepped = position + dice <= 100 ? position + dice : position;
-    const to = ladders[stepped] || snakes[stepped] || stepped;
-    return { from: position, stepped, to, event: ladders[stepped] ? "ladder" : snakes[stepped] ? "snake" : "move", won: to === 100 };
+    const path = [];
+    let direction = 1;
+    let stepped = position;
+    for (let count = 0; count < dice; count += 1) {
+      if (stepped === 100) direction = -1;
+      stepped += direction;
+      path.push(stepped);
+    }
+    const transfers = [];
+    let to = stepped;
+    const visited = new Set();
+    while (!visited.has(to) && (ladders[to] || snakes[to])) {
+      visited.add(to);
+      const event = ladders[to] ? "ladder" : "snake";
+      const destination = ladders[to] || snakes[to];
+      transfers.push({ from: to, to: destination, event });
+      to = destination;
+    }
+    return { from: position, path, stepped, transfers, to, event: transfers.at(-1)?.event || "move", won: to === 100 };
   };
   const coordinates = (position) => {
     const value = Math.max(1, Math.min(100, Number(position) || 1));
@@ -78,28 +94,28 @@
     token.style.top = `${point.top}%`;
     await sleep(duration);
   };
-  const animateTransfer = async (move) => {
+  const animateTransfer = async (move, transfer) => {
     const token = tokenElement(move.playerId);
     if (!token) return;
-    const from = coordinates(move.stepped);
-    const to = coordinates(move.to);
-    const middle = move.event === "snake" ? snakePaths[move.stepped] || [] : [];
+    const from = coordinates(transfer.from);
+    const to = coordinates(transfer.to);
+    const middle = transfer.event === "snake" ? snakePaths[transfer.from] || [] : [];
     const points = [from, ...middle.map(([left, top]) => ({ left, top })), to];
-    playSound(move.event === "ladder" ? "#ladder-sound" : "#snake-sound");
-    token.classList.add(`following-${move.event}`);
+    playSound(transfer.event === "ladder" ? "#ladder-sound" : "#snake-sound");
+    token.classList.add(`following-${transfer.event}`);
     token.style.transition = "none";
     const animation = token.animate(points.map((point) => ({ left: `${point.left}%`, top: `${point.top}%` })), {
-      duration: move.event === "ladder" ? 900 : 1250,
-      easing: move.event === "ladder" ? "ease-in-out" : "linear",
+      duration: transfer.event === "ladder" ? 900 : 1250,
+      easing: transfer.event === "ladder" ? "ease-in-out" : "linear",
       fill: "forwards",
     });
     await animation.finished.catch(() => {});
-    token.classList.remove(`following-${move.event}`);
+    token.classList.remove(`following-${transfer.event}`);
     token.style.left = `${to.left}%`;
     token.style.top = `${to.top}%`;
     animation.cancel();
     token.style.transition = "";
-    state.visualPositions.set(move.playerId, move.to);
+    state.visualPositions.set(move.playerId, transfer.to);
   };
   const animateMove = async (move) => {
     state.busy = true;
@@ -112,10 +128,8 @@
     }
     await sleep(Math.max(0, 800 - (Date.now() - state.rollStartedAt)));
     $("#dice").textContent = diceFaces[move.dice - 1];
-    if (move.from !== move.stepped) {
-      for (let position = move.from + 1; position <= move.stepped; position += 1) await animatePoint(move.playerId, position);
-    }
-    if (move.event === "ladder" || move.event === "snake") await animateTransfer(move);
+    for (const position of move.path || []) await animatePoint(move.playerId, position);
+    for (const transfer of move.transfers || []) await animateTransfer(move, transfer);
     state.visualPositions.set(move.playerId, move.to);
     state.rollStartedAt = 0;
     state.busy = false;
@@ -158,9 +172,10 @@
   const describeMove = (move) => {
     if (!move) return "Permainan siap dimulai.";
     if (move.won) return `${move.playerName} mencapai petak 100 dan menang!`;
-    if (move.event === "ladder") return `${move.playerName} mendapat tangga: ${move.stepped} → ${move.to}.`;
-    if (move.event === "snake") return `${move.playerName} terkena ular: ${move.stepped} → ${move.to}.`;
-    if (move.from === move.to) return `${move.playerName} mendapat ${move.dice}, tetapi harus tepat ke petak 100.`;
+    if (move.transfers?.length) {
+      const route = [move.stepped, ...move.transfers.map((transfer) => transfer.to)].join(" → ");
+      return `${move.playerName} mendapat ${move.dice}: ${route}.`;
+    }
     return `${move.playerName} mendapat ${move.dice}: ${move.from} → ${move.to}.`;
   };
   const render = () => {
@@ -232,6 +247,29 @@
     state.rollStartedAt = Date.now();
     playSound("#dice-sound", { start: .16, duration: 800 });
   };
+  const returnToLobby = () => {
+    sessionStorage.removeItem(roomSessionKey);
+    state.mode = null;
+    state.playerId = null;
+    state.room = null;
+    state.busy = false;
+    state.visualPositions.clear();
+    document.body.classList.remove("game-active");
+    $("#game").hidden = true;
+    $("#setup").hidden = true;
+    $("#welcome").hidden = false;
+    $("#leave-dialog").close();
+    window.dispatchEvent(new CustomEvent("snake:game-left"));
+  };
+  const leaveRoom = () => {
+    if (!state.room) { window.location.href = "/"; return; }
+    if (state.mode === "solo") { returnToLobby(); return; }
+    socket.emit("room:leave", {}, (reply) => {
+      if (!reply?.ok) { toast(reply?.error || "Gagal keluar dari room."); return; }
+      returnToLobby();
+    });
+  };
+
   const createSolo = (name) => {
     state.mode = "solo";
     state.playerId = "human";
@@ -323,6 +361,12 @@
       startView();
     });
   });
+  $("#back-button").addEventListener("click", () => {
+    if (!state.room) { window.location.href = "/"; return; }
+    $("#leave-dialog").showModal();
+  });
+  $("#cancel-leave").addEventListener("click", () => $("#leave-dialog").close());
+  $("#confirm-leave").addEventListener("click", leaveRoom);
   $("#roll-button").addEventListener("click", roll);
   $("#start-button").addEventListener("click", () => socket.emit("game:start", {}, (reply) => { if (!reply?.ok) toast(reply?.error); }));
   $("#reset-button").addEventListener("click", () => {

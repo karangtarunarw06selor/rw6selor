@@ -169,6 +169,27 @@ io.on("connection", (socket) => {
     emitRoom(room);
   });
 
+  socket.on("room:leave", (_payload, reply = () => {}) => {
+    const room = rooms.get(socket.data.roomCode);
+    const player = room && findPlayer(room, socket);
+    if (!room || !player) return reply({ ok: true });
+    clearTimeout(player.cleanupTimer);
+    leaveVoice(room, player);
+    room.players = room.players.filter((item) => item.id !== player.id);
+    socket.leave(room.code);
+    socket.data.roomCode = null;
+    if (!room.players.length) {
+      rooms.delete(room.code);
+      removeRoomAnnouncement(room);
+    } else {
+      if (room.turn === player.id) room.turn = room.players.find((item) => item.connected)?.id || room.players[0].id;
+      room.status = room.players.length >= 2 ? room.status : "waiting";
+      if (room.winner === player.id) room.winner = null;
+      emitRoom(room);
+    }
+    reply({ ok: true });
+  });
+
   socket.on("game:start", (_payload, reply = () => {}) => {
     const room = rooms.get(socket.data.roomCode);
     const player = room && findPlayer(room, socket);
