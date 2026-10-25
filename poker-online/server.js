@@ -39,9 +39,10 @@ function publicView(room, viewerId) {
   view.voteCount = room.capsaVotes?.size || 0;
   view.voteResult = room.capsaVoteResult || null;
   view.myVote = room.capsaVotes?.get(viewerId) || null;
+  view.readyIds = [...room.readyIds];
   view.players = view.players.map((player) => {
     const source = room.table.players.find((item) => item.id === player.id);
-    return { ...player, media: mediaView(source) };
+    return { ...player, media: mediaView(source), ready: room.readyIds.has(player.id) };
   });
   return view;
 }
@@ -70,16 +71,18 @@ function selectMode(room, mode) {
       media: source.media,
       socketId: source.socketId,
       connected: source.connected,
+      playingRound: source.playingRound,
     });
   });
   room.mode = mode;
   room.table = table;
   room.capsaVotes = new Map();
   room.capsaVoteResult = null;
+  room.readyIds.clear();
 }
 
 function resolveCapsaVote(room) {
-  const players = room.table.players.filter((player) => player.connected);
+  const players = room.table.players.filter((player) => player.connected && (player.id === room.hostId || room.readyIds.has(player.id)));
   if (players.some((player) => !room.capsaVotes.has(player.id))) return null;
   const counts = { classic: 0, free: 0, wheel: 0 };
   players.forEach((player) => { counts[room.capsaVotes.get(player.id)] += 1; });
@@ -156,6 +159,14 @@ function publishLobbyMessage(siteId, name, text, roomCode = null) {
   return message;
 }
 
+function removeRoomFromLobby(siteId, roomCode) {
+  const history = lobbyChats.get(siteId);
+  const remaining = history.filter((message) => message.roomCode !== roomCode);
+  if (remaining.length === history.length) return;
+  lobbyChats.set(siteId, remaining);
+  io.to(lobbyChannel(siteId)).emit("lobby:chat:remove-room", { roomCode });
+}
+
 io.on("connection", (socket) => {
   socket.on("lobby:chat:join", ({ siteId: rawSiteId } = {}, reply = () => {}) => {
     const siteId = cleanSiteId(rawSiteId);
@@ -197,7 +208,7 @@ io.on("connection", (socket) => {
     const player = table.addPlayer({ id: crypto.randomUUID(), name: playerName });
     player.token = crypto.randomBytes(24).toString("base64url");
     player.media = { audio: false, video: false };
-    const room = { code, siteId, mode: null, table, hostId: player.id, capsaVotes: new Map(), capsaVoteResult: null, emptyTimer: null, turnTimer: null, turnDeadline: null };
+    const room = { code, siteId, mode: null, table, hostId: player.id, readyIds: new Set(), capsaVotes: new Map(), capsaVoteResult: null, emptyTimer: null, turnTimer: null, turnDeadline: null };
     rooms.set(code, room);
     attach(socket, room, player);
     publishLobbyMessage(siteId, playerName, `${playerName} membuat room ${code}`, code);
@@ -233,6 +244,7 @@ io.on("connection", (socket) => {
     const room = rooms.get(code);
     const player = room?.table.players.find((item) => item.token && validToken(item.token, token));
     if (!room || room.siteId !== siteId || !player || player.token !== token) return reply({ ok: false, error: "Sesi reconnect tidak valid." });
+    const wasInactive = room.table.players.every((item) => !item.connected);
     if (room.emptyTimer) { clearTimeout(room.emptyTimer); room.emptyTimer = null; }
     if (player.socketId && player.socketId !== socket.id) {
       const previousSocket = io.sockets.sockets.get(player.socketId);
@@ -240,6 +252,7 @@ io.on("connection", (socket) => {
       previousSocket?.disconnect(true);
     }
     attach(socket, room, player);
+    if (wasInactive) publishLobbyMessage(siteId, player.name, `${player.name} membuka kembali room ${code}`, code);
     reply({ ok: true, room: publicView(room, player.id), playerId: player.id, token: player.token });
     emitRoom(room);
   });
@@ -262,10 +275,24 @@ io.on("connection", (socket) => {
     } catch (error) { reply({ ok: false, error: error.message }); }
   });
 
+  socket.on("room:ready", ({ ready = true } = {}, reply = () => {}) => {
+    const { room, player } = session(socket);
+    if (!room || !player) return reply({ ok: false, error: "Sesi tidak ditemukan." });
+    if (!room.mode) return reply({ ok: false, error: "Tunggu Room Master memilih mode." });
+    if (room.hostId === player.id) return reply({ ok: false, error: "Room Master otomatis ikut ronde." });
+    if (!["waiting", "finished"].includes(room.table.phase)) return reply({ ok: false, error: "Status Ready terkunci selama ronde berjalan." });
+    if (ready) room.readyIds.add(player.id);
+    else room.readyIds.delete(player.id);
+    if (room.mode === "capsa-banting") room.capsaVoteResult = resolveCapsaVote(room);
+    reply({ ok: true, ready: room.readyIds.has(player.id) });
+    emitRoom(room);
+  });
+
   socket.on("capsa:vote", ({ rule } = {}, reply = () => {}) => {
     const { room, player } = session(socket);
     if (!room || !player) return reply({ ok: false, error: "Sesi tidak ditemukan." });
     if (room.mode !== "capsa-banting") return reply({ ok: false, error: "Voting hanya tersedia untuk Capsa Banting." });
+    if (player.id !== room.hostId && !room.readyIds.has(player.id)) return reply({ ok: false, error: "Pilih Ready sebelum voting aturan." });
     if (!["waiting", "finished"].includes(room.table.phase)) return reply({ ok: false, error: "Voting terkunci selama ronde berjalan." });
     if (!["classic", "free", "wheel"].includes(rule)) return reply({ ok: false, error: "Pilihan voting tidak valid." });
     room.capsaVotes.set(player.id, rule);
@@ -279,6 +306,8 @@ io.on("connection", (socket) => {
     if (!room || !player) return reply({ ok: false, error: "Sesi tidak ditemukan." });
     if (room.hostId !== player.id) return reply({ ok: false, error: "Hanya pembuat room yang bisa mulai." });
     if (!room.mode) return reply({ ok: false, error: "Pilih mode permainan dahulu." });
+    if (![...room.readyIds].some((id) => room.table.players.some((item) => item.id === id && item.connected))) return reply({ ok: false, error: "Tunggu minimal satu pemain lain Ready." });
+    room.table.players.forEach((item) => { item.playingRound = item.id === room.hostId || room.readyIds.has(item.id); });
     if (room.mode === "capsa-banting") {
       room.capsaVoteResult = resolveCapsaVote(room);
       if (!room.capsaVoteResult) return reply({ ok: false, error: "Tunggu semua pemain menyelesaikan voting aturan straight." });
@@ -292,6 +321,7 @@ io.on("connection", (socket) => {
         room.table.startRound();
       }
       scheduleTurn(room);
+      room.readyIds.clear();
       reply({ ok: true });
       emitRoom(room);
     } catch (error) { reply({ ok: false, error: error.message }); }
@@ -368,9 +398,11 @@ io.on("connection", (socket) => {
     leaveMedia(room, player);
     player.connected = false;
     player.socketId = null;
+    room.readyIds.delete(player.id);
     if (room.mode === "capsa-banting" && ["waiting", "finished"].includes(room.table.phase)) room.capsaVoteResult = resolveCapsaVote(room);
     emitRoom(room);
     if (room.table.players.every((item) => !item.connected)) {
+      removeRoomFromLobby(room.siteId, room.code);
       room.emptyTimer = setTimeout(() => rooms.delete(room.code), EMPTY_ROOM_TTL);
       room.emptyTimer.unref();
     }

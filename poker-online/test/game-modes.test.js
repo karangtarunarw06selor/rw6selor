@@ -112,18 +112,26 @@ test("minuman follows the system house and keeps opponents private", () => {
   assert.deepEqual(bView.players.find((p) => p.id === "b").hand, cards("9h", "3d"));
 });
 
-test("minuman draws until matching the house and plays the drawn card", () => {
+test("minuman draws one card at a time and requires confirmation before playing", () => {
   const table = new CangkulanTable({ code: "MINUM2", siteId: "KT" });
   table.addPlayer({ id: "a", name: "A" });
   table.addPlayer({ id: "b", name: "B" });
   table.startRound({ hands: { a: cards("2c"), b: cards("3h") }, stock: cards("6h", "5d", "4s"), openingCard: cards("9h")[0] });
   table.act("a", { type: "draw", actionId: "drink-a" });
+  assert.deepEqual(table.players[0].hand, cards("2c", "4s"));
+  assert.equal(table.currentTrick.length, 0);
+  assert.equal(table.currentPlayer().id, "a");
+  table.act("a", { type: "draw", actionId: "drink-a-2" });
   assert.deepEqual(table.players[0].hand, cards("2c", "4s", "5d"));
+  table.act("a", { type: "draw", actionId: "drink-a-3" });
+  assert.deepEqual(table.players[0].hand, cards("2c", "4s", "5d", "6h"));
+  assert.throws(() => table.act("a", { type: "draw", actionId: "drink-extra" }), /house/i);
+  table.act("a", { type: "play", cardIndex: 3, actionId: "confirm-a" });
   assert.equal(table.currentTrick[0].card.rank, "6");
   assert.equal(table.currentPlayer().id, "b");
 });
 
-test("minuman clears a completed trick and highest rank becomes bandar", () => {
+test("minuman keeps the completed trick visible until bandar opens a new house", () => {
   const table = new CangkulanTable({ code: "MINUM3", siteId: "MMS" });
   table.addPlayer({ id: "a", name: "A" });
   table.addPlayer({ id: "b", name: "B" });
@@ -133,11 +141,16 @@ test("minuman clears a completed trick and highest rank becomes bandar", () => {
   table.act("b", { type: "play", cardIndex: 0, actionId: "b" });
   table.act("c", { type: "play", cardIndex: 0, actionId: "c" });
   assert.equal(table.currentTrick.length, 0);
+  assert.deepEqual(table.completedTrick.map((play) => play.playerId), ["a", "b", "c"]);
+  assert.equal(table.completedTrickWinnerId, "b");
   assert.equal(table.houseSuit, null);
   assert.equal(table.bandarId, "b");
   assert.equal(table.currentPlayer().id, "b");
   table.act("b", { type: "play", cardIndex: 0, actionId: "lead" });
   assert.equal(table.houseSuit, "d");
+  assert.equal(table.completedTrick.length, 0);
+  assert.equal(table.completedTrickWinnerId, null);
+  assert.equal(table.currentTrick[0].playerId, "b");
 });
 
 test("minuman records finish order, skips finished players, and ranks the last player as loser", () => {

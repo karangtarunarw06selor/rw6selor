@@ -13,7 +13,7 @@
   const elements = {
     lobby: $("#lobby"), game: $("#game"), name: $("#playerName"), code: $("#roomCode"), error: $("#lobbyError"),
     copy: $("#copyCode"), seats: $("#seats"), board: $("#board"), pot: $("#pot"), phase: $("#phase"), handDock: $("#handDock"), notice: $("#notice"),
-    start: $("#startGame"), modePicker: $("#modePicker"), capsaVote: $("#capsaVote"), voteStatus: $("#voteStatus"), actions: $("#actions"), cangkulanActions: $("#cangkulanActions"), capsaActions: $("#capsaActions"), samgongActions: $("#samgongActions"), checkCall: $("#checkCall"), raisePanel: $("#raisePanel"),
+    start: $("#startGame"), modePicker: $("#modePicker"), readyPanel: $("#readyPanel"), readyToggle: $("#readyToggle"), readyStatus: $("#readyStatus"), capsaVote: $("#capsaVote"), voteStatus: $("#voteStatus"), actions: $("#actions"), cangkulanActions: $("#cangkulanActions"), capsaActions: $("#capsaActions"), samgongActions: $("#samgongActions"), checkCall: $("#checkCall"), raisePanel: $("#raisePanel"),
     raiseAmount: $("#raiseAmount"), raiseOutput: $("#raiseOutput"),
   };
   const state = { room: null, playerId: null, token: null, busy: false, selectedCards: new Set() };
@@ -21,6 +21,8 @@
   const chatMessages = $("#lobbyChatMessages");
   const chatInput = $("#lobbyChatInput");
   const chatError = $("#lobbyChatError");
+  const leaveConfirm = $("#leaveConfirm");
+  let allowLeave = false;
   const storageKey = `rw06_poker_session_${siteId}`;
   const suit = { c: "♣", d: "♦", h: "♥", s: "♠" };
   const phaseLabel = { waiting: "LOBBY", playing: "BERMAIN", preflop: "PRE-FLOP", flop: "FLOP", turn: "TURN", river: "RIVER", finished: "RONDE SELESAI" };
@@ -67,6 +69,7 @@
     const classes = ["seat"];
     if (player.id === state.playerId) classes.push("me");
     if (player.id === state.room.turnId) classes.push("turn");
+    if (player.playingRound === false) classes.push("resting");
     if (player.media?.audio || player.media?.video) classes.push("media-on");
     const initials = escapeHtml(player.name.slice(0, 2).toUpperCase());
     const cards = player.hole || player.hand || [];
@@ -79,6 +82,7 @@
         <span class="avatar" data-video-slot="${player.id}"><span>${initials}</span><i class="voice-dot"></i></span>
         <b class="seat-name">${escapeHtml(player.name)}${player.folded ? " · FOLD" : player.allIn ? " · ALL-IN" : ""}</b>
         <span class="seat-stack">${state.room.mode === "holdem" ? `♢ ${player.stack}` : state.room.mode === "samgong" ? `${player.cardCount ?? cards.length} KARTU · SKOR ${player.score >= 0 ? "+" : ""}${player.score}` : `${player.cardCount ?? cards.length} KARTU`}</span>
+        ${["waiting", "finished"].includes(state.room.phase) && state.room.mode ? `<i class="ready-badge ${player.id === state.room.hostId || player.ready ? "is-ready" : ""}">${player.id === state.room.hostId ? "MASTER" : player.ready ? "READY" : "REHAT"}</i>` : player.playingRound === false ? '<i class="ready-badge">REHAT</i>' : ""}
         ${state.room.mode === "holdem" && player.id === state.room.dealerId ? `<i class="dealer">${state.room.players.length >= 3 ? "BANDAR" : "D"}</i>` : ""}
         ${state.room.mode === "cangkulan" && player.id === state.room.bandarId ? '<i class="dealer">BANDAR</i>' : ""}
         ${state.room.mode === "samgong" && player.id === state.room.bandarId ? '<i class="dealer">BANDAR</i>' : ""}
@@ -115,7 +119,12 @@
     if (room.mode === "cangkulan") {
       if (room.lastResult?.rankings) elements.board.innerHTML = `<ol class="ranking-list">${room.lastResult.rankings.map((entry, index, all) => `<li><b>#${index + 1}</b> ${escapeHtml(entry.name)}${index === all.length - 1 ? " · KALAH" : ""}</li>`).join("")}</ol>`;
       else {
-        const trick = room.currentTrick?.length ? room.currentTrick.map((play) => cardHtml(play.card)).join("") : room.houseSuit ? cardHtml(room.openingCard) : "";
+        const plays = room.currentTrick?.length ? room.currentTrick : room.completedTrick || [];
+        const trick = plays.length ? `<div class="minuman-trick">${plays.map((play) => {
+          const player = room.players.find((item) => item.id === play.playerId);
+          const highest = play.playerId === room.completedTrickWinnerId;
+          return `<article class="${highest ? "highest" : ""}"><small>${escapeHtml(player?.name || "Pemain")}</small>${cardHtml(play.card)}${highest ? "<b>TERTINGGI</b>" : ""}</article>`;
+        }).join("")}</div>` : room.houseSuit ? `<div class="minuman-trick system-house"><article><small>SISTEM</small>${cardHtml(room.openingCard)}</article></div>` : "";
         const house = room.houseSuit ? `HOUSE ${suit[room.houseSuit]}` : "BANDAR BUKA";
         elements.board.innerHTML = `${trick}<span class="stock-count">${house} · DECK ${room.stockCount}</span>`;
       }
@@ -144,12 +153,19 @@
     const mayChooseMode = isHost && room.players.length >= 2 && ["waiting", "finished"].includes(room.phase);
     elements.modePicker.classList.toggle("hidden", !mayChooseMode);
     elements.modePicker.querySelectorAll("[data-mode]").forEach((button) => button.classList.toggle("selected", button.dataset.mode === room.mode));
-    const voting = room.mode === "capsa-banting" && ["waiting", "finished"].includes(room.phase);
+    const voting = room.mode === "capsa-banting" && ["waiting", "finished"].includes(room.phase) && (isHost || me?.ready);
     elements.capsaVote.classList.toggle("hidden", !voting);
     elements.capsaVote.querySelectorAll("[data-rule]").forEach((button) => button.classList.toggle("selected", button.dataset.rule === room.myVote));
-    elements.voteStatus.textContent = room.voteResult ? `Hasil: ${room.voteResult.toUpperCase()}` : `${room.voteCount}/${room.players.length} pemain sudah vote`;
-    elements.start.classList.toggle("hidden", !isHost || !room.mode || (room.mode === "capsa-banting" && !room.voteResult) || !["waiting", "finished"].includes(room.phase));
-    elements.start.textContent = room.phase === "finished" ? "Ronde Berikutnya" : `Mulai ${modeLabel[room.mode] || "Permainan"}`;
+    elements.voteStatus.textContent = room.voteResult ? `Hasil: ${room.voteResult.toUpperCase()}` : `${room.voteCount}/${room.readyIds.length + 1} peserta sudah vote`;
+    const preparing = Boolean(room.mode) && ["waiting", "finished"].includes(room.phase);
+    const readyCount = room.readyIds.length;
+    elements.readyPanel.classList.toggle("hidden", !preparing || isHost);
+    elements.readyToggle.textContent = me?.ready ? "Rehat ronde ini" : "Ready untuk ronde";
+    elements.readyToggle.classList.toggle("primary", !me?.ready);
+    elements.readyStatus.textContent = me?.ready ? "Kamu ikut ronde berikutnya." : "Kamu menonton satu ronde tanpa kartu.";
+    elements.start.classList.toggle("hidden", !isHost || !preparing || (room.mode === "capsa-banting" && !room.voteResult));
+    elements.start.disabled = readyCount < 1;
+    elements.start.textContent = readyCount < 1 ? "Menunggu pemain Ready" : `${room.phase === "finished" ? "Ronde Berikutnya" : `Mulai ${modeLabel[room.mode] || "Permainan"}`} · ${readyCount + 1} pemain`;
     const myTurn = room.turnId === state.playerId && ["preflop", "flop", "turn", "river"].includes(room.phase);
     elements.actions.classList.toggle("hidden", !myTurn);
     const cangkulanTurn = room.mode === "cangkulan" && room.phase === "playing" && room.turnId === state.playerId;
@@ -159,7 +175,7 @@
     const samgongTurn = room.mode === "samgong" && room.phase === "playing" && room.turnId === state.playerId;
     elements.samgongActions.classList.toggle("hidden", !samgongTurn);
     $("#minumanPlay").disabled = state.selectedCards.size !== 1;
-    $("#minumanPlay").textContent = state.selectedCards.size ? "Pilih kartu ✓" : "Pilih kartu";
+    $("#minumanPlay").textContent = state.selectedCards.size ? "Buang kartu ✓" : "Pilih lalu buang";
     $("#capsaPlay").disabled = state.selectedCards.size < 1;
     $("#capsaPlay").textContent = state.selectedCards.size ? `Mainkan ${state.selectedCards.size} kartu` : "Mainkan pilihan";
     $("#drawCard").disabled = !room.houseSuit || (me?.hand || []).some((card) => card?.suit === room.houseSuit);
@@ -230,6 +246,10 @@
     const mode = event.target.closest("[data-mode]")?.dataset.mode;
     if (mode) roomAction("room:mode", { mode });
   });
+  elements.readyToggle.addEventListener("click", () => {
+    const me = state.room?.players.find((player) => player.id === state.playerId);
+    roomAction("room:ready", { ready: !me?.ready });
+  });
   elements.capsaVote.addEventListener("click", (event) => {
     const rule = event.target.closest("[data-rule]")?.dataset.rule;
     if (rule) roomAction("capsa:vote", { rule });
@@ -270,9 +290,26 @@
     }
   });
   elements.copy.addEventListener("click", async () => { await navigator.clipboard?.writeText(state.room.code); elements.notice.textContent = "Kode room disalin."; });
-  $("#leaveGame").addEventListener("click", () => { localStorage.removeItem(storageKey); window.PokerMedia?.leave(); location.reload(); });
+  $("#leaveGame").addEventListener("click", () => leaveConfirm.showModal());
+  $("#leaveConfirmButton").addEventListener("click", () => {
+    allowLeave = true;
+    localStorage.removeItem(storageKey);
+    window.PokerMedia?.leave();
+    location.reload();
+  });
+  window.addEventListener("beforeunload", (event) => {
+    if (!state.room || allowLeave) return;
+    event.preventDefault();
+    event.returnValue = "";
+  });
   socket.on("room:state", (room) => { state.room = room; render(); });
   socket.on("lobby:chat:message", addLobbyMessage);
+  socket.on("lobby:chat:remove-room", ({ roomCode } = {}) => {
+    for (let index = lobbyMessages.length - 1; index >= 0; index -= 1) {
+      if (lobbyMessages[index].roomCode === roomCode) lobbyMessages.splice(index, 1);
+    }
+    renderLobbyChat();
+  });
   socket.on("session:replaced", () => {
     localStorage.removeItem(storageKey);
     alert("Sesi dipindahkan ke perangkat atau tab lain.");

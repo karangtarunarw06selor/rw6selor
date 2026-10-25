@@ -95,7 +95,7 @@ class PokerTable {
   addPlayer({ id, name, stack = 1000 }) {
     if (this.players.length >= 6) throw new Error("Meja sudah penuh.");
     if (this.phase !== "waiting" && this.phase !== "finished") throw new Error("Tunggu hand selesai.");
-    const player = { id, name, stack, connected: true, folded: false, allIn: false, hole: [], streetBet: 0, committed: 0 };
+    const player = { id, name, stack, connected: true, playingRound: true, folded: false, allIn: false, hole: [], streetBet: 0, committed: 0 };
     this.players.push(player);
     return player;
   }
@@ -124,9 +124,8 @@ class PokerTable {
 
   startHand(random) {
     if (!["waiting", "finished"].includes(this.phase)) throw new Error("Hand sedang berjalan.");
-    const eligible = this.players.filter((player) => player.stack > 0 && player.connected !== false);
+    const eligible = this.players.filter((player) => player.stack > 0 && player.connected !== false && player.playingRound !== false);
     if (eligible.length < 2) throw new Error("Minimal dua pemain untuk mulai.");
-    this.players = eligible;
     this.handNumber += 1;
     this.phase = "preflop";
     this.board = [];
@@ -136,17 +135,18 @@ class PokerTable {
     this.lastResult = null;
     this.processedActions.clear();
     this.players.forEach((player) => Object.assign(player, { folded: false, allIn: false, hole: [], streetBet: 0, committed: 0 }));
-    this.dealerIndex = (this.dealerIndex + 1) % this.players.length;
+    this.dealerIndex = this.nextEligibleIndex(this.dealerIndex, (player) => eligible.includes(player));
     this.deck = shuffle(createDeck(), random);
     for (let round = 0; round < 2; round += 1) {
-      for (let step = 1; step <= this.players.length; step += 1) {
-        const index = (this.dealerIndex + step) % this.players.length;
+      let index = this.dealerIndex;
+      for (let step = 0; step < eligible.length; step += 1) {
+        index = this.nextEligibleIndex(index, (player) => eligible.includes(player));
         this.players[index].hole.push(this.deck.pop());
       }
     }
-    const headsUp = this.players.length === 2;
-    const sbIndex = headsUp ? this.dealerIndex : this.nextEligibleIndex(this.dealerIndex, () => true);
-    const bbIndex = this.nextEligibleIndex(sbIndex, () => true);
+    const headsUp = eligible.length === 2;
+    const sbIndex = headsUp ? this.dealerIndex : this.nextEligibleIndex(this.dealerIndex, (player) => eligible.includes(player));
+    const bbIndex = this.nextEligibleIndex(sbIndex, (player) => eligible.includes(player));
     this.commit(this.players[sbIndex], this.smallBlind);
     this.commit(this.players[bbIndex], this.bigBlind);
     this.currentBet = Math.max(this.players[sbIndex].streetBet, this.players[bbIndex].streetBet);
@@ -301,6 +301,7 @@ class PokerTable {
         name: player.name,
         stack: player.stack,
         connected: player.connected,
+        playingRound: player.playingRound !== false,
         folded: player.folded,
         allIn: player.allIn,
         bet: player.streetBet,

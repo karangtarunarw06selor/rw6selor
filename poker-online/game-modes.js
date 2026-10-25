@@ -18,19 +18,29 @@ class BaseCardTable {
   addPlayer({ id, name }) {
     if (this.players.length >= 6) throw new Error("Meja sudah penuh.");
     if (this.phase !== "waiting" && this.phase !== "finished") throw new Error("Tunggu ronde selesai.");
-    const player = { id, name, connected: true, hand: [] };
+    const player = { id, name, connected: true, playingRound: true, hand: [] };
     this.players.push(player);
     return player;
   }
 
   currentPlayer() { return this.players[this.turnIndex] || null; }
   requirePlayers() {
-    const eligible = this.players.filter((player) => player.connected !== false);
+    const eligible = this.players.filter((player) => player.connected !== false && player.playingRound !== false);
     if (eligible.length < 2) throw new Error("Minimal dua pemain untuk mulai.");
-    this.players = eligible;
     this.roundNumber += 1;
     this.lastResult = null;
     this.processedActions.clear();
+    return eligible;
+  }
+
+  roundPlayers() { return this.players.filter((player) => player.playingRound !== false); }
+
+  nextRoundIndex(fromIndex) {
+    for (let step = 1; step <= this.players.length; step += 1) {
+      const index = (fromIndex + step) % this.players.length;
+      if (this.players[index].playingRound !== false) return index;
+    }
+    return -1;
   }
 
   privatePlayers(viewerId, reveal = false) {
@@ -38,6 +48,7 @@ class BaseCardTable {
       id: player.id,
       name: player.name,
       connected: player.connected,
+      playingRound: player.playingRound !== false,
       cardCount: player.hand.length,
       hand: player.id === viewerId || reveal ? player.hand : player.hand.map(() => null),
       rank: this.rankings?.find((entry) => entry.id === player.id)?.rank || null,
@@ -120,15 +131,15 @@ class BigTwoTable extends BaseCardTable {
 
   startRound({ hands, random } = {}) {
     if (!["waiting", "finished"].includes(this.phase)) throw new Error("Ronde sedang berjalan.");
-    this.requirePlayers();
-    if (this.players.length > 4) throw new Error("Capsa Banting maksimal empat pemain.");
+    const active = this.requirePlayers();
+    if (active.length > 4) throw new Error("Capsa Banting maksimal empat pemain.");
     const deck = shuffle(createDeck(), random);
     this.players.forEach((player) => { player.hand = hands?.[player.id] ? [...hands[player.id]] : []; });
     if (!hands) {
       const threeDiamond = deck.findIndex((card) => card.rank === "3" && card.suit === "d");
-      const dealtPosition = deck.length - 1 - (threeDiamond % (13 * this.players.length));
+      const dealtPosition = deck.length - 1 - (threeDiamond % (13 * active.length));
       [deck[threeDiamond], deck[dealtPosition]] = [deck[dealtPosition], deck[threeDiamond]];
-      for (let round = 0; round < 13; round += 1) for (const player of this.players) player.hand.push(deck.pop());
+      for (let round = 0; round < 13; round += 1) for (const player of active) player.hand.push(deck.pop());
     }
     const opener = this.players.findIndex((player) => player.hand.some((card) => card.rank === "3" && card.suit === "d"));
     if (opener < 0) throw new Error("Kartu pembuka 3♦ tidak ditemukan.");
@@ -152,11 +163,11 @@ class BigTwoTable extends BaseCardTable {
     if (action.type === "pass") {
       if (!this.currentPlay) throw new Error("Tidak bisa pass saat membuka putaran.");
       this.passCount += 1;
-      if (this.passCount >= this.players.length - 1) {
+      if (this.passCount >= this.roundPlayers().length - 1) {
         this.currentPlay = null;
         this.passCount = 0;
         this.turnIndex = this.lastPlayIndex;
-      } else this.turnIndex = (this.turnIndex + 1) % this.players.length;
+      } else this.turnIndex = this.nextRoundIndex(this.turnIndex);
     } else if (action.type === "play") {
       const indexes = [...new Set((action.cardIndexes || []).map(Number))].sort((a, b) => a - b);
       if (!indexes.length || indexes.some((index) => !Number.isInteger(index) || !player.hand[index])) throw new Error("Pilihan kartu tidak valid.");
@@ -173,7 +184,7 @@ class BigTwoTable extends BaseCardTable {
         this.phase = "finished";
         this.turnIndex = -1;
         this.lastResult = { reason: "empty-hand", winners: [{ id: player.id, name: player.name }] };
-      } else this.turnIndex = (this.turnIndex + 1) % this.players.length;
+      } else this.turnIndex = this.nextRoundIndex(this.turnIndex);
     } else throw new Error("Aksi tidak valid.");
     if (action.actionId) this.processedActions.set(action.actionId, playerId);
     return { duplicate: false, view: this.viewFor(playerId) };
@@ -235,14 +246,14 @@ class SamgongTable extends BaseCardTable {
 
   startRound({ hands, random } = {}) {
     if (!["waiting", "finished"].includes(this.phase)) throw new Error("Ronde sedang berjalan.");
-    this.requirePlayers();
+    const active = this.requirePlayers();
     const deck = shuffle(createDeck(), random);
     this.players.forEach((player) => {
-      player.hand = hands?.[player.id] ? [...hands[player.id]] : [deck.pop(), deck.pop(), deck.pop()];
+      player.hand = player.playingRound === false ? [] : hands?.[player.id] ? [...hands[player.id]] : [deck.pop(), deck.pop(), deck.pop()];
       player.revealed = false;
     });
-    if (this.players.some((player) => player.hand.length !== 3)) throw new Error("Setiap pemain wajib mendapat tiga kartu.");
-    this.turnIndex = (this.roundNumber - 1) % this.players.length;
+    if (active.some((player) => player.hand.length !== 3)) throw new Error("Setiap pemain wajib mendapat tiga kartu.");
+    this.turnIndex = this.players.indexOf(active[(this.roundNumber - 1) % active.length]);
     this.bandarId = this.currentPlayer().id;
     this.phase = "playing";
     return this.viewFor(null);
@@ -253,7 +264,7 @@ class SamgongTable extends BaseCardTable {
     const bandarHand = evaluateSamgong(bandar.hand);
     const outcomes = [];
     let bandarDelta = 0;
-    for (const player of this.players) {
+    for (const player of this.roundPlayers()) {
       if (player.id === bandar.id) continue;
       const result = compareSamgong(evaluateSamgong(player.hand), bandarHand) > 0 ? "win" : "lose";
       const delta = result === "win" ? 1 : -1;
@@ -277,9 +288,9 @@ class SamgongTable extends BaseCardTable {
     const player = this.players.find((item) => item.id === playerId);
     if (!player || this.currentPlayer()?.id !== playerId) throw new Error("Belum giliranmu.");
     player.revealed = true;
-    if (this.players.every((item) => item.revealed)) this.settle();
+    if (this.roundPlayers().every((item) => item.revealed)) this.settle();
     else {
-      do { this.turnIndex = (this.turnIndex + 1) % this.players.length; } while (this.currentPlayer().revealed);
+      do { this.turnIndex = this.nextRoundIndex(this.turnIndex); } while (this.currentPlayer().revealed);
     }
     if (action.actionId) this.processedActions.set(action.actionId, playerId);
     return { duplicate: false, view: this.viewFor(playerId) };
@@ -305,11 +316,12 @@ class SamgongTable extends BaseCardTable {
         id: player.id,
         name: player.name,
         connected: player.connected,
+        playingRound: player.playingRound !== false,
         cardCount: player.hand.length,
         hand: player.id === viewerId || revealAll ? player.hand : player.hand.map(() => null),
         score: player.score,
         revealed: player.revealed,
-        evaluation: revealAll ? evaluateSamgong(player.hand) : null,
+        evaluation: revealAll && player.playingRound !== false ? evaluateSamgong(player.hand) : null,
       })),
     };
   }
@@ -323,6 +335,8 @@ class CangkulanTable extends BaseCardTable {
     this.openingCard = null;
     this.houseSuit = null;
     this.currentTrick = [];
+    this.completedTrick = [];
+    this.completedTrickWinnerId = null;
     this.bandarId = null;
     this.rankings = [];
     this.trickPlayerIds = [];
@@ -330,21 +344,23 @@ class CangkulanTable extends BaseCardTable {
 
   startRound({ hands, stock, openingCard, random } = {}) {
     if (!["waiting", "finished"].includes(this.phase)) throw new Error("Ronde sedang berjalan.");
-    this.requirePlayers();
+    const active = this.requirePlayers();
     const deck = shuffle(createDeck(), random);
     this.players.forEach((player) => { player.hand = hands?.[player.id] ? [...hands[player.id]] : []; });
-    if (!hands) for (let round = 0; round < 7; round += 1) for (const player of this.players) player.hand.push(deck.pop());
+    if (!hands) for (let round = 0; round < 7; round += 1) for (const player of active) player.hand.push(deck.pop());
     this.stock = stock ? [...stock] : deck;
     this.openingCard = openingCard || this.stock.pop();
     if (!this.openingCard) throw new Error("Kartu pembuka tidak tersedia.");
     this.spent = [this.openingCard];
     this.houseSuit = this.openingCard.suit;
     this.currentTrick = [];
+    this.completedTrick = [];
+    this.completedTrickWinnerId = null;
     this.bandarId = null;
     this.rankings = [];
-    this.trickPlayerIds = this.players.map((player) => player.id);
+    this.trickPlayerIds = active.map((player) => player.id);
     this.phase = "playing";
-    this.turnIndex = 0;
+    this.turnIndex = this.players.indexOf(active[0]);
     return this.viewFor(null);
   }
 
@@ -357,7 +373,7 @@ class CangkulanTable extends BaseCardTable {
   }
 
   activePlayers() {
-    return this.players.filter((player) => !this.rankings.some((entry) => entry.id === player.id));
+    return this.players.filter((player) => player.playingRound !== false && !this.rankings.some((entry) => entry.id === player.id));
   }
 
   rankPlayer(player) {
@@ -374,7 +390,7 @@ class CangkulanTable extends BaseCardTable {
   nextActiveIndex(fromIndex) {
     for (let step = 1; step <= this.players.length; step += 1) {
       const index = (fromIndex + step) % this.players.length;
-      if (!this.rankings.some((entry) => entry.id === this.players[index].id)) return index;
+      if (this.players[index].playingRound !== false && !this.rankings.some((entry) => entry.id === this.players[index].id)) return index;
     }
     return -1;
   }
@@ -383,6 +399,8 @@ class CangkulanTable extends BaseCardTable {
     const rankOrder = "23456789TJQKA";
     const eligible = this.currentTrick.filter((play) => !this.rankings.some((entry) => entry.id === play.playerId));
     const winner = eligible.reduce((best, play) => rankOrder.indexOf(play.card.rank) > rankOrder.indexOf(best.card.rank) ? play : best);
+    this.completedTrick = [...this.currentTrick];
+    this.completedTrickWinnerId = winner.playerId;
     this.spent.push(...this.currentTrick.map((play) => play.card));
     this.currentTrick = [];
     this.houseSuit = null;
@@ -392,7 +410,11 @@ class CangkulanTable extends BaseCardTable {
   }
 
   recordPlay(player, card) {
-    if (!this.houseSuit) this.houseSuit = card.suit;
+    if (!this.houseSuit) {
+      this.completedTrick = [];
+      this.completedTrickWinnerId = null;
+      this.houseSuit = card.suit;
+    }
     this.currentTrick.push({ playerId: player.id, card });
     if (!player.hand.length) this.rankPlayer(player);
     if (this.phase === "finished") return;
@@ -417,15 +439,9 @@ class CangkulanTable extends BaseCardTable {
     } else if (action.type === "draw") {
       if (!this.houseSuit) throw new Error("Bandar harus membuka house dengan kartu sendiri.");
       if (player.hand.some((card) => this.isPlayable(card))) throw new Error("Masih ada kartu house yang bisa dibuang.");
-      let playedCard = null;
-      while (!playedCard) {
-        this.refillStock();
-        if (!this.stock.length) throw new Error("Deck habis dan kartu house tidak tersedia.");
-        const card = this.stock.pop();
-        if (this.isPlayable(card)) playedCard = card;
-        else player.hand.push(card);
-      }
-      this.recordPlay(player, playedCard);
+      this.refillStock();
+      if (!this.stock.length) throw new Error("Deck habis dan kartu house tidak tersedia.");
+      player.hand.push(this.stock.pop());
     } else throw new Error("Aksi tidak valid.");
     if (action.actionId) this.processedActions.set(action.actionId, playerId);
     return { duplicate: false, view: this.viewFor(playerId) };
@@ -442,6 +458,8 @@ class CangkulanTable extends BaseCardTable {
       openingCard: this.openingCard,
       houseSuit: this.houseSuit,
       currentTrick: this.currentTrick,
+      completedTrick: this.completedTrick,
+      completedTrickWinnerId: this.completedTrickWinnerId,
       bandarId: this.bandarId,
       rankings: this.rankings,
       stockCount: this.stock.length,

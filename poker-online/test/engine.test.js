@@ -35,6 +35,21 @@ test("evaluator handles wheel straight and split pots", () => {
   assert.equal(compareHands(a, b), 0);
 });
 
+test("table excludes resting players from cards, blinds, and turns", () => {
+  const table = new PokerTable({ smallBlind: 5, bigBlind: 10 });
+  table.addPlayer({ id: "a", name: "A", stack: 100 });
+  const resting = table.addPlayer({ id: "b", name: "B", stack: 100 });
+  table.addPlayer({ id: "c", name: "C", stack: 100 });
+  resting.playingRound = false;
+  table.startHand();
+  assert.equal(resting.hole.length, 0);
+  assert.equal(resting.streetBet, 0);
+  assert.equal(resting.stack, 100);
+  assert.equal(resting.committed, 0);
+  assert.notEqual(table.currentPlayer().id, "b");
+  assert.deepEqual(table.viewFor("b").players.find((player) => player.id === "b").hole, []);
+});
+
 test("table deals private cards and exposes only own hole cards", () => {
   const table = new PokerTable({ code: "ABC123", siteId: "MMS", smallBlind: 10, bigBlind: 20 });
   const a = table.addPlayer({ id: "a", name: "A" });
