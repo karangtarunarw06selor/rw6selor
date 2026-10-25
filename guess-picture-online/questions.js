@@ -9,4 +9,4 @@ module.exports = [
   { id: "monas", answer: "Monumen Nasional", aliases: ["Monas"], category: "Tempat", image: "monas.jpg", forbidden: ["monas", "monumen", "tugu"], examples: ["Jakarta", "Emas", "Kemerdekaan", "Lapangan Merdeka"] },
   { id: "harimau", answer: "Harimau Sumatra", aliases: ["Harimau Sumatera", "Sumatran Tiger"], category: "Hewan", image: "harimau.jpg", forbidden: ["harimau", "tiger", "kucing belang"], examples: ["Pulau Sumatra", "Belang", "Karnivora", "Hutan"] },
   { id: "aadc", answer: "Ada Apa Dengan Cinta", aliases: ["AADC"], category: "Film", image: "aadc.jpg", forbidden: ["judul", "aadc", "cinta dan rangga"], examples: ["Rangga", "Puisi", "SMA", "Cinta"] }
-];
+].concat(require("./assets/questions/generated.json"));

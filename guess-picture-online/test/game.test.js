@@ -11,3 +11,34 @@ test("scores decrease as more clues are opened", () => {
   assert.deepEqual([1, 2, 3, 4].map(scoreFor), [4, 3, 2, 1]);
   assert.deepEqual([1, 2, 3, 4].map(drawerScoreFor), [3, 2, 1, 1]);
 });
+
+test("question bank adds 100 unique private reference images for 108 total", () => {
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const crypto = require("node:crypto");
+  const questions = require("../questions");
+  const ids = new Set(questions.map((question) => question.id));
+  const answers = new Set(questions.map((question) => normalize(question.answer)));
+  const images = new Set(questions.map((question) => question.image));
+  const hashes = new Set(questions.map((question) => {
+    const file = path.join(__dirname, "..", "assets", "questions", question.image);
+    assert.equal(fs.existsSync(file), true, `Gambar tidak ditemukan: ${question.image}`);
+    assert.ok(fs.statSync(file).size > 4_000, `Gambar terlalu kecil: ${question.image}`);
+    return crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex");
+  }));
+  assert.equal(questions.length, 108);
+  assert.equal(ids.size, 108);
+  assert.equal(answers.size, 108);
+  assert.equal(images.size, 108);
+  assert.equal(hashes.size, 108);
+  const answerOwners = new Map(questions.map((question) => [normalize(question.answer), question.id]));
+  questions.forEach((question) => {
+    assert.ok(question.aliases instanceof Array);
+    assert.ok(question.forbidden.length > 0);
+    assert.equal(question.examples.length, 4);
+    question.aliases.forEach((alias) => {
+      const owner = answerOwners.get(normalize(alias));
+      assert.ok(!owner || owner === question.id, `Alias ${alias} bertabrakan dengan ${owner}`);
+    });
+  });
+});
