@@ -131,6 +131,15 @@
     attachVideo(playerId, localStream, true);
     await replaceTracks();
   }
+  function mediaErrorMessage(error, fallback) {
+    if (error?.name === "NotAllowedError" || error?.name === "SecurityError") {
+      return "Izin media belum bisa diminta. Tutup bubble/overlay aplikasi lain, lalu coba lagi.";
+    }
+    if (error?.name === "NotReadableError" || error?.name === "AbortError") {
+      return "Mikrofon atau kamera sedang dipakai aplikasi lain. Tutup aplikasi tersebut, lalu coba lagi.";
+    }
+    return error?.message || fallback;
+  }
   async function join(wantVideo) {
     try {
       await acquire(wantVideo);
@@ -143,8 +152,8 @@
     } catch (error) {
       if (wantVideo) {
         try { await acquire(false); const fallback = await request("media:join", { audio: true, video: false }); if (!fallback?.ok) throw new Error(fallback?.error); audioButton.classList.add("active"); videoButton.classList.remove("active"); }
-        catch { alert(error.message || "Izin media ditolak."); }
-      } else alert(error.message || "Izin mikrofon ditolak.");
+        catch { alert(mediaErrorMessage(error, "Izin media ditolak.")); }
+      } else alert(mediaErrorMessage(error, "Izin mikrofon ditolak."));
     }
   }
   async function toggleAudio() {

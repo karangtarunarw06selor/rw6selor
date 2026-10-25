@@ -170,7 +170,13 @@
       localStream = null;
       joining = false;
       syncBadges();
-      game.toast(error?.name === "NotAllowedError" ? "Izin mikrofon ditolak." : "Mikrofon tidak tersedia.");
+      if (error?.name === "NotAllowedError" || error?.name === "SecurityError") {
+        game.toast("Mikrofon belum diizinkan. Tutup bubble/overlay aplikasi lain, lalu tekan VOICE lagi.");
+      } else if (error?.name === "NotReadableError" || error?.name === "AbortError") {
+        game.toast("Mikrofon sedang dipakai aplikasi lain. Tutup aplikasi tersebut, lalu coba lagi.");
+      } else {
+        game.toast("Mikrofon tidak tersedia. Periksa izin browser lalu coba lagi.");
+      }
     }
   };
 
