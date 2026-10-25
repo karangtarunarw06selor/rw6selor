@@ -95,6 +95,30 @@ test("creating a room publishes a clickable lobby announcement only for its site
   assert.equal(lobbyChats.get("MMS").length, 0);
 });
 
+test("a disconnected player keeps the room and securely reconnects", async (context) => {
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const port = server.address().port;
+  const first = await connect(port);
+  const created = await emit(first, "room:create", { name: "Ayu", siteId: "MMS" });
+  const { code } = created.room;
+  first.close();
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  assert.equal(rooms.has(code), true);
+  assert.equal(rooms.get(code).players[0].connected, false);
+
+  const resumed = await connect(port);
+  context.after(() => {
+    resumed.close(); io.close(); server.close(); rooms.clear();
+    lobbyChats.set("MMS", []); lobbyChats.set("KT", []);
+  });
+  const rejected = await emit(resumed, "room:reconnect", { code, siteId: "MMS", playerId: created.playerId, reconnectToken: "wrong" });
+  assert.equal(rejected.ok, false);
+  const restored = await emit(resumed, "room:reconnect", { code, siteId: "MMS", playerId: created.playerId, reconnectToken: created.reconnectToken });
+  assert.equal(restored.ok, true);
+  assert.equal(restored.playerId, created.playerId);
+  assert.equal(restored.room.players[0].connected, true);
+});
+
 test("voice signaling is limited to joined peers in the same room", async (context) => {
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   const port = server.address().port;

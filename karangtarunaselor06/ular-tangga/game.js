@@ -7,6 +7,7 @@
   const $ = (selector) => document.querySelector(selector);
   const siteId = document.body.dataset.site || "MMS";
   const socket = typeof io === "function" ? io({ path: "/ular-tangga/socket.io" }) : null;
+  const roomSessionKey = `snake-room-session:${siteId}`;
   const state = { mode: null, playerId: null, room: null, sound: true, busy: false, visualPositions: new Map(), animationQueue: Promise.resolve(), rollStartedAt: 0 };
   let setupMode = "solo";
   let lobbyMessages = [];
@@ -209,6 +210,20 @@
       renderLobbyChat();
     });
   };
+  const saveRoomSession = (reply) => sessionStorage.setItem(roomSessionKey, JSON.stringify({ code: reply.room.code, playerId: reply.playerId, reconnectToken: reply.reconnectToken }));
+  const reconnectRoom = () => {
+    const saved = JSON.parse(sessionStorage.getItem(roomSessionKey) || "null");
+    if (!saved || state.mode === "solo") return;
+    socket.emit("room:reconnect", { ...saved, siteId }, (reply) => {
+      if (!reply?.ok) { sessionStorage.removeItem(roomSessionKey); return; }
+      state.mode = "online";
+      state.playerId = reply.playerId;
+      state.room = reply.room;
+      saveRoomSession(reply);
+      startView();
+      toast("Tersambung kembali ke room.");
+    });
+  };
   const rollAnimation = () => {
     state.busy = true;
     $("#roll-button").disabled = true;
@@ -304,6 +319,7 @@
       state.mode = "online";
       state.playerId = reply.playerId;
       state.room = reply.room;
+      saveRoomSession(reply);
       startView();
     });
   });
@@ -323,10 +339,10 @@
     $("#sound-toggle").classList.toggle("off", !state.sound);
   });
   socket?.on("room:state", (room) => { state.room = room; render(); });
-  socket?.on("connect", joinLobbyChat);
+  socket?.on("connect", () => { joinLobbyChat(); reconnectRoom(); });
   socket?.on("disconnect", () => { $("#lobby-chat-status").textContent = "Terputus"; });
   socket?.on("lobby:chat:message", (message) => { lobbyMessages.push(message); lobbyMessages = lobbyMessages.slice(-50); renderLobbyChat(); });
   socket?.on("lobby:chat:remove-room", ({ roomCode }) => { lobbyMessages = lobbyMessages.filter((message) => message.roomCode !== roomCode); renderLobbyChat(); });
   socket?.on("connect_error", () => { if (state.mode === "online") toast("Koneksi permainan terputus."); });
-  if (socket?.connected) joinLobbyChat();
+  if (socket?.connected) { joinLobbyChat(); reconnectRoom(); }
 })();

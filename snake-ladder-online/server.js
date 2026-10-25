@@ -12,6 +12,7 @@ const server = http.createServer(app);
 const socketPath = process.env.SOCKET_PATH || "/ular-tangga/socket.io";
 const io = new Server(server, { path: socketPath, cors: { origin: false } });
 const PORT = Number(process.env.PORT) || 3016;
+const RECONNECT_GRACE_MS = Number(process.env.RECONNECT_GRACE_MS) || 30 * 60_000;
 const rooms = new Map();
 const lobbyChats = new Map([["MMS", []], ["KT", []]]);
 
@@ -50,6 +51,7 @@ const publicRoom = (room) => ({
   lastMove: room.lastMove,
 });
 const findPlayer = (room, socket) => room.players.find((player) => player.socketId === socket.id);
+const sessionReply = (room, player) => ({ ok: true, room: publicRoom(room), playerId: player.id, reconnectToken: player.reconnectToken });
 const emitRoom = (room) => io.to(room.code).emit("room:state", publicRoom(room));
 const voicePeers = (room, playerId) => room.players
   .filter((player) => player.connected && player.voice && player.id !== playerId)
@@ -75,10 +77,21 @@ const removeRoomAnnouncement = (room) => {
   lobbyChats.set(room.siteId, remaining);
   io.to(lobbyChannel(room.siteId)).emit("lobby:chat:remove-room", { roomCode: room.code });
 };
-const finishIfEmpty = (room) => {
-  if (!room.players.every((player) => !player.connected)) return;
-  rooms.delete(room.code);
-  removeRoomAnnouncement(room);
+const scheduleDisconnectCleanup = (room, player) => {
+  clearTimeout(player.cleanupTimer);
+  player.cleanupTimer = setTimeout(() => {
+    if (player.connected) return;
+    room.players = room.players.filter((item) => item.id !== player.id);
+    if (room.turn === player.id) room.turn = room.players.find((item) => item.connected)?.id || null;
+    if (!room.players.length) {
+      rooms.delete(room.code);
+      removeRoomAnnouncement(room);
+      return;
+    }
+    room.status = room.players.length >= 2 ? room.status : "waiting";
+    emitRoom(room);
+  }, RECONNECT_GRACE_MS);
+  player.cleanupTimer.unref();
 };
 
 io.on("connection", (socket) => {
@@ -110,12 +123,12 @@ io.on("connection", (socket) => {
     if (!playerName) return reply({ ok: false, error: "Nama pemain wajib diisi." });
     let roomCode = code();
     while (rooms.has(roomCode)) roomCode = code();
-    const player = { id: crypto.randomUUID(), socketId: socket.id, name: playerName, color: "#f0b54b", position: 1, connected: true };
+    const player = { id: crypto.randomUUID(), reconnectToken: crypto.randomBytes(24).toString("base64url"), socketId: socket.id, name: playerName, color: "#f0b54b", position: 1, connected: true };
     const room = { code: roomCode, siteId, status: "waiting", turn: player.id, winner: null, players: [player], lastMove: null };
     rooms.set(roomCode, room);
     socket.join(roomCode);
     socket.data.roomCode = roomCode;
-    reply({ ok: true, room: publicRoom(room), playerId: player.id });
+    reply(sessionReply(room, player));
     emitRoom(room);
     publishLobbyMessage(siteId, playerName, `${playerName} membuat room ${roomCode}. Tekan kode untuk gabung.`, roomCode);
   });
@@ -130,12 +143,29 @@ io.on("connection", (socket) => {
     if (room.players.length >= 4) return reply({ ok: false, error: "Room sudah penuh." });
     if (room.status === "finished") return reply({ ok: false, error: "Permainan sudah selesai." });
     const colors = ["#f0b54b", "#4db8d0", "#ef6f6c", "#70c48f"];
-    const player = { id: crypto.randomUUID(), socketId: socket.id, name: playerName, color: colors[room.players.length], position: 1, connected: true };
+    const player = { id: crypto.randomUUID(), reconnectToken: crypto.randomBytes(24).toString("base64url"), socketId: socket.id, name: playerName, color: colors[room.players.length], position: 1, connected: true };
     room.players.push(player);
     room.status = room.players.length >= 2 ? "playing" : "waiting";
     socket.join(roomCode);
     socket.data.roomCode = roomCode;
-    reply({ ok: true, room: publicRoom(room), playerId: player.id });
+    reply(sessionReply(room, player));
+    emitRoom(room);
+  });
+
+  socket.on("room:reconnect", ({ code: rawCode, playerId, reconnectToken, siteId: rawSiteId } = {}, reply = () => {}) => {
+    const roomCode = String(rawCode || "").trim().toUpperCase();
+    const siteId = cleanSiteId(rawSiteId);
+    const room = rooms.get(roomCode);
+    const player = room?.players.find((item) => item.id === playerId && item.reconnectToken === reconnectToken);
+    if (!room || room.siteId !== siteId || !player) return reply({ ok: false, error: "Sesi room sudah berakhir." });
+    clearTimeout(player.cleanupTimer);
+    if (player.socketId && player.socketId !== socket.id) io.sockets.sockets.get(player.socketId)?.disconnect(true);
+    player.socketId = socket.id;
+    player.connected = true;
+    player.disconnectedAt = null;
+    socket.join(room.code);
+    socket.data.roomCode = room.code;
+    reply(sessionReply(room, player));
     emitRoom(room);
   });
 
@@ -219,14 +249,11 @@ io.on("connection", (socket) => {
     if (!room || !player) return;
     leaveVoice(room, player);
     player.connected = false;
-    if (room.turn === player.id) {
-      const next = room.players.find((item) => item.connected);
-      room.turn = next ? next.id : null;
-    }
+    player.disconnectedAt = Date.now();
     emitRoom(room);
-    setTimeout(() => finishIfEmpty(room), 60_000).unref();
+    scheduleDisconnectCleanup(room, player);
   });
 });
 
 if (require.main === module) server.listen(PORT, "127.0.0.1", () => console.log(`Ular Tangga MMS listening on ${PORT}`));
-module.exports = { app, server, io, rooms, lobbyChats };
+module.exports = { app, server, io, rooms, lobbyChats, RECONNECT_GRACE_MS };
