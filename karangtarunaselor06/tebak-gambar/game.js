@@ -76,6 +76,21 @@
     if (action === "join" && $("#code-wrap").hidden) { $("#code-wrap").hidden = false; $("#room-code").focus(); return; }
     socket.emit(action === "create" ? "room:create" : "room:join", { name, code: $("#room-code").value, siteId }, (reply) => { $("#room-error").textContent = reply?.ok ? "" : reply?.error || "Gagal masuk room."; if (!reply?.ok) return; state.playerId = reply.playerId; state.room = reply.room; saveSession(reply); render(); });
   });
+  $("#back-button").addEventListener("click", () => {
+    if (!state.room) return location.assign("/");
+    $("#leave-dialog").showModal();
+  });
+  $("#cancel-leave").addEventListener("click", () => $("#leave-dialog").close());
+  $("#confirm-leave").addEventListener("click", () => {
+    const finish = () => {
+      sessionStorage.removeItem(sessionKey);
+      state.playerId = null; state.room = null; state.secret = null; state.lastStatus = null; state.correctShown = null;
+      $("#leave-dialog").close(); if ($("#correct-dialog").open) $("#correct-dialog").close();
+      $("#lobby").hidden = true; $("#game").hidden = true; $("#welcome").hidden = false;
+      window.GuessMedia?.leave();
+    };
+    socket.emit("room:leave", {}, (reply) => reply?.ok ? finish() : toast(reply?.error || "Gagal keluar room."));
+  });
   $("#start-game").addEventListener("click", () => socket.emit("game:start", {}, (reply) => { if (!reply?.ok) toast(reply.error); }));
   $("#room-display").addEventListener("click", () => navigator.clipboard?.writeText(state.room?.code));
   $("#close-correct").addEventListener("click", () => $("#correct-dialog").close());

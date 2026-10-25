@@ -250,7 +250,16 @@
         playSound("reset");
         socket.emit("resetGame");
     });
-    els.leave.addEventListener("click", () => window.location.href = "../index.html");
+    const leaveDialog = $("leave-dialog");
+    const openLeaveDialog = () => leaveDialog.showModal();
+    els.leave.addEventListener("click", openLeaveDialog);
+    $("back-link").addEventListener("click", (event) => {
+        if (els.game.classList.contains("hidden")) return;
+        event.preventDefault();
+        openLeaveDialog();
+    });
+    $("cancel-leave").addEventListener("click", () => leaveDialog.close());
+    $("confirm-leave").addEventListener("click", () => window.location.href = "./");
 
     els.roomInput.value = randomRoom();
 })();

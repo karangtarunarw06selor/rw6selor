@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Catur Online RW06 Selor</title>
     <link rel="icon" href="../images/karangtaruna.avif" type="image/avif">
-    <link rel="stylesheet" href="chess.css?v=3">
+    <link rel="stylesheet" href="chess.css?v=4">
 </head>
 <body>
     <main class="chess-app">
         <header class="game-header">
-            <a href="../index.html" class="back-link">← Kembali</a>
+            <a id="back-link" href="../index.html" class="back-link">← Kembali</a>
             <div>
                 <p class="eyebrow">GAME RW06 SELOR</p>
                 <h1>Catur Online</h1>
@@ -50,7 +50,13 @@
         </section>
     </main>
 
+    <dialog id="leave-dialog" class="leave-dialog">
+        <h2>Kembali ke Lobby?</h2>
+        <p>Kamu akan keluar dari permainan dan kembali ke lobby awal Catur.</p>
+        <div><button id="cancel-leave" class="secondary" type="button">Batal</button><button id="confirm-leave" class="danger" type="button">Keluar Game</button></div>
+    </dialog>
+
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-    <script src="chess.js?v=3"></script>
+    <script src="chess.js?v=4"></script>
 </body>
 </html>

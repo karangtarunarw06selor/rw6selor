@@ -146,6 +146,21 @@ io.on("connection", (socket) => {
     player.socketId = socket.id; player.connected = true; player.media = { voice: false, video: false };
     socket.join(room.code); socket.data.roomCode = room.code; reply(sessionReply(room, player)); emitRoom(room);
   });
+  socket.on("room:leave", (_data, reply = () => {}) => {
+    const room = rooms.get(socket.data.roomCode); const player = playerBySocket(room, socket);
+    if (!room || !player) return reply({ ok: false, error: "Sesi tidak ditemukan." });
+    clearTimeout(player.cleanupTimer);
+    player.media = { voice: false, video: false };
+    socket.to(room.code).emit("media:peer-left", { playerId: player.id });
+    room.players = room.players.filter((item) => item.id !== player.id);
+    socket.leave(room.code); socket.data.roomCode = null;
+    if (!room.players.length) removeRoom(room);
+    else {
+      if (room.drawerId === player.id && room.status === "playing") finishRound(room, { reason: "drawer-left", drawerPenalty: -1 });
+      else emitRoom(room);
+    }
+    reply({ ok: true });
+  });
   socket.on("game:start", (_data, reply = () => {}) => {
     const room = rooms.get(socket.data.roomCode); const player = playerBySocket(room, socket);
     if (!room || room.players[0]?.id !== player?.id) return reply({ ok: false, error: "Hanya host." });

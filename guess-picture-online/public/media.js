@@ -31,7 +31,7 @@
     return peer;
   };
   const stop = () => {
-    stream?.getTracks().forEach((track) => track.stop()); stream = null; peers.forEach((_peer, id) => removePeer(id)); dock.innerHTML = ""; socket.emit("media:update", { voice: false, video: false }); dialog.close();
+    stream?.getTracks().forEach((track) => track.stop()); stream = null; peers.forEach((_peer, id) => removePeer(id)); dock.innerHTML = ""; socket.emit("media:update", { voice: false, video: false }); if (dialog.open) dialog.close();
   };
   const start = async (video) => {
     error.textContent = "";
@@ -66,4 +66,5 @@
   document.querySelector("#voice-video").addEventListener("click", () => start(true));
   document.querySelector("#media-off").addEventListener("click", stop);
   socket.on("disconnect", () => { stream?.getTracks().forEach((track) => track.stop()); peers.forEach((_peer, id) => removePeer(id)); });
+  window.GuessMedia = { leave: stop };
 })();

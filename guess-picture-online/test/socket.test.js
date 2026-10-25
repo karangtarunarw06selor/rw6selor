@@ -23,7 +23,7 @@ const setup = async (context) => {
 test("only the drawer receives the secret question", async (context) => {
   const { host, guest } = await setup(context);
   const secret = new Promise((resolve) => host.once("round:secret", resolve));
-  const guestStatePromise = new Promise((resolve) => guest.once("room:state", resolve));
+  const guestStatePromise = waitFor(guest, "room:state", (room) => room.status === "playing");
   let leaked = false; guest.on("round:secret", () => { leaked = true; });
   const started = await emit(host, "game:start");
   assert.equal(started.ok, true);
@@ -113,4 +113,20 @@ test("reconnect token restores the same seat and rejects impostors", async (cont
   assert.equal((await emit(resumed, "room:reconnect", { code: created.room.code, siteId: "MMS", playerId: joined.playerId, reconnectToken: "bad" })).ok, false);
   const restored = await emit(resumed, "room:reconnect", { code: created.room.code, siteId: "MMS", playerId: joined.playerId, reconnectToken: joined.reconnectToken });
   assert.equal(restored.ok, true); assert.equal(restored.playerId, joined.playerId);
+});
+
+test("explicit leave removes the seat and returns the socket to lobby state", async (context) => {
+  const { host, guest, created, joined } = await setup(context);
+  const hostUpdate = waitFor(host, "room:state", (room) => room.players.length === 1);
+  const left = await emit(guest, "room:leave");
+  assert.equal(left.ok, true);
+  const room = await hostUpdate;
+  assert.equal(room.players.some((player) => player.id === joined.playerId), false);
+  assert.equal((await emit(guest, "room:reconnect", {
+    code: created.room.code,
+    siteId: "MMS",
+    playerId: joined.playerId,
+    reconnectToken: joined.reconnectToken,
+  })).ok, false);
+  assert.equal((await emit(guest, "room:create", { name: "Bima", siteId: "MMS" })).ok, true);
 });
