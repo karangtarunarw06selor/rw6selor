@@ -1,0 +1,20 @@
+[Unit]
+Description=RW06 Tebak Gambar Online
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/guess-picture-online
+Environment=NODE_ENV=production
+Environment=PORT=3052
+Environment=SOCKET_PATH=/tebak-gambar/socket.io
+ExecStart=/usr/bin/node server.js
+Restart=on-failure
+RestartSec=3
+PrivateTmp=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

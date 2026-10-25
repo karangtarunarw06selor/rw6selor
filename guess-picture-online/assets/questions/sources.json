@@ -1,0 +1,42 @@
+{
+  "everest": {
+    "page": "https://en.wikipedia.org/wiki/Mount_Everest",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/15/Mt._Everest_from_Gokyo_Ri_November_5%2C_2012.jpg/330px-Mt._Everest_from_Gokyo_Ri_November_5%2C_2012.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "file": "everest.jpg"
+  },
+  "eiffel": {
+    "page": "https://en.wikipedia.org/wiki/Eiffel_Tower",
+    "image": "https://thumb.wikimedia.org/wikipedia/en/thumb/b/ba/Eiffel_Tower_logo.svg/330px-Eiffel_Tower_logo.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "file": "eiffel.png"
+  },
+  "ronaldo": {
+    "page": "https://en.wikipedia.org/wiki/Cristiano_Ronaldo",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/26/Cristiano_Ronaldo_Croatia_v_Portugal_2_July_2026-075_%28cropped%29.jpg/330px-Cristiano_Ronaldo_Croatia_v_Portugal_2_July_2026-075_%28cropped%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "file": "ronaldo.jpg"
+  },
+  "spongebob": {
+    "page": "https://en.wikipedia.org/wiki/SpongeBob_SquarePants",
+    "image": "https://thumb.wikimedia.org/wikipedia/en/thumb/2/22/SpongeBob_SquarePants_logo_by_Nickelodeon.svg/330px-SpongeBob_SquarePants_logo_by_Nickelodeon.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "file": "spongebob.png"
+  },
+  "borobudur": {
+    "page": "https://en.wikipedia.org/wiki/Borobudur",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/25/Pradaksina.jpg/330px-Pradaksina.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "file": "borobudur.jpg"
+  },
+  "monas": {
+    "page": "https://en.wikipedia.org/wiki/National_Monument_(Indonesia)",
+    "image": "https://thumb.wikimedia.org/wikipedia/en/thumb/a/a2/Jakarta_Indonesia_National-Monument-02.jpg/330px-Jakarta_Indonesia_National-Monument-02.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "file": "monas.jpg"
+  },
+  "harimau": {
+    "page": "https://en.wikipedia.org/wiki/Sumatran_tiger",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e1/Sumatran_Tiger_Berlin_Tierpark.jpg/330px-Sumatran_Tiger_Berlin_Tierpark.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "file": "harimau.jpg"
+  },
+  "aadc": {
+    "page": "https://en.wikipedia.org/wiki/What's_Up_with_Love%3F",
+    "image": "https://upload.wikimedia.org/wikipedia/en/d/de/Ada_Apa_dengan_Cinta_film.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "file": "aadc.jpg"
+  }
+}
