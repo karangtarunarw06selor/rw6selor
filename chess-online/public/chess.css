@@ -39,6 +39,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
 #join-room:hover{filter:brightness(1.05)}
 .secondary{background:#334155;color:var(--ink)}
 .secondary:hover{background:#475569}
+.mode-divider{display:flex;align-items:center;gap:10px;margin:18px 0;color:var(--muted);font-size:11px;text-transform:uppercase}.mode-divider::before,.mode-divider::after{content:"";height:1px;flex:1;background:#36516f}.computer-button{width:100%;min-height:50px;background:linear-gradient(135deg,#22c55e,#14b8a6);color:#031611;font-size:15px;font-weight:900}.computer-button:hover{filter:brightness(1.08)}
 .danger{background:#fb7185;color:#4c0519}
 .danger:hover{filter:brightness(1.05)}
 .message{min-height:18px;font-size:13px;font-weight:800}

@@ -12,6 +12,8 @@
     let turn = "white";
     let selected = null;
     let audioContext = null;
+    let gameMode = "online";
+    let computerThinking = false;
 
     function getAudioContext() {
         if (!audioContext) {
@@ -43,8 +45,12 @@
     function playSound(kind) {
         if (kind === "select") playTone(520, 0.05, "triangle", 0.035);
         if (kind === "move") {
-            playTone(620, 0.08, "sine", 0.05);
-            setTimeout(() => playTone(820, 0.07, "sine", 0.04), 65);
+            playTone(180, 0.055, "square", 0.07);
+            setTimeout(() => playTone(120, 0.075, "triangle", 0.05), 38);
+        }
+        if (kind === "capture") {
+            playTone(145, 0.09, "sawtooth", 0.065);
+            setTimeout(() => playTone(90, 0.12, "triangle", 0.055), 55);
         }
         if (kind === "error") playTone(150, 0.12, "sawtooth", 0.045);
         if (kind === "ready") playTone(880, 0.12, "triangle", 0.045);
@@ -58,6 +64,7 @@
         roomInput: $("room-code"),
         join: $("join-room"),
         random: $("random-room"),
+        computer: $("vs-computer"),
         status: $("connection-status"),
         lobbyMessage: $("lobby-message"),
         board: $("chess-board"),
@@ -129,10 +136,45 @@
         els.activeRoom.textContent = roomCode;
         els.playerColor.textContent = colorLabel(playerColor);
         els.turnLabel.textContent = colorLabel(turn);
-        els.gameStatus.textContent = status === "playing"
-            ? `Game berjalan. ${players}/2 player online.`
-            : `Menunggu lawan masuk. ${players}/2 player online.`;
+        els.gameStatus.textContent = gameMode === "computer"
+            ? computerThinking ? "Computer sedang berpikir…" : turn === "white" ? "Giliranmu. Kamu bermain sebagai Putih." : "Giliran Computer."
+            : status === "playing" ? `Game berjalan. ${players}/2 player online.` : `Menunggu lawan masuk. ${players}/2 player online.`;
+        els.copy.classList.toggle("hidden", gameMode === "computer");
         renderBoard();
+    }
+
+    function startComputerGame() {
+        gameMode = "computer";
+        roomCode = "VS COMPUTER";
+        playerColor = "white";
+        board = ChessCore.createInitialBoard();
+        turn = "white";
+        selected = null;
+        computerThinking = false;
+        els.lobby.classList.add("hidden");
+        els.game.classList.remove("hidden");
+        setMessage(els.gameMessage, "Kamu Putih. Pilih bidak untuk mulai.");
+        renderGame({ board, turn, players: 2, status: "playing" });
+    }
+
+    function computerMove() {
+        computerThinking = true;
+        renderGame({ board, turn, players: 2, status: "playing" });
+        setTimeout(() => {
+            const move = ChessCore.chooseComputerMove(board, "black");
+            if (!move) {
+                computerThinking = false;
+                setMessage(els.gameMessage, "Computer tidak memiliki langkah.");
+                return;
+            }
+            const result = ChessCore.applyMove(board, move);
+            board = result.board;
+            turn = "white";
+            computerThinking = false;
+            playSound(result.move.captured ? "capture" : "move");
+            setMessage(els.gameMessage, result.move.captured ? "Computer memakan bidakmu." : "Computer selesai bergerak. Giliranmu.");
+            renderGame({ board, turn, players: 2, status: "playing" });
+        }, 650);
     }
 
     function joinRoom() {
@@ -175,13 +217,34 @@
             return;
         }
 
-        socket.emit("movePiece", {
+        const move = {
             roomCode,
             fromRow: selected.row,
             fromCol: selected.col,
             toRow: row,
             toCol: col
-        });
+        };
+        if (gameMode === "computer") {
+            const legal = ChessCore.pieceMoves(board, selected.row, selected.col)
+                .find((candidate) => candidate.toRow === row && candidate.toCol === col);
+            if (!legal) {
+                playSound("error");
+                setMessage(els.gameMessage, "Langkah bidak itu tidak valid.", true);
+                selected = null;
+                renderBoard();
+                return;
+            }
+            const result = ChessCore.applyMove(board, legal);
+            board = result.board;
+            turn = "black";
+            selected = null;
+            playSound(result.move.captured ? "capture" : "move");
+            setMessage(els.gameMessage, result.move.captured ? "Bidak lawan berhasil dimakan." : "Langkah berhasil.");
+            renderGame({ board, turn, players: 2, status: "playing" });
+            computerMove();
+            return;
+        }
+        socket.emit("movePiece", move);
         selected = null;
     }
 
@@ -193,6 +256,7 @@
     });
 
     socket.on("joinedRoom", (data) => {
+        gameMode = "online";
         roomCode = data.roomCode;
         playerColor = data.color;
         els.lobby.classList.add("hidden");
@@ -208,7 +272,7 @@
         renderGame(data);
     });
     socket.on("boardUpdated", (data) => {
-        playSound("move");
+        playSound(data.move?.captured ? "capture" : "move");
         selected = null;
         setMessage(els.gameMessage, "Langkah berhasil.");
         renderGame(data);
@@ -231,6 +295,7 @@
     });
 
     els.join.addEventListener("click", joinRoom);
+    els.computer.addEventListener("click", startComputerGame);
     els.roomInput.addEventListener("keydown", (event) => {
         if (event.key === "Enter") joinRoom();
     });
@@ -248,6 +313,15 @@
     });
     els.reset.addEventListener("click", () => {
         playSound("reset");
+        if (gameMode === "computer") {
+            board = ChessCore.createInitialBoard();
+            turn = "white";
+            selected = null;
+            computerThinking = false;
+            setMessage(els.gameMessage, "Papan direset. Kamu Putih.");
+            renderGame({ board, turn, players: 2, status: "playing" });
+            return;
+        }
         socket.emit("resetGame");
     });
     els.leave.addEventListener("click", () => window.location.href = "../index.html");

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Catur Online RW06 Selor</title>
     <link rel="icon" href="../images/karangtaruna.avif" type="image/avif">
-    <link rel="stylesheet" href="chess.css?v=3">
+    <link rel="stylesheet" href="chess.css?v=4">
 </head>
 <body>
     <main class="chess-app">
@@ -26,6 +26,8 @@
                 <button id="join-room" type="button">Masuk Game</button>
             </div>
             <button id="random-room" class="secondary" type="button">Buat Kode Acak</button>
+            <div class="mode-divider"><span>atau</span></div>
+            <button id="vs-computer" class="computer-button" type="button">♟ Main Vs Computer</button>
             <p id="lobby-message" class="message"></p>
         </section>
 
@@ -51,6 +53,7 @@
     </main>
 
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-    <script src="chess.js?v=3"></script>
+    <script src="chess-core.js?v=1"></script>
+    <script src="chess.js?v=4"></script>
 </body>
 </html>
