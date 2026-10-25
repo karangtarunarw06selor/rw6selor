@@ -7,14 +7,25 @@
   const $ = (selector) => document.querySelector(selector);
   const siteId = document.body.dataset.site || "MMS";
   const socket = typeof io === "function" ? io({ path: "/ular-tangga/socket.io" }) : null;
-  const state = { mode: null, playerId: null, room: null, sound: true, busy: false };
+  const state = { mode: null, playerId: null, room: null, sound: true, busy: false, visualPositions: new Map(), animationQueue: Promise.resolve(), rollStartedAt: 0 };
   let setupMode = "solo";
 
-  const playSound = (id) => {
+  const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+  const snakePaths = {
+    17: [[43, 84], [50, 87], [57, 92], [66, 91], [62, 96]],
+    54: [[70, 49], [67, 55], [61, 58], [68, 64], [66, 70], [61, 75], [68, 81]],
+    62: [[20, 39], [18, 47], [13, 53], [17, 61], [20, 68], [14, 75], [18, 82]],
+    95: [[65, 10], [66, 18], [60, 24], [57, 31], [61, 39], [56, 47], [49, 53], [52, 59]],
+    99: [[10, 9], [13, 16], [20, 20], [24, 27], [17, 30], [12, 25], [17, 18]],
+  };
+
+  const playSound = (id, { start = 0, duration = 0 } = {}) => {
     if (!state.sound) return;
     const audio = $(id);
-    audio.currentTime = 0;
+    clearTimeout(audio.stopTimer);
+    audio.currentTime = start;
     audio.play().catch(() => {});
+    if (duration) audio.stopTimer = setTimeout(() => { audio.pause(); audio.currentTime = start; }, duration);
   };
   const toast = (message) => {
     const element = $("#toast");
@@ -35,6 +46,86 @@
     const slot = (value - 1) % 10;
     const column = row % 2 ? 9 - slot : slot;
     return { left: 6.4 + column * 9.68, top: 92.9 - row * 9.58 };
+  };
+  const tokenElement = (playerId) => document.querySelector(`.token[data-player-id="${CSS.escape(playerId)}"]`);
+  const syncTokens = (room) => {
+    const container = $("#tokens");
+    const ids = new Set(room.players.map((player) => player.id));
+    container.querySelectorAll(".token").forEach((token) => { if (!ids.has(token.dataset.playerId)) token.remove(); });
+    room.players.forEach((player, index) => {
+      let token = tokenElement(player.id);
+      if (!token) {
+        token = document.createElement("span");
+        token.className = `token offset-${index}`;
+        token.dataset.playerId = player.id;
+        token.textContent = index + 1;
+        container.append(token);
+      }
+      const point = coordinates(state.visualPositions.get(player.id) ?? player.position);
+      token.style.cssText = `left:${point.left}%;top:${point.top}%;background:${player.color}`;
+      token.title = player.name;
+    });
+  };
+  const animatePoint = async (playerId, position, duration = 220) => {
+    state.visualPositions.set(playerId, position);
+    const token = tokenElement(playerId);
+    if (!token) return;
+    const point = coordinates(position);
+    token.style.transitionDuration = `${duration}ms`;
+    token.style.left = `${point.left}%`;
+    token.style.top = `${point.top}%`;
+    await sleep(duration);
+  };
+  const animateTransfer = async (move) => {
+    const token = tokenElement(move.playerId);
+    if (!token) return;
+    const from = coordinates(move.stepped);
+    const to = coordinates(move.to);
+    const middle = move.event === "snake" ? snakePaths[move.stepped] || [] : [];
+    const points = [from, ...middle.map(([left, top]) => ({ left, top })), to];
+    playSound(move.event === "ladder" ? "#ladder-sound" : "#snake-sound");
+    token.classList.add(`following-${move.event}`);
+    token.style.transition = "none";
+    const animation = token.animate(points.map((point) => ({ left: `${point.left}%`, top: `${point.top}%` })), {
+      duration: move.event === "ladder" ? 900 : 1250,
+      easing: move.event === "ladder" ? "ease-in-out" : "linear",
+      fill: "forwards",
+    });
+    await animation.finished.catch(() => {});
+    token.classList.remove(`following-${move.event}`);
+    token.style.left = `${to.left}%`;
+    token.style.top = `${to.top}%`;
+    token.style.transition = "";
+    state.visualPositions.set(move.playerId, move.to);
+  };
+  const animateMove = async (move) => {
+    state.busy = true;
+    const elapsed = Date.now() - state.rollStartedAt;
+    if (!state.rollStartedAt || elapsed > 850) {
+      state.rollStartedAt = Date.now();
+      $("#dice").classList.remove("rolling");
+      requestAnimationFrame(() => $("#dice").classList.add("rolling"));
+      playSound("#dice-sound", { start: .16, duration: 800 });
+    }
+    await sleep(Math.max(0, 800 - (Date.now() - state.rollStartedAt)));
+    $("#dice").textContent = diceFaces[move.dice - 1];
+    if (move.from !== move.stepped) {
+      for (let position = move.from + 1; position <= move.stepped; position += 1) await animatePoint(move.playerId, position);
+    }
+    if (move.event === "ladder" || move.event === "snake") await animateTransfer(move);
+    state.visualPositions.set(move.playerId, move.to);
+    state.rollStartedAt = 0;
+    state.busy = false;
+    render();
+  };
+  const queueMove = (move) => {
+    if (!move || move.at === queueMove.lastAt) return state.animationQueue;
+    queueMove.lastAt = move.at;
+    state.busy = true;
+    $("#roll-button").disabled = true;
+    state.visualPositions.set(move.playerId, move.from);
+    state.animationQueue = state.animationQueue.then(() => animateMove(move));
+    return state.animationQueue;
   };
   const currentPlayer = () => state.room?.players.find((player) => player.id === state.playerId);
   const showSetup = (mode) => {
@@ -72,6 +163,8 @@
   const render = () => {
     const room = state.room;
     if (!room) return;
+    const hasNewMove = room.lastMove && room.lastMove.at !== render.lastMove;
+    if (hasNewMove) state.visualPositions.set(room.lastMove.playerId, room.lastMove.from);
     $("#room-code-display").textContent = room.code;
     const turn = room.players.find((player) => player.id === room.turn);
     $("#turn-name").textContent = room.status === "finished" ? "Selesai" : turn?.name || "Menunggu";
@@ -79,12 +172,9 @@
     $("#players").innerHTML = room.players.map((player) => {
       const mine = player.id === state.playerId;
       const voice = state.mode === "online" ? `${mine ? `<button class="player-voice${player.voice ? " active" : ""}" type="button" data-voice-toggle aria-label="${player.voice ? "Mute mikrofon" : "Aktifkan mikrofon"}" title="${player.voice ? "Mute mikrofon" : "Aktifkan mikrofon"}">${headsetIcon}</button>` : `<span class="player-voice${player.voice ? " active" : ""}" aria-label="${player.voice ? "Voice aktif" : "Voice tidak aktif"}">${headsetIcon}</span>`}` : "";
-      return `<article class="player-row" data-player-id="${player.id}"><span class="player-color" style="background:${player.color}"></span><div class="player-identity"><span class="player-name"><b>${escapeHtml(player.name)}</b>${voice}</span><small>${mine ? "Kamu" : player.connected === false ? "Terputus" : "Pemain"}</small></div><strong class="player-position">${player.position}</strong></article>`;
+      return `<article class="player-row" data-player-id="${player.id}"><span class="player-color" style="background:${player.color}"></span><div class="player-identity"><span class="player-name"><b>${escapeHtml(player.name)}</b>${voice}</span><small>${mine ? "Kamu" : player.connected === false ? "Terputus" : "Pemain"}</small></div><strong class="player-position">${state.visualPositions.get(player.id) ?? player.position}</strong></article>`;
     }).join("");
-    $("#tokens").innerHTML = room.players.map((player, index) => {
-      const point = coordinates(player.position);
-      return `<span class="token offset-${index}" style="left:${point.left}%;top:${point.top}%;background:${player.color}" title="${escapeHtml(player.name)}">${index + 1}</span>`;
-    }).join("");
+    syncTokens(room);
     const message = describeMove(room.lastMove);
     $("#event-banner").textContent = room.status === "waiting" ? "Bagikan kode room dan tunggu teman masuk." : message;
     const mine = currentPlayer();
@@ -93,10 +183,8 @@
     $("#reset-button").hidden = room.status !== "finished" || (state.mode !== "solo" && room.players[0]?.id !== state.playerId);
     if (room.lastMove && room.lastMove.at !== render.lastMove) {
       render.lastMove = room.lastMove.at;
-      $("#dice").textContent = diceFaces[room.lastMove.dice - 1];
       addLog(message);
-      if (room.lastMove.event === "ladder") playSound("#ladder-sound");
-      if (room.lastMove.event === "snake") playSound("#snake-sound");
+      queueMove(room.lastMove);
     }
     window.dispatchEvent(new CustomEvent("snake:rendered"));
   };
@@ -106,10 +194,8 @@
     $("#roll-button").disabled = true;
     $("#dice").classList.remove("rolling");
     requestAnimationFrame(() => $("#dice").classList.add("rolling"));
-    playSound("#dice-sound");
-  };
-  const finishAnimation = () => {
-    setTimeout(() => { state.busy = false; render(); }, 700);
+    state.rollStartedAt = Date.now();
+    playSound("#dice-sound", { start: .16, duration: 800 });
   };
   const createSolo = (name) => {
     state.mode = "solo";
@@ -141,7 +227,7 @@
       room.turn = playerId === "human" ? "bot" : "human";
     }
     render();
-    return result;
+    return { ...result, animation: queueMove(room.lastMove) };
   };
   const roll = () => {
     if (state.busy || !state.room) return;
@@ -149,14 +235,12 @@
     if (state.mode === "solo") {
       setTimeout(() => {
         const result = soloRoll("human");
-        if (!result.won) setTimeout(() => { soloRoll("bot"); finishAnimation(); }, 900);
-        else finishAnimation();
+        if (!result.won) result.animation.then(() => setTimeout(() => soloRoll("bot"), 350));
       }, 600);
       return;
     }
     socket.emit("game:roll", {}, (reply) => {
-      if (!reply?.ok) toast(reply?.error || "Dadu gagal dikocok.");
-      finishAnimation();
+      if (!reply?.ok) { state.busy = false; toast(reply?.error || "Dadu gagal dikocok."); render(); }
     });
   };
 
