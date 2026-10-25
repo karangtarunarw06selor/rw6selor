@@ -1,0 +1,27 @@
+{
+  "id": "/",
+  "name": "Muda-Mudi Selor 05",
+  "short_name": "MMS 05",
+  "description": "Portal kegiatan, layanan anggota, dan game Muda-Mudi Selor 05.",
+  "lang": "id-ID",
+  "dir": "ltr",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "orientation": "any",
+  "background_color": "#fff8f5",
+  "theme_color": "#b71c1c",
+  "categories": ["social", "utilities", "games"],
+  "icons": [
+    { "src": "/images/pwa-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/images/pwa-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/images/pwa-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Ular Tangga", "short_name": "Ular Tangga", "url": "/ular-tangga/", "icons": [{ "src": "/images/pwa-icon-192.png", "sizes": "192x192" }] },
+    { "name": "Kartu / Poker", "short_name": "Kartu", "url": "/poker/", "icons": [{ "src": "/images/pwa-icon-192.png", "sizes": "192x192" }] },
+    { "name": "Catur", "short_name": "Catur", "url": "/chess/", "icons": [{ "src": "/images/pwa-icon-192.png", "sizes": "192x192" }] },
+    { "name": "Billiard", "short_name": "Billiard", "url": "/billiard/", "icons": [{ "src": "/images/pwa-icon-192.png", "sizes": "192x192" }] }
+  ]
+}

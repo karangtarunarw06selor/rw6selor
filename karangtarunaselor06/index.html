@@ -3,21 +3,21 @@
 <head>
     <meta charset="UTF-8">
      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f5ea8">
     <title>Karangtaruna RW06 Selor</title>
 
     <link rel="icon" href="images/karangtaruna.avif" type="image/avif">
-    <link rel="icon" type="image/avif" sizes="192x192" href="images/karangtaruna.avif">
-    <link rel="apple-touch-icon" sizes="192x192" href="images/karangtaruna.avif">
-    <link rel="apple-touch-icon" sizes="512x512" href="images/karangtaruna.avif">
+    <link rel="icon" type="image/png" sizes="192x192" href="images/pwa-icon-192.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="images/pwa-icon-192.png">
 
     <meta name="description" content="Portal resmi Karang Taruna Muda Mudi Sedahromo Lor 05. Layanan administrasi warga, arsip laporan, berita, Kegiatan Pemuda-Pemudi , Karangtaruna , Kartasura , Sukoharjo , dan aplikasi Smart Health Assistant.">
     <meta name="keywords" content="Muda Mudi, Sedahromo Lor, Karang Taruna, Smart Health, Sukoharjo, Database Warga">
     <meta name="author" content="Muda Mudi Sedahromo Lor Official">
     
     
-    <link rel="stylesheet" href="style.css?v=judol-blue-1">
+    <link rel="stylesheet" href="style.css?v=game-nav-1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="manifest.json?v=pwa-1">
 
     <!-- Lucide Standalone Icons -->
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
@@ -102,7 +102,7 @@
                        <li class="submenu-item"><a href="/billiard/"> - BILLIARD</a></li>
                        <li class="submenu-item"><a href="/chess/"> - CATUR</a></li>
                        <li class="submenu-item"><a href="/ular-tangga/"> - ULAR TANGGA</a></li>
-                       <li class="submenu-item"><a href="/poker/"> - POKER</a></li>
+                       <li class="submenu-item"><a href="/poker/"> - KARTU / POKER</a></li>
                     </ul>
                  </li>
  
@@ -242,6 +242,20 @@
         </div>
     </div>
 
+    <aside id="pwa-install-popup">
+        <div class="pwa-mms-container">
+            <img src="images/pwa-icon-192.png" alt="Logo Karang Taruna RW06" class="pwa-mms-logo">
+            <div class="pwa-mms-text-block">
+                <h4 class="pwa-mms-title">Aplikasi Karang Taruna RW06</h4>
+                <p class="pwa-mms-subtitle">Pasang di layar utama untuk akses portal dan game lebih cepat.</p>
+            </div>
+            <div class="pwa-mms-buttons">
+                <button type="button" onclick="this.closest('#pwa-install-popup').hidden=true" class="pwa-mms-btn-later">Nanti</button>
+                <button type="button" id="btn-instal-pwa" class="pwa-mms-btn-install">Instal</button>
+            </div>
+        </div>
+    </aside>
+
 <script>
     // Init lucide icons when DOM is ready
     document.addEventListener('DOMContentLoaded', function() {
@@ -252,5 +266,6 @@
 </script>
 <script src="online-tracker.js"></script>
     <script src="script.js?v=bg-auto-1"></script>
+    <script src="pwa.js?v=1"></script>
 </body>
 </html>
