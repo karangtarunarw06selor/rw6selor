@@ -95,6 +95,7 @@
     token.classList.remove(`following-${move.event}`);
     token.style.left = `${to.left}%`;
     token.style.top = `${to.top}%`;
+    animation.cancel();
     token.style.transition = "";
     state.visualPositions.set(move.playerId, move.to);
   };
