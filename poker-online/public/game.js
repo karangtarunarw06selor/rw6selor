@@ -5,6 +5,8 @@
   const socket = io({ path: "/poker/socket.io", transports: ["websocket", "polling"] });
   const siteId = /karangtaruna/i.test(location.hostname + location.pathname) ? "KT" : "MMS";
   document.body.dataset.site = siteId;
+  document.querySelector('link[rel="icon"]').href = siteId === "KT" ? "favicon-kt.avif?v=1" : "favicon-mms.avif?v=1";
+  document.querySelector('link[rel="apple-touch-icon"]').href = siteId === "KT" ? "favicon-kt.avif?v=1" : "favicon-mms.avif?v=1";
   const siteBrand = siteId === "KT" ? "KT RW06" : "MMS 05";
   document.title = `Game Kartu ${siteBrand}`;
   document.querySelector("[data-site-brand]").textContent = `${siteBrand} SOCIAL GAME`;
