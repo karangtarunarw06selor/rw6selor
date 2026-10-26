@@ -5,7 +5,7 @@
   const socket = io({ path: "/tebak-gambar/socket.io" });
   const siteId = document.body.dataset.site || "MMS";
   const sessionKey = `guess-picture-session:${siteId}`;
-  const state = { playerId: null, room: null, secret: null, activeClue: 0, drawing: false, points: [], lastStatus: null, correctShown: null };
+  const state = { playerId: null, room: null, secret: null, activeClue: 0, drawing: false, points: [], lastStatus: null, correctShown: null, selectedRounds: 2 };
   const canvas = $("#clue-canvas"), context = canvas.getContext("2d");
   const toast = (text) => { $("#toast").textContent = text; $("#toast").classList.add("show"); setTimeout(() => $("#toast").classList.remove("show"), 2200); };
   const lobbyNameKey = `guess-picture-name:${siteId}`;
@@ -55,7 +55,8 @@
     $("#guess-form").hidden = false;
     $("#room-display").textContent = room.code; renderPlayers(); renderRoomMessages();
     $("#restart-game").hidden = room.status !== "finished" || room.hostId !== state.playerId;
-    $("#start-game").hidden = room.hostId !== state.playerId; $("#lobby-note").hidden = room.hostId === state.playerId;
+    const isHost = room.hostId === state.playerId;
+    $("#start-game").hidden = !isHost; $("#round-options").hidden = !isHost; $("#lobby-note").hidden = isHost;
     if (waiting) return;
     const drawer = room.players.find((player) => player.id === room.drawerId);
     $("#round-label").textContent = `RONDE ${Math.min(room.round, room.totalRounds)} / ${room.totalRounds}`;
@@ -118,8 +119,9 @@
     };
     socket.emit("room:leave", {}, (reply) => reply?.ok ? finish() : toast(reply?.error || "Gagal keluar room."));
   });
-  $("#start-game").addEventListener("click", () => socket.emit("game:start", {}, (reply) => { if (!reply?.ok) toast(reply.error); }));
-  $("#restart-game").addEventListener("click", () => socket.emit("game:start", {}, (reply) => { if (!reply?.ok) toast(reply.error); }));
+  $("#round-options").addEventListener("click", (event) => { const rounds = Number(event.target.dataset.rounds); if (![2, 3, 5].includes(rounds)) return; state.selectedRounds = rounds; $("#round-options").querySelectorAll("[data-rounds]").forEach((button) => button.classList.toggle("active", Number(button.dataset.rounds) === rounds)); $("#start-game").textContent = `Mulai ${rounds} Putaran`; });
+  $("#start-game").addEventListener("click", () => socket.emit("game:start", { roundsPerPlayer: state.selectedRounds }, (reply) => { if (!reply?.ok) toast(reply.error); }));
+  $("#restart-game").addEventListener("click", () => socket.emit("game:start", { roundsPerPlayer: state.room?.roundsPerPlayer || 2 }, (reply) => { if (!reply?.ok) toast(reply.error); }));
   $("#room-display").addEventListener("click", () => navigator.clipboard?.writeText(state.room?.code));
   $("#close-correct").addEventListener("click", () => $("#correct-dialog").close());
   $("#next-clue").addEventListener("click", () => socket.emit("clue:unlock", {}, (reply) => { if (!reply?.ok) toast(reply.error); else { state.activeClue = state.room.clueCount; } }));

@@ -44,7 +44,7 @@ const questionImage = (question) => {
 
 const publicView = (room) => ({
   code: room.code, siteId: room.siteId, status: room.status, hostId: room.players[0]?.id || null,
-  drawerId: room.drawerId, round: room.round, totalRounds: room.totalRounds, clueCount: room.clueCount,
+  drawerId: room.drawerId, round: room.round, totalRounds: room.totalRounds, roundsPerPlayer: room.roundsPerPlayer || 2, clueCount: room.clueCount,
   deadline: room.deadline, winnerId: room.winnerId, answerReveal: room.answerReveal, result: room.result,
   strokes: room.strokes, reports: room.reports.size, messages: room.messages,
   players: room.players.map(({ id, name, score, connected, media, wins, totalGuessMs }) => ({ id, name, score, connected, media, wins, totalGuessMs, participant: room.status === "waiting" || room.activeIds?.has(id) })),
@@ -163,7 +163,7 @@ io.on("connection", (socket) => {
     const nameClean = cleanName(name); if (!nameClean) return reply({ ok: false, error: "Nama wajib diisi." });
     let roomCode = code(); while (rooms.has(roomCode)) roomCode = code();
     const player = { id: crypto.randomUUID(), token: crypto.randomBytes(24).toString("base64url"), socketId: socket.id, name: nameClean, score: 0, wins: 0, totalGuessMs: 0, connected: true, media: { voice: false, video: false } };
-    const room = { code: roomCode, siteId: cleanSite(rawSite), status: "waiting", players: [player], createdAt: Date.now(), round: 0, totalRounds: 0, drawerId: null, clueCount: 0, strokes: [[], [], [], []], reports: new Set(), usedQuestions: new Set(), winnerId: null, messages: [] };
+    const room = { code: roomCode, siteId: cleanSite(rawSite), status: "waiting", players: [player], createdAt: Date.now(), round: 0, totalRounds: 0, roundsPerPlayer: 2, drawerId: null, clueCount: 0, strokes: [[], [], [], []], reports: new Set(), usedQuestions: new Set(), winnerId: null, messages: [] };
     rooms.set(roomCode, room); socket.join(roomCode); socket.data.roomCode = roomCode; reply(sessionReply(room, player)); emitRoom(room); emitLobby(room.siteId);
   });
   socket.on("room:join", ({ name, code: rawCode, siteId: rawSite } = {}, reply = () => {}) => {
@@ -203,17 +203,19 @@ io.on("connection", (socket) => {
     }
     reply({ ok: true });
   });
-  socket.on("game:start", (_data, reply = () => {}) => {
+  socket.on("game:start", ({ roundsPerPlayer = 2 } = {}, reply = () => {}) => {
     const room = rooms.get(socket.data.roomCode); const player = playerBySocket(room, socket);
     if (!room || room.players[0]?.id !== player?.id) return reply({ ok: false, error: "Hanya host." });
     if (!['waiting', 'finished'].includes(room.status)) return reply({ ok: false, error: "Permainan sedang berjalan." });
+    const rounds = Number(roundsPerPlayer);
+    if (![2, 3, 5].includes(rounds)) return reply({ ok: false, error: "Pilihan putaran tidak valid." });
     const participants = room.players.filter((item) => item.connected);
     if (participants.length < 2) return reply({ ok: false, error: "Minimal dua pemain." });
     if (room.status === "finished") {
       room.round = 0; room.winnerId = null; room.answerReveal = null; room.result = null;
       room.players.forEach((item) => { item.score = 0; item.wins = 0; item.totalGuessMs = 0; });
     }
-    room.activeIds = new Set(participants.map((item) => item.id)); room.totalRounds = participants.length * 2; reply({ ok: true }); startRound(room); emitLobby(room.siteId);
+    room.roundsPerPlayer = rounds; room.activeIds = new Set(participants.map((item) => item.id)); room.totalRounds = participants.length * rounds; reply({ ok: true }); startRound(room); emitLobby(room.siteId);
   });
   socket.on("clue:stroke", ({ clueIndex, points, color, size } = {}, reply = () => {}) => {
     const room = rooms.get(socket.data.roomCode); const player = playerBySocket(room, socket);

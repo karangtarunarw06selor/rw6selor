@@ -66,6 +66,9 @@ test("waiting room supports chat and media while one socket remains isolated to 
   assert.equal((await emit(host, "room:reconnect", { code: created.room.code, playerId: created.playerId, reconnectToken: created.reconnectToken, siteId: "MMS" })).ok, false);
   assert.equal(rooms.get(created.room.code).players.length, 2);
   assert.equal(guest.connected, true);
+  assert.equal((await emit(host, "game:start", { roundsPerPlayer: 4 })).ok, false);
+  assert.equal((await emit(host, "game:start", { roundsPerPlayer: 3 })).ok, true);
+  assert.equal(rooms.get(created.room.code).totalRounds, 6);
 });
 
 test("late joiner spectates gameplay but can use room chat", async (context) => {
