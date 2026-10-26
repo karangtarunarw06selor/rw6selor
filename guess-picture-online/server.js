@@ -31,8 +31,8 @@ const cleanSite = (value) => String(value || "").toUpperCase() === "KT" ? "KT" :
 const cleanChat = (value) => String(value || "").trim().replace(/\s+/g, " ").slice(0, 180);
 const code = () => crypto.randomBytes(3).toString("hex").slice(0, 6).toUpperCase();
 const playerBySocket = (room, socket) => room?.players.find((player) => player.socketId === socket.id);
-const scoreFor = (clueCount) => [4, 4, 3, 2, 1][Math.max(1, Math.min(4, clueCount))];
-const drawerScoreFor = (clueCount) => [3, 3, 2, 1, 1][Math.max(1, Math.min(4, clueCount))];
+const scoreFor = () => 2;
+const drawerScoreFor = () => 1;
 const imageCache = new Map();
 const questionImage = (question) => {
   if (imageCache.has(question.image)) return imageCache.get(question.image);

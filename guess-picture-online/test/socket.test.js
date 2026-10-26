@@ -171,8 +171,8 @@ test("fastest normalized answer wins and points are recorded immediately", async
   assert.deepEqual(hostState.result, guestState.result);
   const room = [...rooms.values()][0];
   assert.equal(room.status, "result");
-  assert.equal(room.players.find((p) => p.id === joined.playerId).score, 4);
-  assert.equal(room.players[0].score, 3);
+  assert.equal(room.players.find((p) => p.id === joined.playerId).score, 2);
+  assert.equal(room.players[0].score, 1);
   assert.ok(room.result.elapsedMs >= 0);
   assert.equal(room.nextTimer._idleTimeout, 30_000);
 });

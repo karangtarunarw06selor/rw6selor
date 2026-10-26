@@ -7,9 +7,9 @@ test("answer matching ignores capitalization, punctuation, accents, and repeated
   assert.equal(normalize("  GuNuNg---Everest!! "), "gunung everest");
   assert.equal(normalize("MÉNARA   EIFFEL"), "menara eiffel");
 });
-test("scores decrease as more clues are opened", () => {
-  assert.deepEqual([1, 2, 3, 4].map(scoreFor), [4, 3, 2, 1]);
-  assert.deepEqual([1, 2, 3, 4].map(drawerScoreFor), [3, 2, 1, 1]);
+test("correct guesses always award two points and the drawer one", () => {
+  assert.deepEqual([1, 2, 3, 4].map(scoreFor), [2, 2, 2, 2]);
+  assert.deepEqual([1, 2, 3, 4].map(drawerScoreFor), [1, 1, 1, 1]);
 });
 
 test("question bank adds a third 100 unique private images for 308 total", () => {
