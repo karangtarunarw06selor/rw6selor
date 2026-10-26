@@ -55,6 +55,13 @@ test("waiting room supports chat and media while one socket remains isolated to 
   const { host, guest, created } = await setup(context);
   const outsider = await connect(server.address().port); context.after(() => outsider.close());
   assert.equal((await emit(outsider, "media:update", { voice: true, video: true })).error, "Masuk ke room terlebih dahulu.");
+  assert.equal((await emit(outsider, "media:config")).ok, false);
+  process.env.TURN_SECRET = "test-turn-secret"; context.after(() => { delete process.env.TURN_SECRET; });
+  const rtc = await emit(host, "media:config");
+  assert.equal(rtc.ok, true);
+  assert.match(rtc.iceServers.at(-1).urls[0], /^turn:178\.83\.188\.207:3478/);
+  assert.match(rtc.iceServers.at(-1).username, /^\d+:/);
+  assert.ok(rtc.iceServers.at(-1).credential.length > 20);
   assert.equal((await emit(host, "media:update", { voice: true, video: true })).ok, true);
   assert.equal(created.room.messages.length, 0);
   assert.equal(rooms.get(created.room.code).messages[0].text, "Bima masuk ke room.");

@@ -3,7 +3,7 @@
   const game = window.guessGame, socket = game.socket;
   const dialog = document.querySelector("#media-dialog"), dock = document.querySelector("#video-dock"), error = document.querySelector("#media-error");
   const peers = new Map(), pendingSignals = new Map(); let stream = null;
-  const rtcConfig = { iceServers: [{ urls: "stun:stun.cloudflare.com:3478" }, { urls: "stun:stun.l.google.com:19302" }] };
+  let rtcConfig = { iceServers: [{ urls: "stun:stun.cloudflare.com:3478" }, { urls: "stun:stun.l.google.com:19302" }] };
   const tile = (id, name, local = false) => {
     let node = document.querySelector(`.video-tile[data-peer="${CSS.escape(id)}"]`); if (node) return node;
     node = document.createElement("div"); node.className = "video-tile"; node.dataset.peer = id; node.title = name; node.innerHTML = `<video autoplay playsinline ${local ? "muted" : ""}></video>`;
@@ -37,6 +37,9 @@
   const start = async (video) => {
     error.textContent = "";
     try {
+      const config = await new Promise((resolve) => socket.emit("media:config", {}, resolve));
+      if (!config?.ok) throw new Error(config?.error || "Konfigurasi media tidak tersedia.");
+      rtcConfig = { iceServers: config.iceServers };
       stop(); stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true }, video: video ? { width: { ideal: 640 }, height: { ideal: 360 }, facingMode: "user" } : false });
       const own = game.currentPlayer(); if (video) tile(own?.id || "local", `${own?.name || "Kamu"} · Kamu`, true).querySelector("video").srcObject = stream;
       for (const [playerId, queued] of pendingSignals) { pendingSignals.delete(playerId); for (const item of queued) await handleSignal(item); }
@@ -46,7 +49,7 @@
         dialog.close(); game.toast(video ? "Voice dan kamera aktif." : "Voice aktif.");
       });
     } catch (reason) {
-      const blocked = reason?.name === "NotAllowedError" ? "Izin media belum diberikan. Tutup bubble/overlay, lalu coba lagi." : "Mikrofon atau kamera tidak tersedia.";
+      const blocked = reason?.name === "NotAllowedError" ? "Izin media belum diberikan. Tutup bubble/overlay, lalu coba lagi." : reason?.message || "Mikrofon atau kamera tidak tersedia.";
       error.textContent = blocked;
     }
   };

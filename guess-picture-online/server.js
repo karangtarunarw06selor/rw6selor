@@ -274,6 +274,13 @@ io.on("connection", (socket) => {
     if (action === "cancel") finishRound(room, { reason: "cancelled" }); else if (action === "penalty") finishRound(room, { reason: "violation", drawerPenalty: -2 }); else return reply({ ok: false });
     reply({ ok: true });
   });
+  socket.on("media:config", (_data, reply = () => {}) => {
+    const room = rooms.get(socket.data.roomCode); const player = playerBySocket(room, socket); const secret = process.env.TURN_SECRET;
+    if (!room || !player || !secret) return reply({ ok: false, error: "Konfigurasi media tidak tersedia." });
+    const username = `${Math.floor(Date.now() / 1000) + 3600}:${player.id}`;
+    const credential = crypto.createHmac("sha1", secret).update(username).digest("base64");
+    reply({ ok: true, iceServers: [{ urls: ["stun:stun.cloudflare.com:3478", "stun:stun.l.google.com:19302"] }, { urls: ["turn:178.83.188.207:3478?transport=udp", "turn:178.83.188.207:3478?transport=tcp"], username, credential }] });
+  });
   socket.on("media:update", ({ voice, video } = {}, reply = () => {}) => {
     const room = rooms.get(socket.data.roomCode); const player = playerBySocket(room, socket); if (!room || !player) return reply({ ok: false, error: "Masuk ke room terlebih dahulu." });
     const activeVideos = room.players.filter((item) => item.media.video && item.id !== player.id).length;
