@@ -5,9 +5,11 @@
   const peers = new Map(), pendingSignals = new Map(); let stream = null;
   let rtcConfig = { iceServers: [{ urls: "stun:stun.cloudflare.com:3478" }, { urls: "stun:stun.l.google.com:19302" }] };
   const tile = (id, name, local = false) => {
-    let node = document.querySelector(`.video-tile[data-peer="${CSS.escape(id)}"]`); if (node) return node;
-    node = document.createElement("div"); node.className = "video-tile"; node.dataset.peer = id; node.title = name; node.innerHTML = `<video autoplay playsinline ${local ? "muted" : ""}></video>`;
-    const slot = document.querySelector(`[data-player="${CSS.escape(id)}"] .player-camera`); (slot || dock).append(node); return node;
+    const scope = game.state.room?.status === "waiting" ? "#lobby-players" : "#scoreboard";
+    const slot = document.querySelector(`${scope} [data-player="${CSS.escape(id)}"] .player-camera`);
+    let node = document.querySelector(`.video-tile[data-peer="${CSS.escape(id)}"]`);
+    if (!node) { node = document.createElement("div"); node.className = "video-tile"; node.dataset.peer = id; node.title = name; node.innerHTML = `<video autoplay playsinline ${local ? "muted" : ""}></video>`; }
+    (slot || dock).append(node); return node;
   };
   const removePeer = (id) => { peers.get(id)?.close(); peers.delete(id); document.querySelector(`.video-tile[data-peer="${CSS.escape(id)}"]`)?.remove(); };
   const offerPeer = (peer, id) => {
