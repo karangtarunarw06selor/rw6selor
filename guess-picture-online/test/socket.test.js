@@ -151,6 +151,10 @@ test("fastest normalized answer wins and points are recorded immediately", async
   assert.equal(hostState.result.winnerId, joined.playerId);
   assert.equal(guestState.result.winnerId, joined.playerId);
   assert.equal(hostState.answerReveal, secret.answer);
+  assert.equal(hostState.questionReveal.answer, secret.answer);
+  assert.equal(guestState.questionReveal.answer, secret.answer);
+  assert.equal(hostState.questionReveal.category, secret.category);
+  assert.match(guestState.questionReveal.image, /^data:image\/(?:jpeg|png);base64,/);
   assert.deepEqual(hostState.result, guestState.result);
   const room = [...rooms.values()][0];
   assert.equal(room.status, "result");
@@ -174,13 +178,19 @@ test("wrong answers appear in room chat without affecting score", async (context
 });
 
 test("empty timeout penalizes the drawer", async (context) => {
-  const { host } = await setup(context);
-  await emit(host, "game:start");
+  const { host, guest } = await setup(context);
+  const secretPromise = new Promise((resolve) => host.once("round:secret", resolve));
+  await emit(host, "game:start"); const secret = await secretPromise;
   const room = [...rooms.values()][0];
   const drawer = room.players[0];
+  const hostResult = waitFor(host, "room:state", (state) => state.status === "result");
+  const guestResult = waitFor(guest, "room:state", (state) => state.status === "result");
   const { finishRound } = require("../server");
   finishRound(room, { reason: "timeout" });
+  const [hostState, guestState] = await Promise.all([hostResult, guestResult]);
   assert.equal(drawer.score, -1);
+  assert.equal(hostState.questionReveal.answer, secret.answer);
+  assert.deepEqual(hostState.questionReveal, guestState.questionReveal);
   clearTimeout(room.nextTimer);
 });
 

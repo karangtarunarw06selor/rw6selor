@@ -73,13 +73,17 @@
     if (room.status === "result") {
       const winner = room.players.find((player) => player.id === room.result?.winnerId);
       $("#round-result").innerHTML = winner ? `<b>${escapeHtml(winner.name)} tercepat!</b><p>${room.answerReveal}</p><small>${(room.result.elapsedMs / 1000).toFixed(3)} detik · +${room.result.guessPoints}; penggambar ${room.result.drawerPoints > 0 ? "+" : ""}${room.result.drawerPoints}</small>` : `<b>Tidak tertebak</b><p>${room.answerReveal}</p><small>Ronde ini tanpa poin.</small>`;
-      const resultKey = `${room.round}:${room.result?.winnerId || "none"}`;
-      if (winner && state.correctShown !== resultKey) {
+      const resultKey = `${room.round}:${room.result?.reason}:${room.result?.winnerId || "none"}`;
+      if (room.questionReveal && state.correctShown !== resultKey) {
         state.correctShown = resultKey;
-        $("#correct-player").textContent = winner.name;
-        $("#correct-answer").textContent = room.answerReveal;
-        const seconds = (room.result.elapsedMs / 1000).toLocaleString("id-ID", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
-        $("#correct-time").textContent = `Waktu tercepat ${seconds} detik · Bonus +${room.result.guessPoints} poin`;
+        $("#result-kicker").textContent = winner ? "PERTANYAAN TERJAWAB" : "PERTANYAAN TIDAK TERJAWAB";
+        $("#correct-player").textContent = winner ? winner.name : "Tidak ada yang berhasil menebak";
+        $("#result-summary").textContent = winner ? "menjawab paling cepat" : "Waktu ronde telah berakhir";
+        $("#result-question-image").src = room.questionReveal.image;
+        $("#result-category").textContent = `Kategori: ${room.questionReveal.category}`;
+        $("#correct-answer").textContent = room.questionReveal.answer;
+        const seconds = winner ? (room.result.elapsedMs / 1000).toLocaleString("id-ID", { minimumFractionDigits: 3, maximumFractionDigits: 3 }) : null;
+        $("#correct-time").textContent = winner ? `Waktu tercepat ${seconds} detik · Bonus +${room.result.guessPoints} poin` : "Jawaban ditampilkan kepada semua pemain.";
         $("#correct-dialog").showModal();
         $("#correct-dialog").focus();
       }

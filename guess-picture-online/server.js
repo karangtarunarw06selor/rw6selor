@@ -46,6 +46,7 @@ const publicView = (room) => ({
   code: room.code, siteId: room.siteId, status: room.status, hostId: room.players[0]?.id || null,
   drawerId: room.drawerId, round: room.round, totalRounds: room.totalRounds, roundsPerPlayer: room.roundsPerPlayer || 2, clueCount: room.clueCount,
   deadline: room.deadline, winnerId: room.winnerId, answerReveal: room.answerReveal, result: room.result,
+  questionReveal: room.status === "result" && room.question ? { answer: room.question.answer, category: room.question.category, image: questionImage(room.question) } : null,
   strokes: room.strokes, reports: room.reports.size, messages: room.messages,
   players: room.players.map(({ id, name, score, connected, media, wins, totalGuessMs }) => ({ id, name, score, connected, media, wins, totalGuessMs, participant: room.status === "waiting" || room.activeIds?.has(id) })),
 });

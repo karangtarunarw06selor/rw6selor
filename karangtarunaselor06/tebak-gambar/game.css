@@ -19,3 +19,5 @@
 #scoreboard .score-row .player-camera:has(.video-tile){grid-column:1/-1;aspect-ratio:4/3;margin:-6px -6px 1px;border-radius:8px 8px 4px 4px}
 #scoreboard .score-row>b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #scoreboard .score-row>small{grid-column:1/-1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.52rem}
+
+.result-question-image{display:block;width:min(100%,280px);max-height:180px;object-fit:contain;margin:12px auto;border-radius:14px;background:#fff}.correct-dialog #result-category{display:block;margin:0 0 8px;color:var(--muted)}
