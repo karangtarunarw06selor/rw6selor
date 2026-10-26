@@ -107,8 +107,8 @@ test("only the drawer receives the secret question", async (context) => {
   assert.equal(started.ok, true);
   const [value, guestState] = await Promise.all([secret, guestStatePromise]);
   assert.ok(value.answer); assert.ok(value.image); assert.ok(value.forbidden.length);
-  assert.ok(guestState.deadline - Date.now() > 59_000);
-  assert.ok(guestState.deadline - Date.now() <= 60_000);
+  assert.ok(guestState.deadline - Date.now() > 299_000);
+  assert.ok(guestState.deadline - Date.now() <= 5 * 60_000);
   await new Promise((resolve) => setTimeout(resolve, 20));
   assert.equal(leaked, false);
   const encoded = JSON.stringify(guestState).toLowerCase();
