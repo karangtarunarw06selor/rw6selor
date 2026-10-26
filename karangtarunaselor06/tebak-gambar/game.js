@@ -25,7 +25,9 @@
       context.strokeStyle = stroke.color; context.lineWidth = stroke.size; context.beginPath();
       stroke.points.forEach(([x, y], index) => index ? context.lineTo(x * canvas.width, y * canvas.height) : context.moveTo(x * canvas.width, y * canvas.height)); context.stroke();
     }
-    $("#canvas-note").hidden = Boolean(state.room?.strokes?.[state.activeClue]?.length);
+    const hasStrokes = Boolean(state.room?.strokes?.[state.activeClue]?.length);
+    $("#canvas-note").textContent = isDrawer() ? "Kamu sedang memberi clue — mulai menggambar." : "Menunggu penggambar memberi clue…";
+    $("#canvas-note").hidden = hasStrokes;
   };
   const renderTabs = () => {
     $("#clue-tabs").innerHTML = [0, 1, 2, 3].map((index) => `<button type="button" class="clue-tab ${state.activeClue === index ? "active" : ""}" data-clue="${index}" ${index >= (state.room?.clueCount || 0) ? "disabled" : ""}>Clue ${index + 1}</button>`).join("");
@@ -49,6 +51,7 @@
   const render = () => {
     const room = state.room; if (!room) return;
     const waiting = room.status === "waiting";
+    document.body.classList.toggle("game-active", !waiting);
     $("#welcome").hidden = true; $("#lobby").hidden = !waiting; $("#game").hidden = waiting; $("#media-toggle").disabled = false; $("#media-toggle").title = "Aktifkan voice atau kamera";
     const chat = $(".room-chat"); const mount = $(waiting ? "#lobby-chat-mount" : "#game-chat-mount"); if (chat.parentElement !== mount) mount.append(chat);
     $("#chat-mode").textContent = waiting ? "Chat sebelum permainan dimulai" : room.status !== "playing" || isDrawer() || !isParticipant() ? "Mode chat" : "Chat atau tebak jawaban";
@@ -60,7 +63,7 @@
     if (waiting) return;
     const drawer = room.players.find((player) => player.id === room.drawerId);
     $("#round-label").textContent = `RONDE ${Math.min(room.round, room.totalRounds)} / ${room.totalRounds}`;
-    $("#drawer-label").textContent = !isParticipant() && room.status !== "finished" ? `Mode penonton · ${drawer?.name || "Pemain"} sedang menggambar` : room.status === "finished" ? "Permainan selesai" : `${drawer?.name || "Pemain"} sedang menggambar`;
+    $("#drawer-label").textContent = room.status === "finished" ? "Permainan selesai" : isDrawer() ? "Kamu sedang memberi clue" : !isParticipant() ? `Mode penonton · ${drawer?.name || "Pemain"} sedang menggambar` : `${drawer?.name || "Pemain"} sedang menggambar`;
     $("#draw-tools").hidden = !isDrawer() || room.status !== "playing";
     $("#guess-form").hidden = false;
     $("#chat-mode").textContent = room.status !== "playing" || isDrawer() || !isParticipant() ? "Mode chat" : "Chat atau tebak jawaban";
@@ -117,6 +120,7 @@
     const finish = () => {
       sessionStorage.removeItem(sessionKey);
       state.playerId = null; state.room = null; state.secret = null; state.lastStatus = null; state.correctShown = null;
+      document.body.classList.remove("game-active");
       $("#leave-dialog").close(); if ($("#correct-dialog").open) $("#correct-dialog").close();
       $("#lobby").hidden = true; $("#game").hidden = true; $("#welcome").hidden = false;
       window.GuessMedia?.leave();
