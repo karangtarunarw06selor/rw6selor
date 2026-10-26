@@ -30,8 +30,10 @@
     $("#canvas-note").hidden = hasStrokes;
   };
   const renderTabs = () => {
-    $("#clue-tabs").innerHTML = [0, 1, 2, 3].map((index) => `<button type="button" class="clue-tab ${state.activeClue === index ? "active" : ""}" data-clue="${index}" ${index >= (state.room?.clueCount || 0) ? "disabled" : ""}>Clue ${index + 1}</button>`).join("");
+    const question = isDrawer() && state.secret ? `<span class="question-word" title="${escapeHtml(state.secret.answer)}">${escapeHtml(state.secret.answer)}</span><button type="button" class="clue-tab question-open" data-open-question>Buka Soal</button>` : "";
+    $("#clue-tabs").innerHTML = [0, 1, 2, 3].map((index) => `<button type="button" class="clue-tab ${state.activeClue === index ? "active" : ""}" data-clue="${index}" ${index >= (state.room?.clueCount || 0) ? "disabled" : ""}>Clue ${index + 1}</button>`).join("") + question;
     $("#clue-tabs").querySelectorAll("[data-clue]").forEach((button) => button.addEventListener("click", () => { state.activeClue = Number(button.dataset.clue); renderTabs(); redraw(); }));
+    $("#clue-tabs").querySelector("[data-open-question]")?.addEventListener("click", () => { $("#secret-panel").hidden = false; });
   };
   const renderPlayers = () => {
     const room = state.room; if (!room) return;
@@ -102,7 +104,7 @@
     renderTabs(); redraw();
   };
   const showSecret = (secret) => {
-    state.secret = secret; $("#secret-image").src = secret.image; $("#secret-answer").textContent = secret.answer; $("#secret-category").textContent = secret.category; $("#secret-forbidden").textContent = secret.forbidden.join(", "); $("#secret-examples").textContent = `Contoh clue aman: ${secret.examples.join(" · ")}`; $("#secret-panel").hidden = false;
+    state.secret = secret; $("#secret-image").src = secret.image; $("#secret-answer").textContent = secret.answer; $("#secret-category").textContent = secret.category; $("#secret-forbidden").textContent = secret.forbidden.join(", "); $("#secret-examples").textContent = `Contoh clue aman: ${secret.examples.join(" · ")}`; $("#secret-panel").hidden = false; renderTabs();
   };
   const reconnect = () => {
     const saved = JSON.parse(sessionStorage.getItem(sessionKey) || "null"); if (!saved) return;

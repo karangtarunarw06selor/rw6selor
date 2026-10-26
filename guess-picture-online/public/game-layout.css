@@ -13,10 +13,15 @@ body.game-active main{width:min(1280px,calc(100% - 16px));height:calc(100dvh - c
 .play-layout{min-height:0;display:grid;grid-template-columns:minmax(0,1.55fr) minmax(260px,.75fr);gap:8px;overflow:hidden}
 .canvas-area,.side-panel{min-height:0;height:100%;padding:8px;overflow:hidden}
 .canvas-area{display:grid;grid-template-rows:auto minmax(0,1fr) auto}
-.canvas-area nav{margin:0 0 5px}
+.canvas-area nav{display:flex;align-items:center;gap:5px;margin:0 0 5px;overflow:hidden}
+.canvas-area nav .clue-tab{flex:0 0 auto}
+.question-word{flex:1 1 80px;min-width:0;height:30px;display:flex;align-items:center;justify-content:center;padding:0 8px;border:1px solid rgba(246,196,83,.5);border-radius:9px;background:rgba(246,196,83,.12);color:var(--accent);font-size:.68rem;font-weight:900;line-height:1.1;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.question-open{height:30px}
 .canvas-wrap{width:100%;height:clamp(30dvh,35dvh,40dvh);max-height:100%;aspect-ratio:auto;align-self:center}
-.draw-tools{margin-top:5px;min-height:34px;flex-wrap:nowrap}
-.draw-tools button{padding:6px 9px;font-size:.72rem}
+.draw-tools{margin-top:4px;min-height:30px;gap:5px;flex-wrap:nowrap}
+.draw-tools input[type=color]{width:34px;height:30px;padding:3px;border-radius:8px}
+.draw-tools input[type=range]{height:30px;min-width:70px}
+.draw-tools button{height:30px;min-height:30px;padding:4px 8px;font-size:.68rem;line-height:1}
 .side-panel,#game-chat-mount,.side-panel .room-chat{height:100%;min-height:0}
 .side-panel .room-chat{max-height:none}
 .side-panel .room-messages{min-height:0;overflow-y:auto;overscroll-behavior:contain}
@@ -29,9 +34,9 @@ body.game-active main{width:min(1280px,calc(100% - 16px));height:calc(100dvh - c
   .game>.scoreboard{height:clamp(98px,18dvh,138px);gap:3px}
   .game>.scoreboard .score-row{padding:3px;font-size:.56rem}.game>.scoreboard .player-camera,.game>.scoreboard .player-camera:has(.video-tile){margin:-3px -3px 1px}.game>.scoreboard .score-row>small{font-size:.43rem}
   .play-layout{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr);gap:4px}
-  .canvas-area{height:auto;padding:5px}.canvas-area nav{gap:4px;margin-bottom:3px}.clue-tab{padding:5px 7px;font-size:.62rem}
-  .canvas-wrap{height:clamp(30dvh,32dvh,40dvh)}
-  .draw-tools{min-height:28px;margin-top:3px;gap:4px}.draw-tools input[type=range]{min-width:60px}.draw-tools button{padding:5px 6px;font-size:.62rem}
+  .canvas-area{height:auto;padding:5px}.canvas-area nav{gap:3px;margin-bottom:3px}.clue-tab{height:27px;padding:4px 6px;font-size:.59rem}.question-word{height:27px;padding-inline:5px;font-size:.58rem}.question-open{height:27px}
+  .canvas-wrap{height:clamp(28dvh,30dvh,36dvh)}
+  .draw-tools{min-height:27px;margin-top:2px;gap:3px}.draw-tools input[type=color]{width:29px;height:27px;padding:2px}.draw-tools input[type=range]{height:27px;min-width:50px}.draw-tools button{height:27px;min-height:27px;padding:3px 5px;font-size:.58rem}
   .side-panel{padding:4px;border-radius:12px}.room-chat{border-radius:10px}.room-chat>header{padding:5px 8px}.room-chat>header small{font-size:.58rem}.room-messages{padding:4px 6px}.room-message{margin-bottom:3px;padding:4px 6px;font-size:.7rem}.room-chat #guess-form{padding:5px;gap:4px}.room-chat #guess-form input{min-height:34px;padding:6px 8px}.room-chat #guess-form button{padding-inline:8px}
 }
 @media(max-height:650px){
