@@ -273,7 +273,7 @@ io.on("connection", (socket) => {
     reply({ ok: true });
   });
   socket.on("media:update", ({ voice, video } = {}, reply = () => {}) => {
-    const room = rooms.get(socket.data.roomCode); const player = playerBySocket(room, socket); if (!room || !player) return reply({ ok: false });
+    const room = rooms.get(socket.data.roomCode); const player = playerBySocket(room, socket); if (!room || !player) return reply({ ok: false, error: "Masuk ke room terlebih dahulu." });
     const activeVideos = room.players.filter((item) => item.media.video && item.id !== player.id).length;
     if (video && activeVideos >= 4) return reply({ ok: false, error: "Maksimal empat kamera." });
     player.media = { voice: Boolean(voice), video: Boolean(video) }; socket.to(room.code).emit("media:peer", { playerId: player.id, ...player.media }); emitRoom(room); reply({ ok: true, peers: room.players.filter((item) => item.connected && item.media.voice && item.id !== player.id).map((item) => ({ id: item.id, name: item.name, media: item.media })) });

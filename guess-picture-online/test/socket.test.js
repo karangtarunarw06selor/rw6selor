@@ -51,8 +51,11 @@ test("public lobby chat discovers active same-site rooms without cross-tenant le
   assert.equal((await active).rooms[0].code, created.room.code);
 });
 
-test("waiting room supports chat while one socket remains isolated to one room", async (context) => {
+test("waiting room supports chat and media while one socket remains isolated to one room", async (context) => {
   const { host, guest, created } = await setup(context);
+  const outsider = await connect(server.address().port); context.after(() => outsider.close());
+  assert.equal((await emit(outsider, "media:update", { voice: true, video: true })).error, "Masuk ke room terlebih dahulu.");
+  assert.equal((await emit(host, "media:update", { voice: true, video: true })).ok, true);
   assert.equal(created.room.messages.length, 0);
   assert.equal(rooms.get(created.room.code).messages[0].text, "Bima masuk ke room.");
   const waitingChat = await emit(host, "guess:submit", { text: "halo sebelum mulai" });

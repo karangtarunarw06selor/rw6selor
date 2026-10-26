@@ -49,7 +49,7 @@
   const render = () => {
     const room = state.room; if (!room) return;
     const waiting = room.status === "waiting";
-    $("#welcome").hidden = true; $("#lobby").hidden = !waiting; $("#game").hidden = waiting;
+    $("#welcome").hidden = true; $("#lobby").hidden = !waiting; $("#game").hidden = waiting; $("#media-toggle").hidden = false;
     const chat = $(".room-chat"); const mount = $(waiting ? "#lobby-chat-mount" : "#game-chat-mount"); if (chat.parentElement !== mount) mount.append(chat);
     $("#chat-mode").textContent = waiting ? "Chat sebelum permainan dimulai" : room.status !== "playing" || isDrawer() || !isParticipant() ? "Mode chat" : "Chat atau tebak jawaban";
     $("#guess-form").hidden = false;
