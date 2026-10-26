@@ -55,6 +55,7 @@ test("waiting room supports chat and media while one socket remains isolated to 
   const { host, guest, created } = await setup(context);
   const outsider = await connect(server.address().port); context.after(() => outsider.close());
   assert.equal((await emit(outsider, "media:update", { voice: true, video: true })).error, "Masuk ke room terlebih dahulu.");
+  assert.equal((await emit(outsider, "media:watch")).ok, false);
   assert.equal((await emit(outsider, "media:config")).ok, false);
   process.env.TURN_SECRET = "test-turn-secret"; context.after(() => { delete process.env.TURN_SECRET; });
   const rtc = await emit(host, "media:config");
@@ -62,7 +63,15 @@ test("waiting room supports chat and media while one socket remains isolated to 
   assert.match(rtc.iceServers.at(-1).urls[0], /^turn:178\.83\.188\.207:3478/);
   assert.match(rtc.iceServers.at(-1).username, /^\d+:/);
   assert.ok(rtc.iceServers.at(-1).credential.length > 20);
+  const watching = await emit(guest, "media:watch");
+  assert.equal(watching.ok, true);
+  assert.deepEqual(watching.peers, []);
+  const cameraOn = waitFor(guest, "media:peer", (peer) => peer.playerId === created.playerId && peer.video);
   assert.equal((await emit(host, "media:update", { voice: true, video: true })).ok, true);
+  assert.equal((await cameraOn).video, true);
+  const offer = waitFor(host, "media:signal", (payload) => payload.playerId === rooms.get(created.room.code).players[1].id);
+  assert.equal((await emit(guest, "media:signal", { targetId: created.playerId, signal: { description: { type: "offer", sdp: "receive-only" } } })).ok, true);
+  assert.equal((await offer).signal.description.sdp, "receive-only");
   assert.equal(created.room.messages.length, 0);
   assert.equal(rooms.get(created.room.code).messages[0].text, "Bima masuk ke room.");
   const waitingChat = await emit(host, "guess:submit", { text: "halo sebelum mulai" });

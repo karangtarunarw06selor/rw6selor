@@ -163,7 +163,7 @@ io.on("connection", (socket) => {
     if (socket.data.roomCode) return reply({ ok: false, error: "Keluar dari room saat ini terlebih dahulu." });
     const nameClean = cleanName(name); if (!nameClean) return reply({ ok: false, error: "Nama wajib diisi." });
     let roomCode = code(); while (rooms.has(roomCode)) roomCode = code();
-    const player = { id: crypto.randomUUID(), token: crypto.randomBytes(24).toString("base64url"), socketId: socket.id, name: nameClean, score: 0, wins: 0, totalGuessMs: 0, connected: true, media: { voice: false, video: false } };
+    const player = { id: crypto.randomUUID(), token: crypto.randomBytes(24).toString("base64url"), socketId: socket.id, name: nameClean, score: 0, wins: 0, totalGuessMs: 0, connected: true, media: { voice: false, video: false }, mediaWatching: false };
     const room = { code: roomCode, siteId: cleanSite(rawSite), status: "waiting", players: [player], createdAt: Date.now(), round: 0, totalRounds: 0, roundsPerPlayer: 2, drawerId: null, clueCount: 0, strokes: [[], [], [], []], reports: new Set(), usedQuestions: new Set(), winnerId: null, messages: [] };
     rooms.set(roomCode, room); socket.join(roomCode); socket.data.roomCode = roomCode; reply(sessionReply(room, player)); emitRoom(room); emitLobby(room.siteId);
   });
@@ -173,7 +173,7 @@ io.on("connection", (socket) => {
     if (!nameClean) return reply({ ok: false, error: "Nama wajib diisi." });
     if (!room || room.siteId !== cleanSite(rawSite)) return reply({ ok: false, error: "Room tidak ditemukan." });
     if (room.players.length >= 8) return reply({ ok: false, error: "Room penuh." });
-    const player = { id: crypto.randomUUID(), token: crypto.randomBytes(24).toString("base64url"), socketId: socket.id, name: nameClean, score: 0, wins: 0, totalGuessMs: 0, connected: true, media: { voice: false, video: false } };
+    const player = { id: crypto.randomUUID(), token: crypto.randomBytes(24).toString("base64url"), socketId: socket.id, name: nameClean, score: 0, wins: 0, totalGuessMs: 0, connected: true, media: { voice: false, video: false }, mediaWatching: false };
     room.players.push(player); socket.join(room.code); socket.data.roomCode = room.code; addRoomMessage(room, null, "system", `${player.name} masuk ke room.`); reply(sessionReply(room, player)); emitRoom(room); emitLobby(room.siteId);
   });
   socket.on("room:reconnect", ({ code: rawCode, playerId, reconnectToken, siteId: rawSite } = {}, reply = () => {}) => {
@@ -182,7 +182,7 @@ io.on("connection", (socket) => {
     const player = room?.players.find((item) => item.id === playerId && item.token === reconnectToken);
     if (!room || room.siteId !== cleanSite(rawSite) || !player) return reply({ ok: false, error: "Sesi berakhir." });
     clearTimeout(player.cleanupTimer); io.sockets.sockets.get(player.socketId)?.disconnect(true);
-    player.socketId = socket.id; player.connected = true; player.media = { voice: false, video: false };
+    player.socketId = socket.id; player.connected = true; player.media = { voice: false, video: false }; player.mediaWatching = false;
     socket.join(room.code); socket.data.roomCode = room.code; reply(sessionReply(room, player)); emitRoom(room); emitLobby(room.siteId);
     if (room.status === "result" && room.players.filter((item) => item.connected && room.activeIds?.has(item.id)).length >= 2) {
       clearTimeout(room.nextTimer); room.nextTimer = setTimeout(() => startRound(room), 500); room.nextTimer.unref();
@@ -282,6 +282,12 @@ io.on("connection", (socket) => {
     const credential = crypto.createHmac("sha1", secret).update(username).digest("base64");
     reply({ ok: true, iceServers: [{ urls: ["stun:stun.cloudflare.com:3478", "stun:stun.l.google.com:19302"] }, { urls: ["turn:178.83.188.207:3478?transport=udp", "turn:178.83.188.207:3478?transport=tcp"], username, credential }] });
   });
+  socket.on("media:watch", (_data, reply = () => {}) => {
+    const room = rooms.get(socket.data.roomCode); const player = playerBySocket(room, socket);
+    if (!room || !player) return reply({ ok: false, error: "Masuk ke room terlebih dahulu." });
+    player.mediaWatching = true;
+    reply({ ok: true, peers: room.players.filter((item) => item.connected && item.media.voice && item.id !== player.id).map((item) => ({ id: item.id, name: item.name, media: item.media })) });
+  });
   socket.on("media:update", ({ voice, video } = {}, reply = () => {}) => {
     const room = rooms.get(socket.data.roomCode); const player = playerBySocket(room, socket); if (!room || !player) return reply({ ok: false, error: "Masuk ke room terlebih dahulu." });
     const activeVideos = room.players.filter((item) => item.media.video && item.id !== player.id).length;
@@ -289,8 +295,8 @@ io.on("connection", (socket) => {
     player.media = { voice: Boolean(voice), video: Boolean(video) }; socket.to(room.code).emit("media:peer", { playerId: player.id, ...player.media }); emitRoom(room); reply({ ok: true, peers: room.players.filter((item) => item.connected && item.media.voice && item.id !== player.id).map((item) => ({ id: item.id, name: item.name, media: item.media })) });
   });
   socket.on("media:signal", ({ targetId, signal } = {}, reply = () => {}) => {
-    const room = rooms.get(socket.data.roomCode); const player = playerBySocket(room, socket); const target = room?.players.find((item) => item.id === targetId && item.connected && item.media.voice);
-    if (!player?.media.voice || !target || !signal || JSON.stringify(signal).length > 20_000) return reply({ ok: false });
+    const room = rooms.get(socket.data.roomCode); const player = playerBySocket(room, socket); const target = room?.players.find((item) => item.id === targetId && item.connected && (item.media.voice || item.mediaWatching));
+    if (!(player?.media.voice || player?.mediaWatching) || !target || !signal || JSON.stringify(signal).length > 20_000) return reply({ ok: false });
     io.to(target.socketId).emit("media:signal", { playerId: player.id, name: player.name, signal }); reply({ ok: true });
   });
   socket.on("disconnect", () => {
