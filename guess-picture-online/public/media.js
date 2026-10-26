@@ -2,7 +2,7 @@
   "use strict";
   const game = window.guessGame, socket = game.socket;
   const dialog = document.querySelector("#media-dialog"), dock = document.querySelector("#video-dock"), error = document.querySelector("#media-error");
-  const peers = new Map(); let stream = null, watchingCode = null, watchTask = null;
+  const peers = new Map(); let stream = null, watchingCode = null, watchTask = null, restoreBroadcast = false;
   let rtcConfig = { iceServers: [{ urls: "stun:stun.cloudflare.com:3478" }, { urls: "stun:stun.l.google.com:19302" }] };
   const tile = (id, name, local = false) => {
     const scope = game.state.room?.status === "waiting" ? "#lobby-players" : "#scoreboard";
@@ -57,14 +57,24 @@
     })().finally(() => { watchTask = null; });
     await watchTask;
   };
+  const restore = async () => {
+    if (!restoreBroadcast || !stream || !game.state.room || stream.getTracks().every((track) => track.readyState !== "live")) return;
+    restoreBroadcast = false;
+    await watch();
+    const video = stream.getVideoTracks().some((track) => track.readyState === "live");
+    const reply = await request("media:update", { voice: true, video });
+    if (!reply?.ok) return;
+    const own = game.currentPlayer(); if (video) tile(own?.id || "local", `${own?.name || "Kamu"} · Kamu`, true).querySelector("video").srcObject = stream;
+    for (const person of reply.peers || []) createPeer(person.id, person.name, true);
+  };
   const stopBroadcast = () => {
-    stream?.getTracks().forEach((track) => track.stop()); stream = null;
+    restoreBroadcast = false; stream?.getTracks().forEach((track) => track.stop()); stream = null;
     const ownId = game.currentPlayer()?.id || "local"; document.querySelector(`.video-tile[data-peer="${CSS.escape(ownId)}"]`)?.remove();
     peers.forEach((_peer, id) => removePeer(id)); socket.emit("media:update", { voice: false, video: false }, () => { watchingCode = null; watch(); });
     if (dialog.open) dialog.close();
   };
   const start = async (video) => {
-    error.textContent = "";
+    error.textContent = ""; restoreBroadcast = false;
     try {
       const config = await request("media:config"); if (!config?.ok) throw new Error(config?.error || "Konfigurasi media tidak tersedia.");
       rtcConfig = { iceServers: config.iceServers };
@@ -81,7 +91,7 @@
       error.textContent = blocked;
     }
   };
-  socket.on("room:state", () => watch());
+  socket.on("room:state", () => { watch(); restore(); });
   socket.on("media:peer", async ({ playerId, voice, video }) => {
     if (!voice || playerId === game.state.playerId) return removePeer(playerId);
     if (!video) document.querySelector(`.video-tile[data-peer="${CSS.escape(playerId)}"]`)?.remove();
@@ -100,6 +110,6 @@
   document.querySelector("#voice-only").addEventListener("click", () => start(false));
   document.querySelector("#voice-video").addEventListener("click", () => start(true));
   document.querySelector("#media-off").addEventListener("click", stopBroadcast);
-  socket.on("disconnect", () => { watchingCode = null; stream?.getTracks().forEach((track) => track.stop()); stream = null; peers.forEach((_peer, id) => removePeer(id)); });
+  socket.on("disconnect", () => { watchingCode = null; restoreBroadcast = Boolean(stream?.getTracks().some((track) => track.readyState === "live")); peers.forEach((_peer, id) => removePeer(id)); });
   window.GuessMedia = { leave: stopBroadcast };
 })();
