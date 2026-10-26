@@ -51,6 +51,18 @@ test("public lobby chat discovers active same-site rooms without cross-tenant le
   assert.equal((await active).rooms[0].code, created.room.code);
 });
 
+test("one socket cannot subscribe to multiple rooms or chat before play", async (context) => {
+  const { host, guest, created } = await setup(context);
+  const waitingChat = await emit(host, "guess:submit", { text: "halo" });
+  assert.equal(waitingChat.ok, false);
+  assert.match(waitingChat.error, /setelah permainan/);
+  assert.equal((await emit(host, "room:create", { name: "Ayu", siteId: "KT" })).ok, false);
+  assert.equal((await emit(host, "room:join", { name: "Ayu", code: created.room.code, siteId: "MMS" })).ok, false);
+  assert.equal((await emit(host, "room:reconnect", { code: created.room.code, playerId: created.playerId, reconnectToken: created.reconnectToken, siteId: "MMS" })).ok, false);
+  assert.equal(rooms.get(created.room.code).players.length, 2);
+  assert.equal(guest.connected, true);
+});
+
 test("late joiner spectates gameplay but can use room chat", async (context) => {
   const { host, guest, created } = await setup(context);
   assert.equal((await emit(host, "game:start")).ok, true);
@@ -140,6 +152,9 @@ test("wrong answers appear in room chat without affecting score", async (context
   assert.deepEqual({ correct: result.correct, kind: result.kind }, { correct: false, kind: "guess" });
   const message = await publicGuess;
   assert.equal(message.text, "jawaban salah <img>");
+  const limited = await emit(guest, "guess:submit", { text: "spam kedua" });
+  assert.equal(limited.ok, false);
+  assert.match(limited.error, /Tunggu/);
   assert.equal([...rooms.values()][0].players[1].score, 0);
 });
 

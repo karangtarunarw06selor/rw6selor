@@ -18,6 +18,7 @@ const rooms = new Map();
 const lobbyMessages = new Map();
 const LOBBY_HISTORY_LIMIT = 50;
 const LOBBY_CHAT_COOLDOWN_MS = 800;
+const ROOM_CHAT_COOLDOWN_MS = 1200;
 
 app.use("/tebak-gambar", express.static(path.join(__dirname, "public")));
 app.get("/health", (_req, res) => res.json({ ok: true, rooms: rooms.size }));
@@ -155,6 +156,7 @@ io.on("connection", (socket) => {
     io.to(lobbyChannel(siteId)).emit("lobby:chat", message); reply({ ok: true });
   });
   socket.on("room:create", ({ name, siteId: rawSite } = {}, reply = () => {}) => {
+    if (socket.data.roomCode) return reply({ ok: false, error: "Keluar dari room saat ini terlebih dahulu." });
     const nameClean = cleanName(name); if (!nameClean) return reply({ ok: false, error: "Nama wajib diisi." });
     let roomCode = code(); while (rooms.has(roomCode)) roomCode = code();
     const player = { id: crypto.randomUUID(), token: crypto.randomBytes(24).toString("base64url"), socketId: socket.id, name: nameClean, score: 0, wins: 0, totalGuessMs: 0, connected: true, media: { voice: false, video: false } };
@@ -162,6 +164,7 @@ io.on("connection", (socket) => {
     rooms.set(roomCode, room); socket.join(roomCode); socket.data.roomCode = roomCode; reply(sessionReply(room, player)); emitRoom(room); emitLobby(room.siteId);
   });
   socket.on("room:join", ({ name, code: rawCode, siteId: rawSite } = {}, reply = () => {}) => {
+    if (socket.data.roomCode) return reply({ ok: false, error: "Keluar dari room saat ini terlebih dahulu." });
     const room = rooms.get(String(rawCode || "").trim().toUpperCase()); const nameClean = cleanName(name);
     if (!nameClean) return reply({ ok: false, error: "Nama wajib diisi." });
     if (!room || room.siteId !== cleanSite(rawSite)) return reply({ ok: false, error: "Room tidak ditemukan." });
@@ -170,6 +173,7 @@ io.on("connection", (socket) => {
     room.players.push(player); socket.join(room.code); socket.data.roomCode = room.code; reply(sessionReply(room, player)); emitRoom(room); emitLobby(room.siteId);
   });
   socket.on("room:reconnect", ({ code: rawCode, playerId, reconnectToken, siteId: rawSite } = {}, reply = () => {}) => {
+    if (socket.data.roomCode) return reply({ ok: false, error: "Keluar dari room saat ini terlebih dahulu." });
     const room = rooms.get(String(rawCode || "").trim().toUpperCase());
     const player = room?.players.find((item) => item.id === playerId && item.token === reconnectToken);
     if (!room || room.siteId !== cleanSite(rawSite) || !player) return reply({ ok: false, error: "Sesi berakhir." });
@@ -226,8 +230,9 @@ io.on("connection", (socket) => {
   socket.on("guess:submit", ({ text } = {}, reply = () => {}) => {
     const room = rooms.get(socket.data.roomCode); const player = playerBySocket(room, socket);
     if (!room || !player) return reply({ ok: false, error: "Tidak bisa mengirim pesan." });
+    if (room.status === "waiting") return reply({ ok: false, error: "Chat room tersedia setelah permainan dimulai." });
     const now = Date.now();
-    if (now - (player.lastGuessAt || 0) < 350) return reply({ ok: false, error: "Tunggu sebentar sebelum mengirim lagi." });
+    if (now - (player.lastGuessAt || 0) < ROOM_CHAT_COOLDOWN_MS) return reply({ ok: false, error: "Tunggu sebentar sebelum mengirim lagi." });
     player.lastGuessAt = now;
     const rawText = cleanChat(String(text || "").slice(0, 80));
     const guess = normalize(rawText); if (!guess) return reply({ ok: false, error: "Pesan kosong." });
