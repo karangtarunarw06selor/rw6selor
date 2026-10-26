@@ -173,7 +173,7 @@ io.on("connection", (socket) => {
     if (!room || room.siteId !== cleanSite(rawSite)) return reply({ ok: false, error: "Room tidak ditemukan." });
     if (room.players.length >= 8) return reply({ ok: false, error: "Room penuh." });
     const player = { id: crypto.randomUUID(), token: crypto.randomBytes(24).toString("base64url"), socketId: socket.id, name: nameClean, score: 0, wins: 0, totalGuessMs: 0, connected: true, media: { voice: false, video: false } };
-    room.players.push(player); socket.join(room.code); socket.data.roomCode = room.code; reply(sessionReply(room, player)); emitRoom(room); emitLobby(room.siteId);
+    room.players.push(player); socket.join(room.code); socket.data.roomCode = room.code; addRoomMessage(room, null, "system", `${player.name} masuk ke room.`); reply(sessionReply(room, player)); emitRoom(room); emitLobby(room.siteId);
   });
   socket.on("room:reconnect", ({ code: rawCode, playerId, reconnectToken, siteId: rawSite } = {}, reply = () => {}) => {
     if (socket.data.roomCode) return reply({ ok: false, error: "Keluar dari room saat ini terlebih dahulu." });
@@ -236,7 +236,6 @@ io.on("connection", (socket) => {
   socket.on("guess:submit", ({ text } = {}, reply = () => {}) => {
     const room = rooms.get(socket.data.roomCode); const player = playerBySocket(room, socket);
     if (!room || !player) return reply({ ok: false, error: "Tidak bisa mengirim pesan." });
-    if (room.status === "waiting") return reply({ ok: false, error: "Chat room tersedia setelah permainan dimulai." });
     const now = Date.now();
     if (now - (player.lastGuessAt || 0) < ROOM_CHAT_COOLDOWN_MS) return reply({ ok: false, error: "Tunggu sebentar sebelum mengirim lagi." });
     player.lastGuessAt = now;

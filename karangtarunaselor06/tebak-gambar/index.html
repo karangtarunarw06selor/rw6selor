@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#24104f">
-  <title>Tebak Gambar • RW06 Selor</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext y='.9em' font-size='56'%3E🎨%3C/text%3E%3C/svg%3E"><link rel="stylesheet" href="game.css?v=5">
+  <title>Tebak Gambar • RW06 Selor</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext y='.9em' font-size='56'%3E🎨%3C/text%3E%3C/svg%3E"><link rel="stylesheet" href="game.css?v=6">
 </head>
 <body data-site="KT">
 <header class="topbar"><button id="back-button" class="back-link" type="button">← Kembali</button><div><b>TEBAK GAMBAR</b><small>Clue kreatif, jawaban tercepat</small></div><button id="media-toggle" type="button">Voice / Video</button></header>
@@ -20,14 +20,14 @@
     <aside class="rules"><b>Aturan cepat</b><ol><li>Setiap pemain menggambar 2 ronde.</li><li>Objek utama jawaban tidak boleh digambar.</li><li>Poin turun dari 4 ke 1 setiap clue dibuka.</li><li>Tidak tertebak: semua 0. Asal-asalan bisa −1.</li></ol></aside>
   </section>
 
-  <section id="lobby" class="lobby" hidden><div><span>ROOM</span><button id="room-display"></button></div><h2>Siap bermain?</h2><div id="lobby-players" class="player-grid"></div><button id="start-game" class="primary">Mulai 2 Putaran</button><p id="lobby-note">Menunggu host memulai.</p></section>
+  <section id="lobby" class="lobby" hidden><div class="lobby-room-head"><span>ROOM</span><button id="room-display"></button></div><h2>Siap bermain?</h2><p class="lobby-intro">Pemain yang masuk langsung muncul di bawah. Gunakan chat untuk menyapa sebelum host memulai.</p><div id="lobby-players" class="player-grid"></div><div id="lobby-chat-mount"></div><button id="start-game" class="primary">Mulai 2 Putaran</button><p id="lobby-note">Menunggu host memulai.</p></section>
 
   <section id="game" class="game" hidden>
     <div class="game-head"><div><span id="round-label">RONDE</span><b id="drawer-label">Menunggu…</b></div><strong id="timer">01:00</strong><button id="report-round" type="button">Laporkan clue</button></div>
     <section id="secret-panel" class="secret" hidden><img id="secret-image" alt="Referensi rahasia"><div><span>KHUSUS PENGGAMBAR</span><h2 id="secret-answer"></h2><p id="secret-category"></p><p><b>Dilarang:</b> <span id="secret-forbidden"></span></p><small id="secret-examples"></small><div><button id="skip-question">Tidak paham soal</button><button id="hide-secret">Sembunyikan</button></div></div></section>
     <div class="play-layout">
       <section class="canvas-area"><nav id="clue-tabs"></nav><div class="canvas-wrap"><canvas id="clue-canvas" width="900" height="600"></canvas><p id="canvas-note">Menunggu penggambar memberi clue…</p></div><div id="draw-tools" class="draw-tools" hidden><input id="draw-color" type="color" value="#111827" aria-label="Warna"><input id="draw-size" type="range" min="2" max="24" value="5" aria-label="Ukuran kuas"><button id="clear-clue">Hapus clue</button><button id="next-clue">+ Clue berikutnya</button></div></section>
-      <aside class="side-panel"><div id="scoreboard" class="scoreboard"></div><section class="room-chat" aria-label="Chat dan jawaban room"><header><b>Chat & Jawaban</b><small id="chat-mode">Ketik jawaban atau ngobrol</small></header><div id="room-messages" class="room-messages" role="log" aria-live="polite"></div><form id="guess-form"><label class="sr-only" for="guess-input">Chat atau jawaban</label><input id="guess-input" maxlength="80" autocomplete="off" placeholder="Ketik jawaban atau chat…"><button aria-label="Kirim">Kirim</button><small id="guess-feedback"></small></form></section><div id="round-result" class="result" hidden></div><div id="moderation" hidden><button data-mod="cancel">Batalkan ronde</button><button data-mod="penalty">Pelanggaran −2</button></div></aside>
+      <aside class="side-panel"><div id="scoreboard" class="scoreboard"></div><div id="game-chat-mount"><section class="room-chat" aria-label="Chat dan jawaban room"><header><b>Chat & Jawaban</b><small id="chat-mode">Ketik jawaban atau ngobrol</small></header><div id="room-messages" class="room-messages" role="log" aria-live="polite"></div><form id="guess-form"><label class="sr-only" for="guess-input">Chat atau jawaban</label><input id="guess-input" maxlength="80" autocomplete="off" placeholder="Ketik jawaban atau chat…"><button aria-label="Kirim">Kirim</button><small id="guess-feedback"></small></form></section></div><div id="round-result" class="result" hidden></div><div id="moderation" hidden><button data-mod="cancel">Batalkan ronde</button><button data-mod="penalty">Pelanggaran −2</button></div></aside>
     </div>
     <button id="restart-game" class="primary" type="button" hidden>Main Lagi Bersama Semua Pemain</button>
     <div id="video-dock" class="video-dock"></div>
@@ -37,5 +37,5 @@
 <dialog id="leave-dialog" class="leave-dialog"><h2>Keluar dari room?</h2><p>Kamu akan keluar dari permainan dan kembali ke lobby awal Tebak Gambar.</p><div><button id="cancel-leave" class="secondary" type="button">Batal</button><button id="confirm-leave" type="button">Keluar Room</button></div></dialog>
 <dialog id="media-dialog"><button class="close-dialog">×</button><h2>Voice & Video</h2><p>Opsional. Media tidak direkam. Maksimal empat kamera.</p><button id="voice-only">Aktifkan Voice</button><button id="voice-video">Voice + Kamera</button><button id="media-off" class="secondary">Matikan Media</button><small id="media-error"></small></dialog>
 <div id="toast" class="toast"></div>
-<script src="/tebak-gambar/socket.io/socket.io.js"></script><script src="game.js?v=5"></script><script src="media.js?v=2"></script>
+<script src="/tebak-gambar/socket.io/socket.io.js"></script><script src="game.js?v=6"></script><script src="media.js?v=3"></script>
 </body></html>

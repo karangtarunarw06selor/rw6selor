@@ -33,8 +33,10 @@
   };
   const renderPlayers = () => {
     const room = state.room; if (!room) return;
-    $("#lobby-players").innerHTML = room.players.map((player, index) => `<article class="player-card ${player.connected ? "" : "offline"}"><b>${escapeHtml(player.name)}</b><small>${index === 0 ? "HOST" : player.participant ? "PEMAIN" : "PENONTON"}</small></article>`).join("");
-    $("#scoreboard").innerHTML = [...room.players].sort((a, b) => b.score - a.score).map((player) => `<div class="score-row ${player.id === room.drawerId ? "drawer" : ""}"><b>${escapeHtml(player.name)}${player.id === state.playerId ? " · Kamu" : ""}</b><strong>${player.score}</strong><small>${player.id === room.drawerId ? "Sedang menggambar" : `${player.wins} jawaban tercepat`}${player.connected ? "" : " · offline"}</small></div>`).join("");
+    const tiles = [...document.querySelectorAll(".video-tile")];
+    $("#lobby-players").innerHTML = room.players.map((player, index) => `<article class="player-card ${player.connected ? "" : "offline"}" data-player="${player.id}"><div class="player-camera"></div><div><b>${escapeHtml(player.name)}</b><small>${index === 0 ? "HOST" : player.participant ? "PEMAIN" : "PENONTON"}</small></div></article>`).join("");
+    $("#scoreboard").innerHTML = [...room.players].sort((a, b) => b.score - a.score).map((player) => `<div class="score-row ${player.id === room.drawerId ? "drawer" : ""}" data-player="${player.id}"><div class="player-camera"></div><b>${escapeHtml(player.name)}${player.id === state.playerId ? " · Kamu" : ""}</b><strong>${player.score}</strong><small>${player.id === room.drawerId ? "Sedang menggambar" : `${player.wins} jawaban tercepat`}${player.connected ? "" : " · offline"}</small></div>`).join("");
+    tiles.forEach((tile) => { const slot = document.querySelector(`${room.status === "waiting" ? "#lobby-players" : "#scoreboard"} [data-player="${CSS.escape(tile.dataset.peer)}"] .player-camera`); (slot || $("#video-dock")).append(tile); });
   };
   const renderRoomMessages = () => {
     const container = $("#room-messages");
@@ -48,6 +50,9 @@
     const room = state.room; if (!room) return;
     const waiting = room.status === "waiting";
     $("#welcome").hidden = true; $("#lobby").hidden = !waiting; $("#game").hidden = waiting;
+    const chat = $(".room-chat"); const mount = $(waiting ? "#lobby-chat-mount" : "#game-chat-mount"); if (chat.parentElement !== mount) mount.append(chat);
+    $("#chat-mode").textContent = waiting ? "Chat sebelum permainan dimulai" : room.status !== "playing" || isDrawer() || !isParticipant() ? "Mode chat" : "Chat atau tebak jawaban";
+    $("#guess-form").hidden = false;
     $("#room-display").textContent = room.code; renderPlayers(); renderRoomMessages();
     $("#restart-game").hidden = room.status !== "finished" || room.hostId !== state.playerId;
     $("#start-game").hidden = room.hostId !== state.playerId; $("#lobby-note").hidden = room.hostId === state.playerId;

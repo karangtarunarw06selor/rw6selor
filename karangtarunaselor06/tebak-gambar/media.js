@@ -5,10 +5,11 @@
   const peers = new Map(), pendingSignals = new Map(); let stream = null;
   const rtcConfig = { iceServers: [{ urls: "stun:stun.cloudflare.com:3478" }, { urls: "stun:stun.l.google.com:19302" }] };
   const tile = (id, name, local = false) => {
-    let node = dock.querySelector(`[data-peer="${CSS.escape(id)}"]`); if (node) return node;
-    node = document.createElement("div"); node.className = "video-tile"; node.dataset.peer = id; node.innerHTML = `<video autoplay playsinline ${local ? "muted" : ""}></video><span>${name}</span>`; dock.append(node); return node;
+    let node = document.querySelector(`.video-tile[data-peer="${CSS.escape(id)}"]`); if (node) return node;
+    node = document.createElement("div"); node.className = "video-tile"; node.dataset.peer = id; node.title = name; node.innerHTML = `<video autoplay playsinline ${local ? "muted" : ""}></video>`;
+    const slot = document.querySelector(`[data-player="${CSS.escape(id)}"] .player-camera`); (slot || dock).append(node); return node;
   };
-  const removePeer = (id) => { peers.get(id)?.close(); peers.delete(id); dock.querySelector(`[data-peer="${CSS.escape(id)}"]`)?.remove(); };
+  const removePeer = (id) => { peers.get(id)?.close(); peers.delete(id); document.querySelector(`.video-tile[data-peer="${CSS.escape(id)}"]`)?.remove(); };
   const offerPeer = (peer, id) => {
     if (peer.offerStarted) return;
     peer.offerStarted = true;
@@ -31,7 +32,7 @@
     return peer;
   };
   const stop = () => {
-    stream?.getTracks().forEach((track) => track.stop()); stream = null; peers.forEach((_peer, id) => removePeer(id)); dock.innerHTML = ""; socket.emit("media:update", { voice: false, video: false }); if (dialog.open) dialog.close();
+    stream?.getTracks().forEach((track) => track.stop()); stream = null; peers.forEach((_peer, id) => removePeer(id)); document.querySelectorAll(".video-tile").forEach((node) => node.remove()); socket.emit("media:update", { voice: false, video: false }); if (dialog.open) dialog.close();
   };
   const start = async (video) => {
     error.textContent = "";
