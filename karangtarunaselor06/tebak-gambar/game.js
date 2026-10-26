@@ -57,7 +57,7 @@
     if (room.status === "playing" && $("#correct-dialog").open) $("#correct-dialog").close();
     if (room.status === "result") {
       const winner = room.players.find((player) => player.id === room.result?.winnerId);
-      $("#round-result").innerHTML = winner ? `<b>${winner.name} tercepat!</b><p>${room.answerReveal}</p><small>${(room.result.elapsedMs / 1000).toFixed(3)} detik · +${room.result.guessPoints}; penggambar ${room.result.drawerPoints > 0 ? "+" : ""}${room.result.drawerPoints}</small>` : `<b>Tidak tertebak</b><p>${room.answerReveal}</p><small>Ronde ini tanpa poin.</small>`;
+      $("#round-result").innerHTML = winner ? `<b>${escapeHtml(winner.name)} tercepat!</b><p>${room.answerReveal}</p><small>${(room.result.elapsedMs / 1000).toFixed(3)} detik · +${room.result.guessPoints}; penggambar ${room.result.drawerPoints > 0 ? "+" : ""}${room.result.drawerPoints}</small>` : `<b>Tidak tertebak</b><p>${room.answerReveal}</p><small>Ronde ini tanpa poin.</small>`;
       const resultKey = `${room.round}:${room.result?.winnerId || "none"}`;
       if (winner && state.correctShown !== resultKey) {
         state.correctShown = resultKey;
@@ -69,7 +69,7 @@
         $("#correct-dialog").focus();
       }
     } else if (room.status === "finished") {
-      const winner = room.players.find((player) => player.id === room.winnerId); $("#round-result").innerHTML = `<b>${winner?.name || "Tidak ada"} menang!</b><p>Skor tertinggi: ${winner?.score || 0}</p>`;
+      const winner = room.players.find((player) => player.id === room.winnerId); $("#round-result").innerHTML = `<b>${escapeHtml(winner?.name || "Tidak ada")} menang!</b><p>Skor tertinggi: ${winner?.score || 0}</p>`;
     }
     renderTabs(); redraw();
   };
