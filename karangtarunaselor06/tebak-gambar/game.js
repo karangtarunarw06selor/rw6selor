@@ -1,6 +1,7 @@
 (() => {
   "use strict";
   const $ = (selector) => document.querySelector(selector);
+  const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
   const socket = io({ path: "/tebak-gambar/socket.io" });
   const siteId = document.body.dataset.site || "MMS";
   const sessionKey = `guess-picture-session:${siteId}`;
@@ -9,13 +10,14 @@
   const toast = (text) => { $("#toast").textContent = text; $("#toast").classList.add("show"); setTimeout(() => $("#toast").classList.remove("show"), 2200); };
   const lobbyNameKey = `guess-picture-name:${siteId}`;
   const roomButton = (code, label = `Gabung ${code}`) => { const button = document.createElement("button"); button.type = "button"; button.className = "join-room-code"; button.textContent = label; button.addEventListener("click", () => { $("#code-wrap").hidden = false; $("#room-code").value = code; $("#room-code").focus(); $("#room-form").scrollIntoView({ behavior: "smooth", block: "center" }); }); return button; };
-  const renderLobbyRooms = (rooms = []) => { const container = $("#public-rooms"); container.replaceChildren(); if (!rooms.length) { const empty = document.createElement("p"); empty.textContent = "Belum ada room terbuka. Buat room agar pemain lain bisa bergabung."; container.append(empty); return; } rooms.forEach((room) => { const card = document.createElement("article"); const text = document.createElement("div"); const name = document.createElement("b"); const meta = document.createElement("small"); name.textContent = room.host; meta.textContent = `${room.players}/${room.capacity} pemain`; text.append(name, meta); card.append(text, roomButton(room.code, room.code)); container.append(card); }); };
+  const renderLobbyRooms = (rooms = []) => { const container = $("#public-rooms"); container.replaceChildren(); if (!rooms.length) { const empty = document.createElement("p"); empty.textContent = "Belum ada room terbuka. Buat room agar pemain lain bisa bergabung."; container.append(empty); return; } rooms.forEach((room) => { const card = document.createElement("article"); const text = document.createElement("div"); const name = document.createElement("b"); const meta = document.createElement("small"); name.textContent = room.host; meta.textContent = `${room.players}/${room.capacity} orang · ${room.status === "waiting" ? "Menunggu pemain" : "Sedang bermain · masuk sebagai penonton"}`; text.append(name, meta); card.append(text, roomButton(room.code, room.code)); container.append(card); }); };
   const appendLobbyMessage = (message) => { const container = $("#lobby-messages"); container.querySelector(".empty-chat")?.remove(); if (container.querySelector(`[data-message-id="${CSS.escape(message.id)}"]`)) return; const row = document.createElement("article"); row.dataset.messageId = message.id; const head = document.createElement("div"); const name = document.createElement("b"); const time = document.createElement("time"); const text = document.createElement("p"); name.textContent = message.name; time.textContent = new Date(message.createdAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }); text.textContent = message.text; head.append(name, time); row.append(head, text); (message.roomCodes || []).forEach((code) => row.append(roomButton(code))); container.append(row); while (container.children.length > 50) container.firstElementChild.remove(); container.scrollTop = container.scrollHeight; };
   const renderLobby = ({ rooms = [], messages = [] } = {}) => { renderLobbyRooms(rooms); const container = $("#lobby-messages"); container.replaceChildren(); if (!messages.length) { const empty = document.createElement("p"); empty.className = "empty-chat"; empty.textContent = "Belum ada pesan. Ajak pemain membuat room."; container.append(empty); } else messages.forEach(appendLobbyMessage); };
   const joinPublicLobby = () => socket.emit("lobby:join", { siteId }, (reply) => { $("#lobby-online").textContent = reply?.ok ? "Online" : "Terputus"; if (reply?.ok) renderLobby(reply); });
   const saveSession = (reply) => sessionStorage.setItem(sessionKey, JSON.stringify({ code: reply.room.code, playerId: reply.playerId, reconnectToken: reply.reconnectToken }));
   const isDrawer = () => state.room?.drawerId === state.playerId;
   const currentPlayer = () => state.room?.players.find((player) => player.id === state.playerId);
+  const isParticipant = () => currentPlayer()?.participant !== false;
   const redraw = () => {
     context.clearRect(0, 0, canvas.width, canvas.height);
     context.lineCap = "round"; context.lineJoin = "round";
@@ -31,22 +33,23 @@
   };
   const renderPlayers = () => {
     const room = state.room; if (!room) return;
-    $("#lobby-players").innerHTML = room.players.map((player, index) => `<article class="player-card ${player.connected ? "" : "offline"}"><b>${player.name}</b><small>${index === 0 ? "HOST" : "PEMAIN"}</small></article>`).join("");
-    $("#scoreboard").innerHTML = [...room.players].sort((a, b) => b.score - a.score).map((player) => `<div class="score-row ${player.id === room.drawerId ? "drawer" : ""}"><b>${player.name}${player.id === state.playerId ? " · Kamu" : ""}</b><strong>${player.score}</strong><small>${player.id === room.drawerId ? "Sedang menggambar" : `${player.wins} jawaban tercepat`}${player.connected ? "" : " · offline"}</small></div>`).join("");
+    $("#lobby-players").innerHTML = room.players.map((player, index) => `<article class="player-card ${player.connected ? "" : "offline"}"><b>${escapeHtml(player.name)}</b><small>${index === 0 ? "HOST" : player.participant ? "PEMAIN" : "PENONTON"}</small></article>`).join("");
+    $("#scoreboard").innerHTML = [...room.players].sort((a, b) => b.score - a.score).map((player) => `<div class="score-row ${player.id === room.drawerId ? "drawer" : ""}"><b>${escapeHtml(player.name)}${player.id === state.playerId ? " · Kamu" : ""}</b><strong>${player.score}</strong><small>${player.id === room.drawerId ? "Sedang menggambar" : `${player.wins} jawaban tercepat`}${player.connected ? "" : " · offline"}</small></div>`).join("");
   };
   const render = () => {
     const room = state.room; if (!room) return;
     const waiting = room.status === "waiting";
     $("#welcome").hidden = true; $("#lobby").hidden = !waiting; $("#game").hidden = waiting;
     $("#room-display").textContent = room.code; renderPlayers();
+    $("#restart-game").hidden = room.status !== "finished" || room.hostId !== state.playerId;
     $("#start-game").hidden = room.hostId !== state.playerId; $("#lobby-note").hidden = room.hostId === state.playerId;
     if (waiting) return;
     const drawer = room.players.find((player) => player.id === room.drawerId);
     $("#round-label").textContent = `RONDE ${Math.min(room.round, room.totalRounds)} / ${room.totalRounds}`;
-    $("#drawer-label").textContent = room.status === "finished" ? "Permainan selesai" : `${drawer?.name || "Pemain"} sedang menggambar`;
+    $("#drawer-label").textContent = !isParticipant() && room.status !== "finished" ? `Mode penonton · ${drawer?.name || "Pemain"} sedang menggambar` : room.status === "finished" ? "Permainan selesai" : `${drawer?.name || "Pemain"} sedang menggambar`;
     $("#draw-tools").hidden = !isDrawer() || room.status !== "playing";
-    $("#guess-form").hidden = isDrawer() || room.status !== "playing";
-    $("#report-round").hidden = isDrawer() || room.status !== "playing";
+    $("#guess-form").hidden = isDrawer() || !isParticipant() || room.status !== "playing";
+    $("#report-round").hidden = isDrawer() || !isParticipant() || room.status !== "playing";
     $("#next-clue").disabled = room.clueCount >= 4;
     $("#secret-panel").hidden = !isDrawer() || !state.secret || room.status !== "playing";
     $("#moderation").hidden = room.hostId !== state.playerId || room.reports < Math.max(2, Math.ceil((room.players.length - 1) / 2));
@@ -102,6 +105,7 @@
     socket.emit("room:leave", {}, (reply) => reply?.ok ? finish() : toast(reply?.error || "Gagal keluar room."));
   });
   $("#start-game").addEventListener("click", () => socket.emit("game:start", {}, (reply) => { if (!reply?.ok) toast(reply.error); }));
+  $("#restart-game").addEventListener("click", () => socket.emit("game:start", {}, (reply) => { if (!reply?.ok) toast(reply.error); }));
   $("#room-display").addEventListener("click", () => navigator.clipboard?.writeText(state.room?.code));
   $("#close-correct").addEventListener("click", () => $("#correct-dialog").close());
   $("#next-clue").addEventListener("click", () => socket.emit("clue:unlock", {}, (reply) => { if (!reply?.ok) toast(reply.error); else { state.activeClue = state.room.clueCount; } }));

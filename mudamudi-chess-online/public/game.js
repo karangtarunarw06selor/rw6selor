@@ -207,11 +207,25 @@ function resetGame() {
 
 }
 
+socket.on("room:chat", (message) => {
+    const container = document.getElementById("roomChatMessages"); if (!container) return;
+    const row = document.createElement("p"); const sender = document.createElement("b"); sender.textContent = `${message.sender}: `;
+    row.append(sender, document.createTextNode(message.text)); container.append(row);
+    while (container.children.length > 50) container.firstElementChild.remove(); container.scrollTop = container.scrollHeight;
+});
+
+document.getElementById("roomChatForm")?.addEventListener("submit", (event) => {
+    event.preventDefault(); const input = document.getElementById("roomChatInput"); if (!roomCode || !input.value.trim()) return;
+    socket.emit("room:chat", { text: input.value }); input.value = "";
+});
+
 socket.on("joinedRoom", (data) => {
 
     roomCode = data.roomCode;
 
     playerColor = data.color;
+
+    if (playerColor === "spectator") document.getElementById("status").textContent = "Mode penonton · kamu bisa menonton dan memakai chat room";
 
     board = data.board;
 

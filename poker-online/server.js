@@ -226,12 +226,13 @@ io.on("connection", (socket) => {
     if (!room || room.siteId !== siteId) return reply({ ok: false, error: "Room tidak ditemukan untuk situs ini." });
     if (room.mode === "capsa-banting" && room.table.players.length >= 4) return reply({ ok: false, error: "Capsa Banting maksimal empat pemain." });
     if (room.table.players.length >= 6) return reply({ ok: false, error: "Meja sudah penuh." });
-    if (!["waiting", "finished"].includes(room.table.phase)) return reply({ ok: false, error: "Hand sedang berjalan. Tunggu hand selesai." });
     const player = room.table.addPlayer({ id: crypto.randomUUID(), name: playerName });
     player.token = crypto.randomBytes(24).toString("base64url");
     player.media = { audio: false, video: false };
-    room.capsaVotes.clear();
-    room.capsaVoteResult = null;
+    if (["waiting", "finished"].includes(room.table.phase)) {
+      room.capsaVotes.clear();
+      room.capsaVoteResult = null;
+    }
     attach(socket, room, player);
     reply({ ok: true, room: publicView(room, player.id), playerId: player.id, token: player.token });
     emitRoom(room);
@@ -330,6 +331,7 @@ io.on("connection", (socket) => {
   socket.on("game:action", (action = {}, reply = () => {}) => {
     const { room, player } = session(socket);
     if (!room || !player) return reply({ ok: false, error: "Sesi tidak ditemukan." });
+    if (player.playingRound === false) return reply({ ok: false, error: "Penonton menunggu ronde berikutnya." });
     const actionId = String(action.actionId || "").slice(0, 80);
     if (!actionId) return reply({ ok: false, error: "ID aksi wajib diisi." });
     try {

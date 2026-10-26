@@ -68,6 +68,7 @@ try {
             rp.is_host,
             rp.ready,
             rp.turn_order,
+            CASE WHEN r.status = 'playing' AND rp.turn_order IS NULL THEN 1 ELSE 0 END AS spectator,
             rp.score,
             rp.fouls,
             rp.balls_pocketed,
@@ -75,6 +76,7 @@ try {
             p.last_seen,
             TIMESTAMPDIFF(SECOND, p.last_seen, NOW()) AS seconds_ago
         FROM room_players rp
+        JOIN rooms r ON r.id = rp.room_id
         LEFT JOIN players p ON p.id = rp.player_id
         WHERE rp.room_id = ?
         ORDER BY rp.turn_order ASC, rp.joined_at ASC

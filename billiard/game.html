@@ -2412,9 +2412,10 @@ function animatePocketBallToRail(ball) {
       <div class="small">
         Score: ${player.score}<br>
         Foul: ${player.fouls}<br>
-        Turn Order: ${player.turn_order}
+        ${Number(player.spectator) === 1 ? "Status: PENONTON" : `Turn Order: ${player.turn_order}`}
       </div>
       ${Number(player.is_host) === 1 ? '<span class="badge">Host</span>' : ''}
+      ${Number(player.spectator) === 1 ? '<span class="badge">Penonton</span>' : ''}
       ${Number(player.player_id) === currentId ? '<span class="badge">Current Turn</span>' : ''}
       ${localPlayer && Number(player.player_id) === Number(localPlayer.id) ? '<span class="badge">You</span>' : ''}
       ${bih.active && Number(bih.player_id) === Number(player.player_id) ? '<span class="badge">Ball In Hand</span>' : ''}
@@ -2578,7 +2579,9 @@ if (isMatchFinished) {
         type: "join_room",
         room_code: matchData.room.room_code,
         player_id: localPlayer.id,
-        username: localPlayer.username
+        username: localPlayer.username,
+        player_key: playerKey,
+        spectator: Boolean(matchData.players?.find(player => Number(player.player_id) === Number(localPlayer.id))?.spectator)
       }));
     }
 
@@ -5203,6 +5206,7 @@ async function createRematchNow() {
       },
       body: JSON.stringify({
         room_code: roomCode,
+        player_key: playerKey,
         mode: matchData?.room?.mode || "straight_pool"
       })
     });

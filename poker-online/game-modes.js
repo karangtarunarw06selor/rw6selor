@@ -17,8 +17,7 @@ class BaseCardTable {
 
   addPlayer({ id, name }) {
     if (this.players.length >= 6) throw new Error("Meja sudah penuh.");
-    if (this.phase !== "waiting" && this.phase !== "finished") throw new Error("Tunggu ronde selesai.");
-    const player = { id, name, connected: true, playingRound: true, hand: [] };
+    const player = { id, name, connected: true, playingRound: ["waiting", "finished"].includes(this.phase), hand: [] };
     this.players.push(player);
     return player;
   }

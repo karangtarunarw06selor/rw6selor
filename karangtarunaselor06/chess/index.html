@@ -42,6 +42,10 @@
                 <h2>Status Permainan</h2>
                 <p id="game-status">Menunggu lawan masuk…</p>
                 <p id="game-message" class="message"></p>
+                <section class="room-chat" aria-label="Chat room">
+                    <h3>Chat Room</h3><div id="room-chat-messages" class="room-chat-messages" aria-live="polite"></div>
+                    <form id="room-chat-form"><input id="room-chat-input" maxlength="180" placeholder="Kirim pesan ke pemain & penonton" autocomplete="off"><button type="submit">Kirim</button></form>
+                </section>
                 <button id="copy-room" type="button">Salin Kode Room</button>
                 <button id="reset-game" class="secondary" type="button">Reset Papan</button>
                 <button id="leave-game" class="danger" type="button">Keluar Game</button>

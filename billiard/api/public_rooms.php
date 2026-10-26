@@ -27,7 +27,7 @@ try {
         WHERE r.play_type = 'online'
           AND r.visibility = 'public'
           AND r.mode = ?
-          AND r.status IN ('waiting', 'ready')
+          AND r.status IN ('waiting', 'ready', 'playing')
         GROUP BY
             r.id,
             r.room_code,

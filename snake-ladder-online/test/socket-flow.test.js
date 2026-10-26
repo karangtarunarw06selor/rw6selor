@@ -37,7 +37,7 @@ test("two players create, join, and receive a server-authoritative roll", async 
   assert.match(rejected.error, /giliran/i);
 });
 
-test("finished players are ranked, skipped, and the final racer is placed automatically", async (context) => {
+test("late joiner spectates until reset while active racers are ranked", async (context) => {
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   const port = server.address().port;
   const host = await connect(port);
@@ -61,18 +61,17 @@ test("finished players are ranked, skipped, and the final racer is placed automa
 
   const firstFinish = await emit(host, "game:roll");
   assert.equal(firstFinish.move.won, true);
-  assert.deepEqual(room.finishOrder, [created.playerId]);
-  assert.equal(room.status, "playing");
-  assert.equal(room.turn, joinedSecond.playerId);
-  assert.equal((await emit(host, "game:roll")).ok, false);
-
-  const secondFinish = await emit(second, "game:roll");
-  assert.equal(secondFinish.move.won, true);
+  assert.deepEqual(room.finishOrder, [created.playerId, joinedSecond.playerId]);
   assert.equal(room.status, "finished");
-  assert.equal(room.winner, created.playerId);
   assert.equal(room.turn, null);
-  assert.deepEqual(room.finishOrder, [created.playerId, joinedSecond.playerId, joinedLast.playerId]);
+  assert.equal((await emit(host, "game:roll")).ok, false);
+  assert.equal((await emit(last, "game:roll")).ok, false);
   assert.equal(room.players.find((player) => player.id === joinedLast.playerId).position, 42);
+  assert.equal(room.activeIds.has(joinedLast.playerId), false);
+
+  assert.equal((await emit(host, "game:reset")).ok, true);
+  assert.equal(room.activeIds.has(joinedLast.playerId), true);
+  assert.equal(room.status, "playing");
 });
 
 test("leaving a room removes the seat and reconnect session immediately", async (context) => {

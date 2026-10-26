@@ -205,7 +205,7 @@
     $("#players").innerHTML = room.players.map((player) => {
       const mine = player.id === state.playerId;
       const voice = state.mode === "online" ? `${mine ? `<button class="player-voice${player.voice ? " active" : ""}" type="button" data-voice-toggle aria-label="${player.voice ? "Mute mikrofon" : "Aktifkan mikrofon"}" title="${player.voice ? "Mute mikrofon" : "Aktifkan mikrofon"}">${headsetIcon}</button>` : `<span class="player-voice${player.voice ? " active" : ""}" aria-label="${player.voice ? "Voice aktif" : "Voice tidak aktif"}">${headsetIcon}</span>`}` : "";
-      return `<article class="player-row" data-player-id="${player.id}"><span class="player-color" style="background:${player.color}"></span><div class="player-identity"><span class="player-name"><b>${escapeHtml(player.name)}</b>${voice}</span><small>${mine ? "Kamu" : player.connected === false ? "Terputus" : "Pemain"}</small></div><strong class="player-position">${state.visualPositions.get(player.id) ?? player.position}</strong></article>`;
+      return `<article class="player-row" data-player-id="${player.id}"><span class="player-color" style="background:${player.color}"></span><div class="player-identity"><span class="player-name"><b>${escapeHtml(player.name)}</b>${voice}</span><small>${player.participant === false ? (mine ? "Kamu · Penonton" : "Penonton") : mine ? "Kamu" : player.connected === false ? "Terputus" : "Pemain"}</small></div><strong class="player-position">${state.visualPositions.get(player.id) ?? player.position}</strong></article>`;
     }).join("");
     syncTokens(room);
     const message = describeMove(room.lastMove);

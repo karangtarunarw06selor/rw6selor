@@ -23,14 +23,14 @@ const connect = () => new Promise((resolve, reject) => {
   ws.once("error", reject);
 });
 const send = (ws, message) => ws.send(JSON.stringify(message));
-const join = async (ws, siteId, roomCode, playerId, username) => {
+const join = async (ws, siteId, roomCode, playerId, username, spectator = false) => {
   const joined = waitFor(ws, "joined_room");
-  send(ws, { type: "join_room", site_id: siteId, room_code: roomCode, player_id: playerId, username });
+  send(ws, { type: "join_room", site_id: siteId, room_code: roomCode, player_id: playerId, username, spectator });
   return joined;
 };
 
 before(async () => {
-  server = spawn(process.execPath, ["server.js"], { cwd: __dirname, env: { ...process.env, PORT: String(port) } });
+  server = spawn(process.execPath, ["server.js"], { cwd: __dirname, env: { ...process.env, PORT: String(port), NODE_ENV: "test" } });
   await new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error("Server failed to start")), 3000);
     server.stdout.on("data", (chunk) => {
@@ -85,4 +85,24 @@ test("legacy gameplay events still relay in the joined site room", async () => {
   assert.deepEqual((await aim).aim, { x: 5, y: 8 });
   host.close();
   guest.close();
+});
+
+test("spectator keeps voice access but gameplay relays are rejected", async () => {
+  const player = await connect();
+  const spectator = await connect();
+  await join(player, "MMS", "WATCH1", 21, "Player");
+  const joined = await join(spectator, "MMS", "WATCH1", 22, "Watcher", true);
+  assert.equal(joined.spectator, true);
+  send(player, { type: "voice_join" });
+  await waitFor(player, "voice_joined");
+  const peer = waitFor(player, "voice_peer_joined");
+  send(spectator, { type: "voice_join" });
+  assert.equal((await waitFor(spectator, "voice_joined")).peers.length, 1);
+  assert.equal((await peer).player_id, "22");
+  for (const type of ["aim_update", "shot_start", "shot_end"]) {
+    const rejected = waitFor(spectator, "gameplay_rejected");
+    send(spectator, { type });
+    assert.match((await rejected).message, /Penonton/);
+  }
+  player.close(); spectator.close();
 });

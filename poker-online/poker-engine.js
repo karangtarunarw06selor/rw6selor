@@ -94,8 +94,7 @@ class PokerTable {
 
   addPlayer({ id, name, stack = 1000 }) {
     if (this.players.length >= 6) throw new Error("Meja sudah penuh.");
-    if (this.phase !== "waiting" && this.phase !== "finished") throw new Error("Tunggu hand selesai.");
-    const player = { id, name, stack, connected: true, playingRound: true, folded: false, allIn: false, hole: [], streetBet: 0, committed: 0 };
+    const player = { id, name, stack, connected: true, playingRound: ["waiting", "finished"].includes(this.phase), folded: false, allIn: false, hole: [], streetBet: 0, committed: 0 };
     this.players.push(player);
     return player;
   }

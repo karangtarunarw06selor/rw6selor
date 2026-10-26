@@ -301,7 +301,7 @@ function debugLog(...args) {
   return (
     playType === "online" &&
     visibility === "public" &&
-    (status === "waiting" || status === "ready") &&
+    (status === "waiting" || status === "ready" || status === "playing") &&
     count < max
   );
 })

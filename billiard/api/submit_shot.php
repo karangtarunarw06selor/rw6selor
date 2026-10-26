@@ -144,7 +144,7 @@ function pc_get_next_turn_player_id($pdo, $roomId, $currentPlayerId) {
             player_id,
             turn_order
         FROM room_players
-        WHERE room_id = ?
+        WHERE room_id = ? AND turn_order IS NOT NULL
         ORDER BY turn_order ASC, id ASC
     ");
     $stmt->execute([$roomId]);
@@ -172,7 +172,7 @@ function pc_get_room_player_ids($pdo, $roomId) {
     $stmt = $pdo->prepare("
         SELECT player_id
         FROM room_players
-        WHERE room_id = ?
+        WHERE room_id = ? AND turn_order IS NOT NULL
         ORDER BY turn_order ASC, id ASC
     ");
     $stmt->execute([$roomId]);
@@ -186,7 +186,7 @@ function pc_get_room_players_ordered($pdo, $roomId) {
             player_id,
             turn_order
         FROM room_players
-        WHERE room_id = ?
+        WHERE room_id = ? AND turn_order IS NOT NULL
         ORDER BY turn_order ASC, id ASC
     ");
     $stmt->execute([$roomId]);
@@ -470,6 +470,15 @@ try {
     $matchId = (int)$match["id"];
     $currentTurnPlayerId = (int)$match["current_turn_player_id"];
     $matchMode = $match["mode"] ?? $mode;
+
+    $seatStmt = $pdo->prepare("SELECT turn_order FROM room_players WHERE room_id = ? AND player_id = ? LIMIT 1");
+    $seatStmt->execute([$roomId, $playerId]);
+    $seat = $seatStmt->fetch(PDO::FETCH_ASSOC);
+    if (!$seat || $seat["turn_order"] === null) {
+        $pdo->rollBack();
+        echo json_encode(["success" => false, "message" => "Penonton tidak bisa menembak"]);
+        exit;
+    }
 
     if ($playerId !== $currentTurnPlayerId) {
         $pdo->rollBack();

@@ -88,19 +88,21 @@ io.on("connection", (socket) => {
             return;
         }
 
-        if (room.players.length >= 2) {
+        if (room.players.length >= 8) {
             socket.emit("roomFull", "Room sudah penuh.");
             return;
         }
 
-        const color = room.players.length === 0 ? "white" : "black";
+        const activeColors = new Set(room.players.map((player) => player.color).filter((value) => value === "white" || value === "black"));
+
+        const color = room.status === "playing" || room.status === "finished" ? "spectator" : !activeColors.has("white") ? "white" : !activeColors.has("black") ? "black" : "spectator";
 
         room.players.push({
             socketId: socket.id,
             color
         });
 
-        if (room.players.length === 2) {
+        if (room.players.filter((player) => player.color !== "spectator").length === 2) {
             room.status = "playing";
         }
 
@@ -115,15 +117,27 @@ io.on("connection", (socket) => {
 
         io.to(roomCode).emit("roomUpdate", getRoomPublicData(roomCode));
 
-        if (room.status === "playing") {
+        if (room.status === "playing" && color !== "spectator") {
             io.to(roomCode).emit("gameReady", getRoomPublicData(roomCode));
         }
 
         console.log(`${socket.id} joined room ${roomCode} as ${color}`);
     });
 
+    socket.on("room:chat", ({ text } = {}) => {
+        const roomCode = socket.data.roomCode;
+        const room = rooms[roomCode];
+        const member = room?.players.find((player) => player.socketId === socket.id);
+        const clean = String(text || "").trim().replace(/\s+/g, " ").slice(0, 180);
+        if (!room || !member || !clean) return;
+        const now = Date.now();
+        if (socket.data.lastChatAt && now - socket.data.lastChatAt < 800) return;
+        socket.data.lastChatAt = now;
+        io.to(roomCode).emit("room:chat", { id: `${socket.id}:${now}`, sender: member.color === "spectator" ? "Penonton" : member.color === "white" ? "Putih" : "Hitam", text: clean, at: now });
+    });
+
     socket.on("movePiece", (data) => {
-        const roomCode = String(data?.roomCode || socket.data.roomCode || "").trim().toUpperCase();
+        const roomCode = String(socket.data.roomCode || "").trim().toUpperCase();
 
         const fromRow = Number(data?.fromRow);
         const fromCol = Number(data?.fromCol);
@@ -220,10 +234,17 @@ io.on("connection", (socket) => {
         const room = rooms[roomCode];
 
         if (!room) return;
+        const requester = room.players.find((player) => player.socketId === socket.id);
+        const host = room.players.find((player) => player.color !== "spectator");
+        if (!requester || requester.socketId !== host?.socketId) {
+            socket.emit("invalidMove", requester?.color === "spectator" ? "Penonton tidak bisa mereset game." : "Hanya pemain putih yang bisa memulai game berikutnya.");
+            return;
+        }
 
         room.board = createInitialBoard();
         room.turn = "white";
-        room.status = room.players.length === 2 ? "playing" : "waiting";
+        room.players.forEach((member, index) => { member.color = index === 0 ? "white" : index === 1 ? "black" : "spectator"; });
+        room.status = room.players.filter((member) => member.color !== "spectator").length === 2 ? "playing" : "waiting";
 
         io.to(roomCode).emit("boardUpdated", getRoomPublicData(roomCode));
     });
@@ -243,7 +264,7 @@ io.on("connection", (socket) => {
             const disconnectedPlayer = room.players[playerIndex];
 
             room.players.splice(playerIndex, 1);
-            room.status = "waiting";
+            if (disconnectedPlayer.color !== "spectator") room.status = "finished";
 
             io.to(roomCode).emit("playerDisconnected", {
                 message: `${disconnectedPlayer.color} keluar dari game.`,
@@ -266,6 +287,7 @@ app.get("/{*path}", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-server.listen(PORT, () => {
+if (require.main === module) server.listen(PORT, () => {
     console.log(`Chess Online server running on port ${PORT}`);
 });
+module.exports = { app, server, io, rooms };

@@ -82,7 +82,7 @@
         <span class="avatar" data-video-slot="${player.id}"><span>${initials}</span><i class="voice-dot"></i></span>
         <b class="seat-name">${escapeHtml(player.name)}${player.folded ? " · FOLD" : player.allIn ? " · ALL-IN" : ""}</b>
         <span class="seat-stack">${state.room.mode === "holdem" ? `♢ ${player.stack}` : state.room.mode === "samgong" ? `${player.cardCount ?? cards.length} KARTU · SKOR ${player.score >= 0 ? "+" : ""}${player.score}` : `${player.cardCount ?? cards.length} KARTU`}</span>
-        ${["waiting", "finished"].includes(state.room.phase) && state.room.mode ? `<i class="ready-badge ${player.id === state.room.hostId || player.ready ? "is-ready" : ""}">${player.id === state.room.hostId ? "MASTER" : player.ready ? "READY" : "REHAT"}</i>` : player.playingRound === false ? '<i class="ready-badge">REHAT</i>' : ""}
+        ${["waiting", "finished"].includes(state.room.phase) && state.room.mode ? `<i class="ready-badge ${player.id === state.room.hostId || player.ready ? "is-ready" : ""}">${player.id === state.room.hostId ? "MASTER" : player.ready ? "READY" : "REHAT"}</i>` : player.playingRound === false ? '<i class="ready-badge">PENONTON · IKUT RONDE BERIKUTNYA</i>' : ""}
         ${state.room.mode === "holdem" && player.id === state.room.dealerId ? `<i class="dealer">${state.room.players.length >= 3 ? "BANDAR" : "D"}</i>` : ""}
         ${state.room.mode === "cangkulan" && player.id === state.room.bandarId ? '<i class="dealer">BANDAR</i>' : ""}
         ${state.room.mode === "samgong" && player.id === state.room.bandarId ? '<i class="dealer">BANDAR</i>' : ""}

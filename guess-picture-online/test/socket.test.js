@@ -46,9 +46,40 @@ test("public lobby chat discovers active same-site rooms without cross-tenant le
   const limited = await emit(host, "lobby:chat", { siteId: "MMS", name: "Ayu", text: "pesan kedua" });
   assert.equal(limited.ok, false);
   assert.match(limited.error, /Tunggu/);
-  const removed = waitFor(guest, "lobby:state", (state) => state.rooms.length === 0);
+  const active = waitFor(guest, "lobby:state", (state) => state.rooms[0]?.status === "playing");
   assert.equal((await emit(host, "game:start")).ok, true);
-  assert.deepEqual((await removed).rooms, []);
+  assert.equal((await active).rooms[0].code, created.room.code);
+});
+
+test("late joiner spectates an active game and cannot affect scoring", async (context) => {
+  const { host, guest, created } = await setup(context);
+  assert.equal((await emit(host, "game:start")).ok, true);
+  const spectator = await connect(server.address().port);
+  context.after(() => spectator.close());
+  let secretLeaked = false; spectator.on("round:secret", () => { secretLeaked = true; });
+  const joined = await emit(spectator, "room:join", { name: "Citra", code: created.room.code, siteId: "MMS" });
+  assert.equal(joined.ok, true);
+  assert.equal(joined.room.status, "playing");
+  assert.equal(joined.room.players.find((player) => player.id === joined.playerId).participant, false);
+  assert.equal((await emit(spectator, "guess:submit", { text: "apa saja" })).ok, false);
+  assert.equal((await emit(spectator, "round:report")).ok, false);
+  assert.equal((await emit(spectator, "media:update", { voice: true, video: false })).ok, true);
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  assert.equal(secretLeaked, false);
+  assert.equal(rooms.get(created.room.code).activeIds.has(joined.playerId), false);
+  const room = rooms.get(created.room.code);
+  assert.equal(room.activeIds.size, 2);
+  assert.equal(room.players.length, 3);
+  assert.equal(guest.connected, true);
+
+  clearTimeout(room.roundTimer);
+  room.status = "finished";
+  room.players[0].score = 9;
+  assert.equal((await emit(host, "game:start")).ok, true);
+  assert.equal(room.activeIds.has(joined.playerId), true);
+  assert.equal(room.activeIds.size, 3);
+  assert.equal(room.players[0].score, 0);
+  assert.equal(room.status, "playing");
 });
 
 test("only the drawer receives the secret question", async (context) => {

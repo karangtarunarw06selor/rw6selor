@@ -197,8 +197,18 @@
         playerColor = data.color;
         els.lobby.classList.add("hidden");
         els.game.classList.remove("hidden");
-        setMessage(els.gameMessage, playerColor === "white" ? "Kamu player pertama." : "Kamu player kedua.");
+        setMessage(els.gameMessage, playerColor === "spectator" ? "Kamu masuk sebagai penonton. Bisa menonton dan memakai chat room." : playerColor === "white" ? "Kamu player pertama." : "Kamu player kedua.");
         renderGame(data);
+    });
+
+    socket.on("room:chat", (message) => {
+        const container = $("room-chat-messages");
+        if (!container) return;
+        const row = document.createElement("p");
+        const sender = document.createElement("b"); sender.textContent = `${message.sender}: `;
+        row.append(sender, document.createTextNode(message.text)); container.append(row);
+        while (container.children.length > 50) container.firstElementChild.remove();
+        container.scrollTop = container.scrollHeight;
     });
 
     socket.on("roomUpdate", renderGame);
@@ -228,6 +238,12 @@
     socket.on("playerDisconnected", (data) => {
         playSound("error");
         setMessage(els.gameMessage, data.message, true);
+    });
+
+    $("room-chat-form")?.addEventListener("submit", (event) => {
+        event.preventDefault(); const input = $("room-chat-input");
+        if (!roomCode || !input.value.trim()) return;
+        socket.emit("room:chat", { text: input.value }); input.value = "";
     });
 
     els.join.addEventListener("click", joinRoom);

@@ -48,7 +48,7 @@ const publicRoom = (room) => ({
   turn: room.turn,
   winner: room.winner,
   finishOrder: room.finishOrder || [],
-  players: room.players.map(({ id, name, color, position, connected, voice }) => ({ id, name, color, position, connected, voice: Boolean(voice) })),
+  players: room.players.map(({ id, name, color, position, connected, voice }) => ({ id, name, color, position, connected, voice: Boolean(voice), participant: room.status === "waiting" || room.activeIds?.has(id) })),
   lastMove: room.lastMove,
 });
 const findPlayer = (room, socket) => room.players.find((player) => player.socketId === socket.id);
@@ -58,12 +58,12 @@ const nextRacer = (room, playerId) => {
   const start = room.players.findIndex((player) => player.id === playerId);
   for (let offset = 1; offset <= room.players.length; offset += 1) {
     const candidate = room.players[(start + offset) % room.players.length];
-    if (candidate.connected && !room.finishOrder.includes(candidate.id)) return candidate;
+    if (candidate.connected && room.activeIds?.has(candidate.id) && !room.finishOrder.includes(candidate.id)) return candidate;
   }
   return null;
 };
 const completeWithFinalRacer = (room) => {
-  const remaining = room.players.filter((player) => !room.finishOrder.includes(player.id));
+  const remaining = room.players.filter((player) => room.activeIds?.has(player.id) && !room.finishOrder.includes(player.id));
   if (remaining.length > 1) return false;
   if (remaining[0]) room.finishOrder.push(remaining[0].id);
   room.status = "finished";
@@ -104,6 +104,7 @@ const scheduleDisconnectCleanup = (room, player) => {
   player.cleanupTimer = setTimeout(() => {
     if (player.connected) return;
     room.players = room.players.filter((item) => item.id !== player.id);
+    room.activeIds.delete(player.id);
     room.finishOrder = room.finishOrder.filter((id) => id !== player.id);
     if (!room.players.length) {
       rooms.delete(room.code);
@@ -112,7 +113,7 @@ const scheduleDisconnectCleanup = (room, player) => {
     }
     if (room.status === "playing" && room.finishOrder.length) completeWithFinalRacer(room);
     if (room.status !== "finished" && room.turn === player.id) room.turn = nextRacer(room, player.id)?.id || null;
-    if (room.status !== "finished" && room.players.length < 2) room.status = "waiting";
+    if (room.status === "playing" && room.players.filter((item) => room.activeIds.has(item.id)).length < 2) room.status = "finished";
     emitRoom(room);
   }, RECONNECT_GRACE_MS);
   player.cleanupTimer.unref();
@@ -148,7 +149,7 @@ io.on("connection", (socket) => {
     let roomCode = code();
     while (rooms.has(roomCode)) roomCode = code();
     const player = { id: crypto.randomUUID(), reconnectToken: crypto.randomBytes(24).toString("base64url"), socketId: socket.id, name: playerName, color: "#f0b54b", position: 1, connected: true };
-    const room = { code: roomCode, siteId, status: "waiting", turn: player.id, winner: null, finishOrder: [], players: [player], lastMove: null };
+    const room = { code: roomCode, siteId, status: "waiting", turn: player.id, winner: null, finishOrder: [], activeIds: new Set(), players: [player], lastMove: null };
     rooms.set(roomCode, room);
     socket.join(roomCode);
     socket.data.roomCode = roomCode;
@@ -169,7 +170,10 @@ io.on("connection", (socket) => {
     const colors = ["#f0b54b", "#4db8d0", "#ef6f6c", "#70c48f"];
     const player = { id: crypto.randomUUID(), reconnectToken: crypto.randomBytes(24).toString("base64url"), socketId: socket.id, name: playerName, color: colors[room.players.length], position: 1, connected: true };
     room.players.push(player);
-    room.status = room.players.length >= 2 ? "playing" : "waiting";
+    if (room.status === "waiting" && room.players.filter((item) => item.connected).length >= 2) {
+      room.activeIds = new Set(room.players.filter((item) => item.connected).map((item) => item.id));
+      room.status = "playing"; room.turn = room.players.find((item) => room.activeIds.has(item.id))?.id || null;
+    }
     socket.join(roomCode);
     socket.data.roomCode = roomCode;
     reply(sessionReply(room, player));
@@ -200,6 +204,7 @@ io.on("connection", (socket) => {
     clearTimeout(player.cleanupTimer);
     leaveVoice(room, player);
     room.players = room.players.filter((item) => item.id !== player.id);
+    room.activeIds.delete(player.id);
     room.finishOrder = room.finishOrder.filter((id) => id !== player.id);
     socket.leave(room.code);
     socket.data.roomCode = null;
@@ -208,8 +213,8 @@ io.on("connection", (socket) => {
       removeRoomAnnouncement(room);
     } else {
       if (room.status === "playing" && room.finishOrder.length) completeWithFinalRacer(room);
-      if (room.status !== "finished" && room.turn === player.id) room.turn = nextRacer(room, player.id)?.id || room.players.find((item) => item.connected)?.id || null;
-      if (room.status !== "finished" && room.players.length < 2) room.status = "waiting";
+      if (room.status !== "finished" && room.turn === player.id) room.turn = nextRacer(room, player.id)?.id || room.players.find((item) => item.connected && room.activeIds.has(item.id))?.id || null;
+      if (room.status === "playing" && room.players.filter((item) => room.activeIds.has(item.id)).length < 2) room.status = "finished";
       if (room.winner === player.id) room.winner = room.finishOrder[0] || null;
       emitRoom(room);
     }
@@ -220,9 +225,11 @@ io.on("connection", (socket) => {
     const room = rooms.get(socket.data.roomCode);
     const player = room && findPlayer(room, socket);
     if (!room || !player || room.players[0].id !== player.id) return reply({ ok: false, error: "Hanya pembuat room yang bisa mulai." });
-    if (room.players.length < 2) return reply({ ok: false, error: "Minimal dua pemain." });
-    room.status = "playing";
-    room.turn = room.players[0].id;
+    if (room.status !== "waiting") return reply({ ok: false, error: "Permainan sedang berjalan." });
+    const participants = room.players.filter((item) => item.connected);
+    if (participants.length < 2) return reply({ ok: false, error: "Minimal dua pemain." });
+    room.activeIds = new Set(participants.map((item) => item.id)); room.status = "playing";
+    room.turn = participants[0].id;
     emitRoom(room);
     reply({ ok: true });
   });
@@ -232,6 +239,7 @@ io.on("connection", (socket) => {
     const player = room && findPlayer(room, socket);
     if (!room || !player) return reply({ ok: false, error: "Sesi pemain tidak ditemukan." });
     if (room.status !== "playing") return reply({ ok: false, error: "Permainan belum dimulai." });
+    if (!room.activeIds?.has(player.id)) return reply({ ok: false, error: "Penonton menunggu permainan berikutnya." });
     if (room.turn !== player.id) return reply({ ok: false, error: "Belum giliranmu." });
     const dice = crypto.randomInt(1, 7);
     const result = move(player.position, dice);
@@ -251,8 +259,9 @@ io.on("connection", (socket) => {
     const player = room && findPlayer(room, socket);
     if (!room || !player || room.players[0].id !== player.id) return reply({ ok: false, error: "Hanya pembuat room yang bisa reset." });
     room.players.forEach((item) => { item.position = 1; });
-    room.status = room.players.length >= 2 ? "playing" : "waiting";
-    room.turn = room.players[0].id;
+    const participants = room.players.filter((item) => item.connected);
+    room.activeIds = new Set(participants.map((item) => item.id)); room.status = participants.length >= 2 ? "playing" : "waiting";
+    room.turn = participants[0]?.id || null;
     room.winner = null;
     room.finishOrder = [];
     room.lastMove = null;

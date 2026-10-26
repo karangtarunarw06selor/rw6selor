@@ -128,6 +128,27 @@ test("host starts with ready players while resting players remain connected as s
   assert.equal((await emit(resting, "game:action", { type: "reveal", actionId: "spectator-action" })).ok, false);
 });
 
+test("late joiner spectates the active hand, can use media, and waits for the next hand", async () => {
+  const host = await connect();
+  const guest = await connect();
+  const spectator = await connect();
+  const created = await emit(host, "room:create", { name: "Host", siteId: "MMS" });
+  await emit(guest, "room:join", { name: "Guest", code: created.room.code, siteId: "MMS" });
+  await emit(host, "room:mode", { mode: "holdem" });
+  await emit(guest, "room:ready", { ready: true });
+  assert.equal((await emit(host, "game:start")).ok, true);
+
+  const joined = await emit(spectator, "room:join", { name: "Penonton", code: created.room.code, siteId: "MMS" });
+  assert.equal(joined.ok, true);
+  const seat = joined.room.players.find((player) => player.id === joined.playerId);
+  assert.equal(seat.playingRound, false);
+  assert.deepEqual(seat.hole, []);
+  assert.notEqual(joined.room.turnId, joined.playerId);
+  assert.equal((await emit(spectator, "game:action", { type: "fold", actionId: "late-spectator" })).ok, false);
+  assert.equal((await emit(spectator, "media:join", { audio: true, video: false })).ok, true);
+  assert.equal((await emit(spectator, "room:ready", { ready: true })).ok, false);
+});
+
 test("host selects a mode only after another player joins and mode locks during play", async () => {
   const host = await connect();
   const guest = await connect();
@@ -203,8 +224,13 @@ test("minuman enforces the house from server state and keeps hands private", asy
     : { type: "draw", actionId: "legal-drink" };
   assert.equal((await emit(actorSocket, "game:action", action)).ok, true);
   const next = (await emit(host, "room:get")).room;
-  assert.notEqual(next.turnId, actorId);
-  assert.equal(next.currentTrick.length, 1);
+  if (action.type === "play") {
+    assert.notEqual(next.turnId, actorId);
+    assert.equal(next.currentTrick.length, 1);
+  } else {
+    assert.equal(next.turnId, actorId);
+    assert.equal(next.currentTrick.length, 0);
+  }
   const observerView = (await emit(observerSocket, "room:get")).room;
   const hidden = observerView.players.find((player) => player.id === actorId).hand;
   assert.equal(hidden.length > 0, true);

@@ -12,6 +12,30 @@ const rooms = new Map();
 const cleanSiteId = (value) => String(value || "MMS").trim().toUpperCase() === "KT" ? "KT" : "MMS";
 const cleanRoomCode = (value) => String(value || "").trim().toUpperCase().slice(0, 16);
 const roomKey = (siteId, roomCode) => `${siteId}:${roomCode}`;
+const roleEndpoint = (siteId) => siteId === "KT"
+  ? "https://karangtaruna.rw6selor.org/billiard/api/realtime_role.php"
+  : "https://mudamudiselor.rw6selor.org/billiard/api/realtime_role.php";
+async function verifyRole(siteId, roomCode, playerKey, claimedSpectator) {
+  if (process.env.NODE_ENV === "test") return { ok: true, spectator: Boolean(claimedSpectator) };
+  if (!playerKey) return { ok: false };
+  try {
+    const response = await fetch(roleEndpoint(siteId), {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ player_key: playerKey, room_code: roomCode }),
+      signal: AbortSignal.timeout(3000),
+    });
+    const result = await response.json();
+    return {
+      ok: response.ok && result.success === true,
+      spectator: result.spectator === true,
+      playerId: result.player_id,
+      username: result.username,
+    };
+  } catch {
+    return { ok: false };
+  }
+}
 const validVoiceSignal = (signal) => {
   if (!signal || typeof signal !== "object" || JSON.stringify(signal).length > 20000) return false;
   if (signal.description) return ["offer", "answer"].includes(signal.description.type) && typeof signal.description.sdp === "string";
@@ -63,11 +87,12 @@ wss.on("connection", (ws) => {
   ws.playerId = null;
   ws.username = null;
   ws.voice = false;
+  ws.spectator = false;
 
   safeSend(ws, { type: "connected", message: "Connected to Pocket Clash realtime server" });
   ws.on("pong", () => { ws.isAlive = true; });
 
-  ws.on("message", (raw) => {
+  ws.on("message", async (raw) => {
     let data;
     try {
       data = JSON.parse(raw.toString());
@@ -84,12 +109,15 @@ wss.on("connection", (ws) => {
         safeSend(ws, { type: "error", message: "room_code kosong" });
         return;
       }
+      const role = await verifyRole(siteId, roomCode, String(data.player_key || ""), data.spectator);
+      if (!role.ok) return safeSend(ws, { type: "error", message: "Seat realtime tidak valid" });
       removeClientFromRoom(ws);
       ws.roomCode = roomCode;
       ws.roomKey = key;
       ws.siteId = siteId;
-      ws.playerId = String(data.player_id || "").slice(0, 64);
-      ws.username = String(data.username || "Pemain").slice(0, 40);
+      ws.playerId = String(role.playerId || data.player_id || "").slice(0, 64);
+      ws.username = String(role.username || data.username || "Pemain").slice(0, 40);
+      ws.spectator = role.spectator;
       if (!rooms.has(key)) rooms.set(key, { clients: new Set() });
       rooms.get(key).clients.add(ws);
       safeSend(ws, {
@@ -98,6 +126,7 @@ wss.on("connection", (ws) => {
         site_id: siteId,
         player_id: ws.playerId,
         username: ws.username,
+        spectator: ws.spectator,
         online_count: getRoomClientCount(key)
       });
       broadcastToRoom(key, {
@@ -153,6 +182,7 @@ wss.on("connection", (ws) => {
     }
 
     if (data.type === "aim_update") {
+      if (ws.spectator) return safeSend(ws, { type: "gameplay_rejected", message: "Penonton tidak bisa membidik." });
       broadcastToRoom(ws.roomKey, {
         type: "aim_update",
         room_code: ws.roomCode,
@@ -166,6 +196,7 @@ wss.on("connection", (ws) => {
     }
 
     if (data.type === "shot_start") {
+      if (ws.spectator) return safeSend(ws, { type: "gameplay_rejected", message: "Penonton tidak bisa menembak." });
       broadcastToRoom(ws.roomKey, {
         type: "shot_start",
         room_code: ws.roomCode,
@@ -179,6 +210,7 @@ wss.on("connection", (ws) => {
     }
 
     if (data.type === "shot_end") {
+      if (ws.spectator) return safeSend(ws, { type: "gameplay_rejected", message: "Penonton tidak bisa mengubah state meja." });
       broadcastToRoom(ws.roomKey, {
         type: "shot_end",
         room_code: ws.roomCode,

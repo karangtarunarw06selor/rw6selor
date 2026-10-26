@@ -7,9 +7,10 @@ $raw = file_get_contents("php://input");
 $data = json_decode($raw, true);
 
 $roomCode = isset($data["room_code"]) ? trim($data["room_code"]) : "";
+$playerKey = isset($data["player_key"]) ? trim($data["player_key"]) : "";
 $mode = isset($data["mode"]) ? trim($data["mode"]) : "straight_pool";
 
-if ($roomCode === "") {
+if ($roomCode === "" || $playerKey === "") {
     echo json_encode([
         "success" => false,
         "message" => "room_code tidak valid"
@@ -134,10 +135,11 @@ try {
 
     // Ambil room yang sama
     $roomStmt = $pdo->prepare("
-        SELECT id, room_code, mode
+        SELECT id, room_code, mode, status
         FROM rooms
         WHERE room_code = ?
         LIMIT 1
+        FOR UPDATE
     ");
     $roomStmt->execute([$roomCode]);
     $room = $roomStmt->fetch();
@@ -148,6 +150,15 @@ try {
 
     $roomId = (int)$room["id"];
     $roomMode = $room["mode"] ?: $mode;
+    if ($room["status"] !== "finished") {
+        throw new Exception("Match aktif belum selesai");
+    }
+
+    $callerStmt = $pdo->prepare("SELECT p.id FROM players p JOIN room_players rp ON rp.player_id = p.id WHERE p.player_key = ? AND rp.room_id = ? LIMIT 1");
+    $callerStmt->execute([$playerKey, $roomId]);
+    if (!$callerStmt->fetch()) {
+        throw new Exception("Player bukan anggota room");
+    }
 
     // Ambil players dari room yang sama
     $playersStmt = $pdo->prepare("
@@ -157,7 +168,7 @@ try {
             is_host
         FROM room_players
         WHERE room_id = ?
-        ORDER BY turn_order ASC
+        ORDER BY CASE WHEN turn_order IS NULL THEN 1 ELSE 0 END, turn_order ASC, player_id ASC
     ");
     $playersStmt->execute([$roomId]);
     $players = $playersStmt->fetchAll();
@@ -166,21 +177,26 @@ try {
         throw new Exception("Player room tidak ditemukan");
     }
 
-    // Ambil match terakhir sebelum rematch.
-    // Starter baru akan bergilir dari starter match sebelumnya.
-    $lastMatchStmt = $pdo->prepare("
-        SELECT
-            id,
-            current_turn_player_id,
-            winner_player_id,
-            status
-        FROM matches
-        WHERE room_id = ?
-        ORDER BY id DESC
-        LIMIT 1
-    ");
+    // Verifikasi boundary dan konsensus sebelum mengubah seat apa pun.
+    $lastMatchStmt = $pdo->prepare("SELECT id, current_turn_player_id, winner_player_id, status FROM matches WHERE room_id = ? ORDER BY id DESC LIMIT 1 FOR UPDATE");
     $lastMatchStmt->execute([$roomId]);
     $lastMatch = $lastMatchStmt->fetch();
+    if (!$lastMatch || $lastMatch["status"] !== "finished") {
+        throw new Exception("Match sebelumnya belum selesai");
+    }
+    $voteStmt = $pdo->prepare("SELECT COUNT(DISTINCT player_id) FROM rematch_votes WHERE room_id = ? AND match_id = ?");
+    $voteStmt->execute([$roomId, (int)$lastMatch["id"]]);
+    if ((int)$voteStmt->fetchColumn() < count($players)) {
+        throw new Exception("Vote rematch belum lengkap");
+    }
+
+    // Rematch adalah boundary aman: semua seat, termasuk spectator late-join, dipromosikan.
+    $turnOrderStmt = $pdo->prepare("UPDATE room_players SET turn_order = ? WHERE room_id = ? AND player_id = ?");
+    foreach ($players as $index => &$roomPlayer) {
+        $roomPlayer["turn_order"] = $index + 1;
+        $turnOrderStmt->execute([$index + 1, $roomId, (int)$roomPlayer["player_id"]]);
+    }
+    unset($roomPlayer);
 
     $previousStarterPlayerId = $lastMatch && $lastMatch["current_turn_player_id"] !== null
         ? (int)$lastMatch["current_turn_player_id"]
@@ -260,6 +276,8 @@ try {
         $newMatchId,
         json_encode($initialState, JSON_UNESCAPED_SLASHES)
     ]);
+    $clearVotesStmt = $pdo->prepare("DELETE FROM rematch_votes WHERE room_id = ? AND match_id = ?");
+    $clearVotesStmt->execute([$roomId, (int)$lastMatch["id"]]);
 
     $pdo->commit();
 

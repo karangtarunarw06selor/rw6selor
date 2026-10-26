@@ -49,6 +49,7 @@ try {
         FROM rooms
         WHERE room_code = ?
         LIMIT 1
+        FOR UPDATE
     ");
     $roomStmt->execute([$roomCode]);
     $room = $roomStmt->fetch();
@@ -62,7 +63,7 @@ try {
         exit;
     }
 
-    if ($room["status"] !== "waiting") {
+    if (!in_array($room["status"], ["waiting", "ready", "playing"], true)) {
         $pdo->rollBack();
         echo json_encode([
             "success" => false,
@@ -71,25 +72,8 @@ try {
         exit;
     }
 
-    $countStmt = $pdo->prepare("
-        SELECT COUNT(*) AS total
-        FROM room_players
-        WHERE room_id = ?
-    ");
-    $countStmt->execute([$room["id"]]);
-    $count = (int)$countStmt->fetch()["total"];
-
-    if ($count >= (int)$room["max_players"]) {
-        $pdo->rollBack();
-        echo json_encode([
-            "success" => false,
-            "message" => "Room sudah penuh"
-        ]);
-        exit;
-    }
-
     $existsStmt = $pdo->prepare("
-        SELECT id
+        SELECT id, turn_order
         FROM room_players
         WHERE room_id = ? AND player_id = ?
         LIMIT 1
@@ -98,15 +82,35 @@ try {
     $alreadyJoined = $existsStmt->fetch();
 
     if (!$alreadyJoined) {
+        $countStmt = $pdo->prepare("
+            SELECT COUNT(*) AS total
+            FROM room_players
+            WHERE room_id = ?
+        ");
+        $countStmt->execute([$room["id"]]);
+        $count = (int)$countStmt->fetch()["total"];
+
+        if ($count >= (int)$room["max_players"]) {
+            $pdo->rollBack();
+            echo json_encode([
+                "success" => false,
+                "message" => "Room sudah penuh"
+            ]);
+            exit;
+        }
+    }
+
+    if (!$alreadyJoined) {
         $insertStmt = $pdo->prepare("
             INSERT INTO room_players (
                 room_id,
                 player_id,
                 username,
                 is_host,
-                ready
+                ready,
+                turn_order
             )
-            VALUES (?, ?, ?, 0, 0)
+            VALUES (?, ?, ?, 0, 0, NULL)
         ");
         $insertStmt->execute([
             $room["id"],
@@ -131,7 +135,8 @@ try {
 
     echo json_encode([
         "success" => true,
-        "message" => $alreadyJoined ? "Player sudah ada di room" : "Berhasil masuk room",
+        "message" => $alreadyJoined ? "Player sudah ada di room" : ($room["status"] === "playing" ? "Berhasil masuk sebagai penonton" : "Berhasil masuk room"),
+        "spectator" => $room["status"] === "playing" && (!$alreadyJoined || $alreadyJoined["turn_order"] === null),
         "room" => [
             "id" => (int)$room["id"],
             "room_code" => $room["room_code"],
