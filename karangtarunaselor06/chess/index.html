@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Catur Online RW06 Selor</title>
     <link rel="icon" href="../images/karangtaruna.avif" type="image/avif">
-    <link rel="stylesheet" href="chess.css?v=4">
+    <link rel="stylesheet" href="chess.css?v=5">
 </head>
 <body>
     <main class="chess-app">
@@ -27,6 +27,12 @@
             </div>
             <button id="random-room" class="secondary" type="button">Buat Kode Acak</button>
             <p id="lobby-message" class="message"></p>
+            <section class="lobby-public-chat" aria-label="Chat publik Catur">
+                <div class="lobby-chat-head"><h3>Chat Publik Lobby</h3><span id="lobby-room-count">0 room aktif</span></div>
+                <div id="lobby-chat-messages" class="lobby-chat-messages" aria-live="polite"><p class="chat-empty">Belum ada pesan. Mulai obrolan.</p></div>
+                <form id="lobby-chat-form" class="lobby-chat-form"><input id="lobby-chat-name" maxlength="28" placeholder="Nama kamu" autocomplete="nickname" required><input id="lobby-chat-input" maxlength="180" placeholder="Tulis pesan publik…" autocomplete="off" required><button type="submit">Kirim</button></form>
+                <p id="lobby-chat-feedback" class="message"></p>
+            </section>
         </section>
 
         <section id="game" class="game-layout hidden">
@@ -61,6 +67,6 @@
     </dialog>
 
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-    <script src="chess.js?v=4"></script>
+    <script src="chess.js?v=5"></script>
 </body>
 </html>

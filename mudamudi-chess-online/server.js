@@ -36,6 +36,12 @@ app.use(express.static(path.join(__dirname, "public")));
 const rooms = {};
 
 const publicQueue = [];
+const lobbyMessages = { MMS: [], KT: [] };
+const cleanSite = (value) => String(value || "MMS").trim().toUpperCase() === "KT" ? "KT" : "MMS";
+const cleanLobbyText = (value, limit) => String(value || "").trim().replace(/\s+/g, " ").slice(0, limit);
+const lobbyChannel = (siteId) => `chess:lobby:${siteId}`;
+const lobbyState = (siteId) => ({ messages: lobbyMessages[siteId], rooms: Object.entries(rooms).filter(([, room]) => room.siteId === siteId).map(([code, room]) => ({ code, players: room.players.length, status: room.status })).slice(-20) });
+const emitLobby = (siteId) => io.to(lobbyChannel(siteId)).emit("lobby:state", lobbyState(siteId));
 
 function createInitialBoard() {
 
@@ -651,9 +657,11 @@ function getRoomData(roomCode) {
 
 }
 
-function createRoom(roomCode) {
+function createRoom(roomCode, siteId = "MMS") {
 
     rooms[roomCode] = {
+
+        siteId: cleanSite(siteId),
 
         players: [],
 
@@ -713,7 +721,25 @@ io.on("connection", (socket) => {
 
     console.log("Socket connected:", socket.id);
 
-    socket.on("findPublicMatch", () => {
+    socket.on("lobby:join", ({ siteId: rawSite } = {}, reply = () => {}) => {
+        const siteId = cleanSite(rawSite);
+        if (socket.data.lobbySite) socket.leave(lobbyChannel(socket.data.lobbySite));
+        socket.data.lobbySite = siteId; socket.join(lobbyChannel(siteId));
+        reply({ ok: true, ...lobbyState(siteId) });
+    });
+
+    socket.on("lobby:chat", ({ siteId: rawSite, name, text } = {}, reply = () => {}) => {
+        const siteId = cleanSite(rawSite); const cleanName = cleanLobbyText(name, 28); const cleanText = cleanLobbyText(text, 180); const now = Date.now();
+        if (socket.data.lobbySite !== siteId) return reply({ ok: false, error: "Lobby tidak sesuai." });
+        if (!cleanName || !cleanText) return reply({ ok: false, error: "Nama dan pesan wajib diisi." });
+        if (now - (socket.data.lastLobbyChatAt || 0) < 1200) return reply({ ok: false, error: "Tunggu sebentar sebelum mengirim lagi." });
+        socket.data.lastLobbyChatAt = now;
+        const message = { id: `${socket.id}:${now}`, name: cleanName, text: cleanText, at: now };
+        lobbyMessages[siteId].push(message); if (lobbyMessages[siteId].length > 50) lobbyMessages[siteId].shift();
+        io.to(lobbyChannel(siteId)).emit("lobby:chat", message); reply({ ok: true });
+    });
+
+    socket.on("findPublicMatch", ({ siteId: rawSite } = {}) => {
 
         const existingIndex = publicQueue.findIndex((item) => item.socketId === socket.id);
 
@@ -725,11 +751,13 @@ io.on("connection", (socket) => {
 
         }
 
-        const opponent = publicQueue.shift();
+        const siteId = cleanSite(rawSite);
+        const opponentIndex = publicQueue.findIndex((item) => item.siteId === siteId);
+        const opponent = opponentIndex === -1 ? null : publicQueue.splice(opponentIndex, 1)[0];
 
         if (!opponent) {
 
-            publicQueue.push({ socketId: socket.id });
+            publicQueue.push({ socketId: socket.id, siteId });
 
             socket.emit("publicWaiting");
 
@@ -745,8 +773,10 @@ io.on("connection", (socket) => {
 
     });
 
-    socket.on("joinRoom", (roomCodeRaw) => {
+    socket.on("joinRoom", (payload) => {
 
+        const roomCodeRaw = typeof payload === "object" ? payload?.roomCode : payload;
+        const siteId = cleanSite(typeof payload === "object" ? payload?.siteId : "MMS");
         const roomCode = String(roomCodeRaw || "").trim().toUpperCase();
 
         if (!roomCode) {
@@ -759,11 +789,12 @@ io.on("connection", (socket) => {
 
         if (!rooms[roomCode]) {
 
-            createRoom(roomCode);
+            createRoom(roomCode, siteId);
 
         }
 
         const room = rooms[roomCode];
+        if (room.siteId !== siteId) { socket.emit("joinError", "Room tidak ditemukan."); return; }
 
         const existingPlayer = room.players.find((player) => player.socketId === socket.id);
 
@@ -822,6 +853,7 @@ io.on("connection", (socket) => {
         });
 
         io.to(roomCode).emit("roomUpdate", getRoomData(roomCode));
+        emitLobby(room.siteId);
 
         if (room.status === "playing" && color !== "spectator") {
 
@@ -1106,6 +1138,7 @@ io.on("connection", (socket) => {
                 delete rooms[roomCode];
 
             }
+            emitLobby(room.siteId);
 
             break;
 

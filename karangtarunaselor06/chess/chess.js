@@ -142,7 +142,7 @@
             return;
         }
         setMessage(els.lobbyMessage, "Masuk room…");
-        socket.emit("joinRoom", raw);
+        socket.emit("joinRoom", { roomCode: raw, siteId: "KT" });
     }
 
     function handleSquareClick(row, col) {
@@ -185,7 +185,22 @@
         selected = null;
     }
 
-    socket.on("connect", () => updateConnection(true));
+    const lobbyNameKey = "chess:lobby:name:KT";
+    const lobbyNameInput = $("lobby-chat-name");
+    if (lobbyNameInput) lobbyNameInput.value = localStorage.getItem(lobbyNameKey) || "";
+    function appendLobbyMessage(message) {
+        const container = $("lobby-chat-messages"); if (!container || container.querySelector(`[data-id="${CSS.escape(message.id)}"]`)) return;
+        container.querySelector(".chat-empty")?.remove(); const row = document.createElement("p"); row.dataset.id = message.id;
+        const name = document.createElement("strong"); name.textContent = `${message.name}: `; row.append(name, document.createTextNode(message.text)); container.appendChild(row); container.scrollTop = container.scrollHeight;
+    }
+    function renderLobbyState(state) {
+        $("lobby-room-count").textContent = `${state?.rooms?.length || 0} room aktif`; const container = $("lobby-chat-messages"); container.replaceChildren();
+        if (!state?.messages?.length) { const empty = document.createElement("p"); empty.className = "chat-empty"; empty.textContent = "Belum ada pesan. Mulai obrolan."; container.appendChild(empty); return; }
+        state.messages.forEach(appendLobbyMessage);
+    }
+    socket.on("connect", () => { updateConnection(true); socket.emit("lobby:join", { siteId: "KT" }, (state) => { if (state?.ok) renderLobbyState(state); }); });
+    socket.on("lobby:state", renderLobbyState);
+    socket.on("lobby:chat", appendLobbyMessage);
     socket.on("disconnect", () => updateConnection(false));
     socket.on("connect_error", () => {
         updateConnection(false);
@@ -238,6 +253,14 @@
     socket.on("playerDisconnected", (data) => {
         playSound("error");
         setMessage(els.gameMessage, data.message, true);
+    });
+
+    $("lobby-chat-form")?.addEventListener("submit", (event) => {
+        event.preventDefault(); const input = $("lobby-chat-input"); const name = lobbyNameInput.value.trim();
+        socket.emit("lobby:chat", { siteId: "KT", name, text: input.value }, (reply) => {
+            setMessage($("lobby-chat-feedback"), reply?.ok ? "Pesan terkirim." : reply?.error || "Pesan gagal dikirim.", !reply?.ok);
+            if (reply?.ok) { localStorage.setItem(lobbyNameKey, name); input.value = ""; }
+        });
     });
 
     $("room-chat-form")?.addEventListener("submit", (event) => {

@@ -11,7 +11,7 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link rel="stylesheet" href="/chess/style.css?v=2026062817">
+    <link rel="stylesheet" href="/chess/style.css?v=2026102610">
 
 </head>
 
@@ -101,6 +101,17 @@
 
             </section>
 
+            <section class="lobby-public-chat" aria-label="Chat publik Catur">
+                <div class="lobby-chat-head"><div><p class="match-label">Komunitas</p><h2>Chat Publik Lobby</h2></div><span id="activeRoomCount">0 room aktif</span></div>
+                <div id="lobbyChatMessages" class="lobby-chat-messages" aria-live="polite"><p class="chat-empty">Belum ada pesan. Mulai obrolan.</p></div>
+                <form id="lobbyChatForm" class="lobby-chat-form">
+                    <input id="lobbyChatName" maxlength="28" placeholder="Nama kamu" autocomplete="nickname" required>
+                    <input id="lobbyChatInput" maxlength="180" placeholder="Tulis pesan publik…" autocomplete="off" required>
+                    <button type="submit">Kirim</button>
+                </form>
+                <p id="lobbyChatFeedback" class="mini-status"></p>
+            </section>
+
         </section>
 
     </main>
@@ -109,7 +120,7 @@
 
     <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
 
-    <script src="/chess/lobby.js?v=2026062817"></script>
+    <script src="/chess/lobby.js?v=2026102610"></script>
 
 </body>
 

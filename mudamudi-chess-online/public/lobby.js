@@ -8,12 +8,35 @@ const socket = io(window.location.origin, {
     transports: ["polling"]
 
 });
+const lobbySiteId = location.hostname.startsWith("karangtaruna") ? "KT" : "MMS";
+const lobbyNameKey = `chess:lobby:name:${lobbySiteId}`;
+
+function renderLobbyState(state) {
+    const messages = document.getElementById("lobbyChatMessages");
+    const count = document.getElementById("activeRoomCount");
+    if (count) count.textContent = `${state?.rooms?.length || 0} room aktif`;
+    if (!messages) return;
+    messages.replaceChildren();
+    if (!state?.messages?.length) { const empty = document.createElement("p"); empty.className = "chat-empty"; empty.textContent = "Belum ada pesan. Mulai obrolan."; messages.appendChild(empty); return; }
+    state.messages.forEach(appendLobbyMessage);
+}
+
+function appendLobbyMessage(message) {
+    const messages = document.getElementById("lobbyChatMessages"); if (!messages || messages.querySelector(`[data-id="${CSS.escape(message.id)}"]`)) return;
+    messages.querySelector(".chat-empty")?.remove();
+    const row = document.createElement("p"); row.className = "lobby-chat-message"; row.dataset.id = message.id;
+    const name = document.createElement("strong"); name.textContent = `${message.name}: `;
+    const text = document.createTextNode(message.text); row.append(name, text); messages.appendChild(row); messages.scrollTop = messages.scrollHeight;
+}
 
 socket.on("connect", () => {
 
     setConnection("Connected", "connected");
+    socket.emit("lobby:join", { siteId: lobbySiteId }, (state) => { if (state?.ok) renderLobbyState(state); });
 
 });
+socket.on("lobby:state", renderLobbyState);
+socket.on("lobby:chat", appendLobbyMessage);
 
 socket.on("connect_error", (err) => {
 
@@ -69,7 +92,7 @@ function findPublicMatch() {
 
     if (publicStatus) publicStatus.innerText = "Mencari lawan...";
 
-    socket.emit("findPublicMatch");
+    socket.emit("findPublicMatch", { siteId: lobbySiteId });
 
 }
 
@@ -98,6 +121,17 @@ function joinPrivateRoom() {
     window.location.href = "/chess/game.html?room=" + encodeURIComponent(value) + "&type=private";
 
 }
+
+const lobbyNameInput = document.getElementById("lobbyChatName");
+if (lobbyNameInput) lobbyNameInput.value = localStorage.getItem(lobbyNameKey) || "";
+document.getElementById("lobbyChatForm")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const name = lobbyNameInput.value.trim(); const input = document.getElementById("lobbyChatInput"); const feedback = document.getElementById("lobbyChatFeedback");
+    socket.emit("lobby:chat", { siteId: lobbySiteId, name, text: input.value }, (reply) => {
+        feedback.textContent = reply?.ok ? "Pesan terkirim." : reply?.error || "Pesan gagal dikirim.";
+        if (reply?.ok) { localStorage.setItem(lobbyNameKey, name); input.value = ""; }
+    });
+});
 
 function generateRoomCode() {
 

@@ -18,8 +18,16 @@ const join = async (socket, code) => { const result = waitFor(socket, "joinedRoo
 test("production chess backend keeps late joins social and read-only", async (context) => {
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   const port = server.address().port;
-  const clients = [await connect(port), await connect(port), await connect(port), await connect(port)];
+  const clients = [await connect(port), await connect(port), await connect(port), await connect(port), await connect(port), await connect(port)];
   context.after(() => { clients.forEach((socket) => socket.close()); io.close(); server.close(); Object.keys(rooms).forEach((code) => delete rooms[code]); });
+  const joinLobby = (socket, siteId) => new Promise((resolve) => socket.emit("lobby:join", { siteId }, resolve));
+  assert.equal((await joinLobby(clients[4], "MMS")).ok, true);
+  assert.equal((await joinLobby(clients[5], "KT")).ok, true);
+  let crossed = false; clients[5].on("lobby:chat", () => { crossed = true; });
+  const publicChat = waitFor(clients[4], "lobby:chat");
+  const sent = await new Promise((resolve) => clients[4].emit("lobby:chat", { siteId: "MMS", name: "Ayu", text: "Halo <img src=x>" }, resolve));
+  assert.equal(sent.ok, true); assert.equal((await publicChat).text, "Halo <img src=x>");
+  await new Promise((resolve) => setTimeout(resolve, 20)); assert.equal(crossed, false);
   const code = "LATE02";
   assert.equal((await join(clients[0], code)).color, "white");
   assert.equal((await join(clients[1], code)).color, "black");
