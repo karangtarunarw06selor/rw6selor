@@ -13,7 +13,7 @@ const socketPath = process.env.SOCKET_PATH || "/tebak-gambar/socket.io";
 const io = new Server(server, { path: socketPath, cors: { origin: false } });
 const PORT = Number(process.env.PORT) || 3052;
 const ROUND_MS = Number(process.env.ROUND_MS) || 60_000;
-const RECONNECT_MS = Number(process.env.RECONNECT_MS) || 30 * 60_000;
+const RECONNECT_MS = Number(process.env.RECONNECT_MS) || 5 * 60_000;
 const rooms = new Map();
 const lobbyMessages = new Map();
 const LOBBY_HISTORY_LIMIT = 50;
@@ -89,7 +89,10 @@ const chooseQuestion = (room) => {
 };
 const startRound = (room) => {
   const participants = room.players.filter((player) => player.connected && room.activeIds?.has(player.id));
-  if (participants.length < 2) { room.status = "waiting"; return emitRoom(room); }
+  if (participants.length < 2) {
+    if (room.activeIds?.size >= 2 && ["playing", "result"].includes(room.status)) return emitRoom(room);
+    room.status = "waiting"; return emitRoom(room);
+  }
   room.round += 1;
   if (room.round > room.totalRounds) {
     room.status = "finished";
@@ -180,6 +183,9 @@ io.on("connection", (socket) => {
     clearTimeout(player.cleanupTimer); io.sockets.sockets.get(player.socketId)?.disconnect(true);
     player.socketId = socket.id; player.connected = true; player.media = { voice: false, video: false };
     socket.join(room.code); socket.data.roomCode = room.code; reply(sessionReply(room, player)); emitRoom(room); emitLobby(room.siteId);
+    if (room.status === "result" && room.players.filter((item) => item.connected && room.activeIds?.has(item.id)).length >= 2) {
+      clearTimeout(room.nextTimer); room.nextTimer = setTimeout(() => startRound(room), 500); room.nextTimer.unref();
+    }
   });
   socket.on("room:leave", (_data, reply = () => {}) => {
     const room = rooms.get(socket.data.roomCode); const player = playerBySocket(room, socket);
@@ -281,10 +287,7 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     const room = rooms.get(socket.data.roomCode); const player = playerBySocket(room, socket); if (!room || !player) return;
     player.connected = false; player.media = { voice: false, video: false }; socket.to(room.code).emit("media:peer-left", { playerId: player.id });
-    const connectedActive = room.players.filter((item) => item.connected && room.activeIds?.has(item.id));
-    if (room.status === "playing" && player.id === room.drawerId) finishRound(room, { reason: "drawer-left", drawerPenalty: -1 });
-    else if (room.status === "playing" && connectedActive.length < 2) { clearTimeout(room.roundTimer); room.status = "waiting"; emitRoom(room); }
-    else emitRoom(room);
+    emitRoom(room);
     emitLobby(room.siteId); scheduleCleanup(room, player);
   });
 });

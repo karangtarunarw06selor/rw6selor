@@ -193,6 +193,24 @@ test("majority reports let the host apply a violation penalty", async (context) 
   clearTimeout(room.nextTimer);
 });
 
+test("host screen-off keeps the active room for a five-minute reconnect grace", async (context) => {
+  const { host, created } = await setup(context);
+  await emit(host, "game:start");
+  const room = rooms.get(created.room.code);
+  const round = room.round;
+  host.close(); await new Promise((resolve) => setTimeout(resolve, 20));
+  const hostSeat = room.players.find((player) => player.id === created.playerId);
+  assert.equal(room.status, "playing");
+  assert.equal(room.round, round);
+  assert.equal(hostSeat.connected, false);
+  assert.equal(hostSeat.cleanupTimer?._idleTimeout, 5 * 60_000);
+  const resumed = await connect(server.address().port); context.after(() => resumed.close());
+  const restored = await emit(resumed, "room:reconnect", { code: created.room.code, siteId: "MMS", playerId: created.playerId, reconnectToken: created.reconnectToken });
+  assert.equal(restored.ok, true);
+  assert.equal(restored.room.status, "playing");
+  assert.equal(room.players.find((player) => player.id === created.playerId).connected, true);
+});
+
 test("reconnect token restores the same seat and rejects impostors", async (context) => {
   const { guest, created, joined } = await setup(context);
   guest.close(); await new Promise((resolve) => setTimeout(resolve, 15));
