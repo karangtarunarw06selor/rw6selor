@@ -45,7 +45,7 @@
       for (const [playerId, queued] of pendingSignals) { pendingSignals.delete(playerId); for (const item of queued) await handleSignal(item); }
       socket.emit("media:update", { voice: true, video }, (reply) => {
         if (!reply?.ok) { error.textContent = reply?.error || "Media gagal."; return stop(); }
-        for (const person of reply.peers || []) createPeer(person.id, person.name, game.state.playerId < person.id);
+        for (const person of reply.peers || []) createPeer(person.id, person.name, true);
         dialog.close(); game.toast(video ? "Voice dan kamera aktif." : "Voice aktif.");
       });
     } catch (reason) {
@@ -53,7 +53,7 @@
       error.textContent = blocked;
     }
   };
-  socket.on("media:peer", ({ playerId, voice }) => { if (!voice || playerId === game.state.playerId) return removePeer(playerId); if (!stream) return; const person = game.state.room?.players.find((item) => item.id === playerId); createPeer(playerId, person?.name || "Pemain", game.state.playerId < playerId); });
+  socket.on("media:peer", ({ playerId, voice }) => { if (!voice || playerId === game.state.playerId) return removePeer(playerId); if (!stream) return; const person = game.state.room?.players.find((item) => item.id === playerId); createPeer(playerId, person?.name || "Pemain", false); });
   socket.on("media:peer-left", ({ playerId }) => removePeer(playerId));
   const handleSignal = async ({ playerId, name, signal }) => {
     let peer = peers.get(playerId); if (!peer) peer = createPeer(playerId, name, false);
