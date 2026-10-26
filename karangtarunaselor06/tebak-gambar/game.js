@@ -5,7 +5,7 @@
   const socket = io({ path: "/tebak-gambar/socket.io" });
   const siteId = document.body.dataset.site || "MMS";
   const sessionKey = `guess-picture-session:${siteId}`;
-  const state = { playerId: null, room: null, secret: null, activeClue: 0, drawing: false, points: [], lastStatus: null, correctShown: null, selectedRounds: 2 };
+  const state = { playerId: null, room: null, secret: null, activeClue: 0, drawing: false, points: [], lastStatus: null, correctShown: null, standingsShown: null, answerTimer: null, selectedRounds: 2 };
   const canvas = $("#clue-canvas"), context = canvas.getContext("2d");
   const toast = (text) => { $("#toast").textContent = text; $("#toast").classList.add("show"); setTimeout(() => $("#toast").classList.remove("show"), 2200); };
   const lobbyNameKey = `guess-picture-name:${siteId}`;
@@ -36,7 +36,8 @@
   const renderPlayers = () => {
     const room = state.room; if (!room) return;
     const tiles = [...document.querySelectorAll(".video-tile")];
-    $("#lobby-players").innerHTML = room.players.map((player, index) => `<article class="player-card ${player.connected ? "" : "offline"}" data-player="${player.id}"><div class="player-camera"><span class="camera-off">Kamera off</span></div><div><b>${escapeHtml(player.name)}</b><small>${index === 0 ? "HOST" : player.participant ? "PEMAIN" : "PENONTON"}</small></div></article>`).join("");
+    const canTransfer = room.status === "waiting" && room.hostId === state.playerId;
+    $("#lobby-players").innerHTML = room.players.map((player, index) => `<article class="player-card ${player.connected ? "" : "offline"}" data-player="${player.id}"><div class="player-camera"><span class="camera-off">Kamera off</span></div><div><b>${escapeHtml(player.name)}</b><small>${index === 0 ? "HOST" : player.participant ? "PEMAIN" : "PENONTON"}</small>${canTransfer && player.id !== state.playerId && player.connected ? `<button class="transfer-host" type="button" data-transfer-host="${player.id}">Jadikan Host</button>` : ""}</div></article>`).join("");
     $("#scoreboard").innerHTML = [...room.players].sort((a, b) => b.score - a.score).map((player) => `<div class="score-row ${player.id === room.drawerId ? "drawer" : ""}" data-player="${player.id}"><div class="player-camera"><span class="camera-off">Kamera off</span></div><b>${escapeHtml(player.name)}${player.id === state.playerId ? " · Kamu" : ""}</b><strong>${player.score}</strong><small>${player.id === room.drawerId ? "Sedang menggambar" : `${player.wins} jawaban tercepat`}${player.connected ? "" : " · offline"}</small></div>`).join("");
     tiles.forEach((tile) => { const slot = document.querySelector(`${room.status === "waiting" ? "#lobby-players" : "#scoreboard"} [data-player="${CSS.escape(tile.dataset.peer)}"] .player-camera`); (slot || $("#video-dock")).append(tile); });
   };
@@ -57,7 +58,6 @@
     $("#chat-mode").textContent = waiting ? "Chat sebelum permainan dimulai" : room.status !== "playing" || isDrawer() || !isParticipant() ? "Mode chat" : "Chat atau tebak jawaban";
     $("#guess-form").hidden = false;
     $("#room-display").textContent = room.code; renderPlayers(); renderRoomMessages();
-    $("#restart-game").hidden = room.status !== "finished" || room.hostId !== state.playerId;
     const isHost = room.hostId === state.playerId;
     $("#start-game").hidden = !isHost; $("#round-options").hidden = !isHost; $("#lobby-note").hidden = isHost;
     if (waiting) return;
@@ -71,11 +71,10 @@
     $("#next-clue").disabled = room.clueCount >= 4;
     $("#secret-panel").hidden = !isDrawer() || !state.secret || room.status !== "playing";
     $("#moderation").hidden = room.hostId !== state.playerId || room.reports < Math.max(2, Math.ceil((room.players.length - 1) / 2));
-    $("#round-result").hidden = !["result", "finished"].includes(room.status);
+    $("#round-result").hidden = true;
     if (room.status === "playing" && $("#correct-dialog").open) $("#correct-dialog").close();
     if (room.status === "result") {
       const winner = room.players.find((player) => player.id === room.result?.winnerId);
-      $("#round-result").innerHTML = winner ? `<b>${escapeHtml(winner.name)} tercepat!</b><p>${room.answerReveal}</p><small>${(room.result.elapsedMs / 1000).toFixed(3)} detik · +${room.result.guessPoints}; penggambar ${room.result.drawerPoints > 0 ? "+" : ""}${room.result.drawerPoints}</small>` : `<b>Tidak tertebak</b><p>${room.answerReveal}</p><small>Ronde ini tanpa poin.</small>`;
       const resultKey = `${room.round}:${room.result?.reason}:${room.result?.winnerId || "none"}`;
       if (room.questionReveal && state.correctShown !== resultKey) {
         state.correctShown = resultKey;
@@ -89,9 +88,16 @@
         $("#correct-time").textContent = winner ? `Waktu tercepat ${seconds} detik · Bonus +${room.result.guessPoints} poin` : "Jawaban ditampilkan kepada semua pemain.";
         $("#correct-dialog").showModal();
         $("#correct-dialog").focus();
+        clearTimeout(state.answerTimer); state.answerTimer = setTimeout(() => { if ($("#correct-dialog").open) $("#correct-dialog").close(); }, 30_000);
       }
     } else if (room.status === "finished") {
-      const winner = room.players.find((player) => player.id === room.winnerId); $("#round-result").innerHTML = `<b>${escapeHtml(winner?.name || "Tidak ada")} menang!</b><p>Skor tertinggi: ${winner?.score || 0}</p>`;
+      $("#round-result").hidden = true;
+      const standingsKey = `${room.code}:${room.round}:${room.winnerId}`;
+      if (state.standingsShown !== standingsKey) {
+        state.standingsShown = standingsKey; clearTimeout(state.answerTimer); if ($("#correct-dialog").open) $("#correct-dialog").close();
+        $("#standings-list").innerHTML = (room.standings || []).map((player, index) => `<article class="${index === 0 ? "winner" : ""}"><strong>${index + 1}</strong><b>${escapeHtml(player.name)}</b><span>${player.score} poin</span></article>`).join("");
+        $("#standings-dialog").showModal(); $("#standings-dialog").focus();
+      }
     }
     renderTabs(); redraw();
   };
@@ -119,9 +125,9 @@
   $("#confirm-leave").addEventListener("click", () => {
     const finish = () => {
       sessionStorage.removeItem(sessionKey);
-      state.playerId = null; state.room = null; state.secret = null; state.lastStatus = null; state.correctShown = null;
+      clearTimeout(state.answerTimer); state.playerId = null; state.room = null; state.secret = null; state.lastStatus = null; state.correctShown = null; state.standingsShown = null;
       document.body.classList.remove("game-active");
-      $("#leave-dialog").close(); if ($("#correct-dialog").open) $("#correct-dialog").close();
+      $("#leave-dialog").close(); if ($("#correct-dialog").open) $("#correct-dialog").close(); if ($("#standings-dialog").open) $("#standings-dialog").close();
       $("#lobby").hidden = true; $("#game").hidden = true; $("#welcome").hidden = false;
       window.GuessMedia?.leave();
     };
@@ -129,9 +135,11 @@
   });
   $("#round-options").addEventListener("click", (event) => { const rounds = Number(event.target.dataset.rounds); if (![2, 3, 5].includes(rounds)) return; state.selectedRounds = rounds; $("#round-options").querySelectorAll("[data-rounds]").forEach((button) => button.classList.toggle("active", Number(button.dataset.rounds) === rounds)); $("#start-game").textContent = `Mulai ${rounds} Putaran`; });
   $("#start-game").addEventListener("click", () => socket.emit("game:start", { roundsPerPlayer: state.selectedRounds }, (reply) => { if (!reply?.ok) toast(reply.error); }));
-  $("#restart-game").addEventListener("click", () => socket.emit("game:start", { roundsPerPlayer: state.room?.roundsPerPlayer || 2 }, (reply) => { if (!reply?.ok) toast(reply.error); }));
+
   $("#room-display").addEventListener("click", () => navigator.clipboard?.writeText(state.room?.code));
   $("#close-correct").addEventListener("click", () => $("#correct-dialog").close());
+  $("#return-lobby").addEventListener("click", () => socket.emit("game:return-lobby", {}, (reply) => { if (!reply?.ok) toast(reply?.error || "Gagal kembali ke lobby."); }));
+  $("#lobby-players").addEventListener("click", (event) => { const targetId = event.target.dataset.transferHost; if (!targetId) return; socket.emit("room:transfer-host", { targetId }, (reply) => { if (!reply?.ok) toast(reply?.error || "Gagal memindahkan host."); }); });
   $("#next-clue").addEventListener("click", () => socket.emit("clue:unlock", {}, (reply) => { if (!reply?.ok) toast(reply.error); else { state.activeClue = state.room.clueCount; } }));
   $("#clear-clue").addEventListener("click", () => socket.emit("clue:clear", { clueIndex: state.activeClue }));
   $("#hide-secret").addEventListener("click", () => { $("#secret-panel").hidden = true; });
@@ -144,7 +152,7 @@
   const moveDraw = (event) => { if (!state.drawing) return; event.preventDefault(); state.points.push(point(event)); const last = state.points.slice(-2); context.strokeStyle = $("#draw-color").value; context.lineWidth = Number($("#draw-size").value); context.lineCap = "round"; context.beginPath(); context.moveTo(last[0][0] * canvas.width, last[0][1] * canvas.height); context.lineTo(last.at(-1)[0] * canvas.width, last.at(-1)[1] * canvas.height); context.stroke(); };
   const endDraw = () => { if (!state.drawing) return; state.drawing = false; if (state.points.length >= 2) socket.emit("clue:stroke", { clueIndex: state.activeClue, points: state.points.slice(0, 100), color: $("#draw-color").value, size: Number($("#draw-size").value) }); state.points = []; };
   canvas.addEventListener("pointerdown", startDraw); canvas.addEventListener("pointermove", moveDraw); window.addEventListener("pointerup", endDraw);
-  socket.on("room:state", (room) => { state.room = room; if (state.lastStatus === "playing" && room.status !== "playing") state.secret = null; state.lastStatus = room.status; render(); });
+  socket.on("room:state", (room) => { state.room = room; if (state.lastStatus === "playing" && room.status !== "playing") state.secret = null; if (room.status === "waiting" && state.lastStatus === "finished") { state.standingsShown = null; if ($("#standings-dialog").open) $("#standings-dialog").close(); } state.lastStatus = room.status; render(); });
   socket.on("room:message", (message) => { if (!state.room || state.room.messages.some((item) => item.id === message.id)) return; state.room.messages.push(message); if (state.room.messages.length > 60) state.room.messages.shift(); renderRoomMessages(); });
   socket.on("round:secret", showSecret);
   socket.on("clue:stroke", (stroke) => { if (!state.room) return; state.room.strokes[stroke.clueIndex].push(stroke); if (stroke.clueIndex === state.activeClue) redraw(); });

@@ -2,7 +2,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { io: Client } = require("socket.io-client");
-const { server, io, rooms, lobbyMessages } = require("../server");
+const { server, io, rooms, lobbyMessages, startRound } = require("../server");
 const emit = (socket, event, payload = {}) => new Promise((resolve) => socket.emit(event, payload, resolve));
 const waitFor = (socket, event, predicate) => new Promise((resolve) => {
   const listener = (payload) => { if (predicate(payload)) { socket.off(event, listener); resolve(payload); } };
@@ -115,7 +115,11 @@ test("late joiner spectates gameplay but can use room chat", async (context) => 
   clearTimeout(room.roundTimer);
   room.status = "finished";
   room.players[0].score = 9;
-  assert.equal((await emit(host, "game:start")).ok, true);
+  assert.equal((await emit(host, "game:start")).ok, false);
+  assert.equal((await emit(host, "game:return-lobby")).ok, true);
+  assert.equal(room.status, "waiting");
+  assert.equal((await emit(host, "game:start", { roundsPerPlayer: 3 })).ok, true);
+  assert.equal(room.roundsPerPlayer, 3);
   assert.equal(room.activeIds.has(joined.playerId), true);
   assert.equal(room.activeIds.size, 3);
   assert.equal(room.players[0].score, 0);
@@ -170,6 +174,7 @@ test("fastest normalized answer wins and points are recorded immediately", async
   assert.equal(room.players.find((p) => p.id === joined.playerId).score, 4);
   assert.equal(room.players[0].score, 3);
   assert.ok(room.result.elapsedMs >= 0);
+  assert.equal(room.nextTimer._idleTimeout, 30_000);
 });
 
 test("wrong answers appear in room chat without affecting score", async (context) => {
@@ -268,4 +273,30 @@ test("explicit leave removes the seat and returns the socket to lobby state", as
     reconnectToken: joined.reconnectToken,
   })).ok, false);
   assert.equal((await emit(guest, "room:create", { name: "Bima", siteId: "MMS" })).ok, true);
+});
+
+test("host transfer and final standings return the same room to waiting", async (context) => {
+  const { host, guest, created, joined } = await setup(context);
+  assert.equal((await emit(guest, "room:transfer-host", { targetId: joined.playerId })).ok, false);
+  assert.equal((await emit(host, "room:transfer-host", { targetId: joined.playerId })).ok, true);
+  const room = rooms.get(created.room.code);
+  assert.equal(room.players[0].id, joined.playerId);
+  assert.equal((await emit(host, "game:start", { roundsPerPlayer: 2 })).ok, false);
+  assert.equal((await emit(guest, "game:start", { roundsPerPlayer: 2 })).ok, true);
+
+  clearTimeout(room.roundTimer);
+  room.players[0].score = 4;
+  room.players[1].score = 9;
+  room.round = room.totalRounds;
+  const finishedState = waitFor(host, "room:state", (state) => state.status === "finished");
+  startRound(room);
+  const finished = await finishedState;
+  assert.deepEqual(finished.standings.map(({ id, score }) => ({ id, score })), [
+    { id: created.playerId, score: 9 },
+    { id: joined.playerId, score: 4 },
+  ]);
+  assert.equal((await emit(host, "game:return-lobby")).ok, true);
+  assert.equal(room.status, "waiting");
+  assert.equal(room.players.every((player) => player.score === 0), true);
+  assert.equal(room.code, created.room.code);
 });

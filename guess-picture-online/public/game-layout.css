@@ -44,3 +44,14 @@ body.game-active main{width:min(1280px,calc(100% - 16px));height:calc(100dvh - c
   .play-layout{grid-template-columns:minmax(0,1.45fr) minmax(230px,.7fr);grid-template-rows:minmax(0,1fr)}
   .canvas-area{padding:4px}.canvas-area nav{margin-bottom:2px}.clue-tab{padding:3px 6px}.canvas-wrap{height:30dvh}.draw-tools{min-height:24px;margin-top:2px}.draw-tools button{padding:3px 5px}
 }
+.transfer-host{margin-top:4px;padding:4px 6px;border-radius:7px;font-size:.62rem;line-height:1.1}
+.standings-dialog{width:min(92vw,460px);max-height:88dvh;padding:24px;border:1px solid rgba(255,255,255,.2);border-radius:26px;background:linear-gradient(160deg,#3b1c73,#1d0d42);color:#fff;text-align:center;box-shadow:0 28px 80px rgba(0,0,0,.5)}
+.standings-dialog::backdrop{background:rgba(8,3,24,.82);backdrop-filter:blur(6px)}
+.standings-dialog>span{font-size:.72rem;font-weight:900;letter-spacing:.14em;color:var(--accent)}
+.standings-dialog h2{margin:6px 0 16px}.standings-dialog>p{margin:14px 0;color:var(--muted);font-size:.84rem}
+.standings-list{display:grid;gap:7px;max-height:50dvh;overflow:auto}
+.standings-list article{display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:9px;padding:9px 12px;border-radius:12px;background:rgba(255,255,255,.08);text-align:left}
+.standings-list article.winner{background:rgba(246,201,69,.18);border:1px solid rgba(246,201,69,.42)}
+.standings-list article>strong{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.12)}
+.standings-list article>span{font-weight:900;color:var(--accent)}
+.standings-dialog>button{width:100%;margin-top:2px}

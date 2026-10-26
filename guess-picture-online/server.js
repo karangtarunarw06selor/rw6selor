@@ -13,6 +13,7 @@ const socketPath = process.env.SOCKET_PATH || "/tebak-gambar/socket.io";
 const io = new Server(server, { path: socketPath, cors: { origin: false } });
 const PORT = Number(process.env.PORT) || 3052;
 const ROUND_MS = Number(process.env.ROUND_MS) || 5 * 60_000;
+const RESULT_MS = 30_000;
 const RECONNECT_MS = Number(process.env.RECONNECT_MS) || 5 * 60_000;
 const rooms = new Map();
 const lobbyMessages = new Map();
@@ -47,6 +48,7 @@ const publicView = (room) => ({
   drawerId: room.drawerId, round: room.round, totalRounds: room.totalRounds, roundsPerPlayer: room.roundsPerPlayer || 2, clueCount: room.clueCount,
   deadline: room.deadline, winnerId: room.winnerId, answerReveal: room.answerReveal, result: room.result,
   questionReveal: room.status === "result" && room.question ? { answer: room.question.answer, category: room.question.category, image: questionImage(room.question) } : null,
+  standings: room.status === "finished" ? [...room.players].sort((a, b) => b.score - a.score || b.wins - a.wins || a.totalGuessMs - b.totalGuessMs).map(({ id, name, score, wins }) => ({ id, name, score, wins })) : null,
   strokes: room.strokes, reports: room.reports.size, messages: room.messages,
   players: room.players.map(({ id, name, score, connected, media, wins, totalGuessMs }) => ({ id, name, score, connected, media, wins, totalGuessMs, participant: room.status === "waiting" || room.activeIds?.has(id) })),
 });
@@ -64,6 +66,12 @@ const addRoomMessage = (room, player, type, text = "") => {
   return message;
 };
 const sessionReply = (room, player) => ({ ok: true, room: publicView(room), playerId: player.id, reconnectToken: player.token });
+const returnToLobby = (room) => {
+  clearTimeout(room.finishTimer); clearTimeout(room.nextTimer); clearTimeout(room.roundTimer);
+  room.status = "waiting"; room.round = 0; room.totalRounds = 0; room.drawerId = null; room.question = null; room.deadline = null; room.winnerId = null; room.answerReveal = null; room.result = null; room.activeIds = new Set(); room.finishedAcks = new Set(); room.usedQuestions = new Set(); room.clueCount = 0; room.strokes = [[], [], [], []]; room.reports = new Set();
+  room.players.forEach((player) => { player.score = 0; player.wins = 0; player.totalGuessMs = 0; });
+  emitRoom(room); emitLobby(room.siteId);
+};
 const lobbyChannel = (siteId) => `lobby:${siteId}`;
 const lobbyRooms = (siteId) => [...rooms.values()].filter((room) => room.siteId === siteId && room.status !== "finished" && room.players.some((player) => player.connected)).map((room) => ({ code: room.code, host: room.players[0]?.name || "Pemain", players: room.players.filter((player) => player.connected).length, capacity: 8, status: room.status, createdAt: room.createdAt }));
 const lobbyPayload = (siteId) => ({ messages: lobbyMessages.get(siteId) || [], rooms: lobbyRooms(siteId) });
@@ -101,6 +109,8 @@ const startRound = (room) => {
     room.winnerId = sorted[0]?.id || null;
     room.answerReveal = null;
     room.result = null;
+    room.finishedAcks = new Set();
+    clearTimeout(room.finishTimer); room.finishTimer = setTimeout(() => returnToLobby(room), RESULT_MS); room.finishTimer.unref();
     return emitRoom(room);
   }
   room.status = "playing";
@@ -138,7 +148,7 @@ function finishRound(room, { reason, winner = null, elapsedMs = null, drawerPena
   room.result = { reason, winnerId: winner?.id || null, elapsedMs, guessPoints, drawerPoints };
   room.deadline = null;
   emitRoom(room);
-  room.nextTimer = setTimeout(() => startRound(room), 5_000);
+  room.nextTimer = setTimeout(() => startRound(room), RESULT_MS);
   room.nextTimer.unref();
 }
 
@@ -204,18 +214,28 @@ io.on("connection", (socket) => {
     }
     reply({ ok: true });
   });
+  socket.on("room:transfer-host", ({ targetId } = {}, reply = () => {}) => {
+    const room = rooms.get(socket.data.roomCode); const player = playerBySocket(room, socket);
+    if (!room || room.players[0]?.id !== player?.id) return reply({ ok: false, error: "Hanya host." });
+    if (!["waiting", "finished"].includes(room.status)) return reply({ ok: false, error: "Host hanya dapat dipindahkan di lobby." });
+    const index = room.players.findIndex((item) => item.id === targetId && item.connected);
+    if (index < 1) return reply({ ok: false, error: "Pilih player lain yang online." });
+    const [nextHost] = room.players.splice(index, 1); room.players.unshift(nextHost); addRoomMessage(room, null, "system", `${nextHost.name} menjadi host.`); emitRoom(room); reply({ ok: true });
+  });
+  socket.on("game:return-lobby", (_data, reply = () => {}) => {
+    const room = rooms.get(socket.data.roomCode); const player = playerBySocket(room, socket);
+    if (!room || !player || room.status !== "finished") return reply({ ok: false, error: "Klasemen belum tersedia." });
+    reply({ ok: true }); returnToLobby(room);
+  });
   socket.on("game:start", ({ roundsPerPlayer = 2 } = {}, reply = () => {}) => {
     const room = rooms.get(socket.data.roomCode); const player = playerBySocket(room, socket);
     if (!room || room.players[0]?.id !== player?.id) return reply({ ok: false, error: "Hanya host." });
-    if (!['waiting', 'finished'].includes(room.status)) return reply({ ok: false, error: "Permainan sedang berjalan." });
+    if (room.status !== "waiting") return reply({ ok: false, error: "Permainan sedang berjalan." });
     const rounds = Number(roundsPerPlayer);
     if (![2, 3, 5].includes(rounds)) return reply({ ok: false, error: "Pilihan putaran tidak valid." });
     const participants = room.players.filter((item) => item.connected);
     if (participants.length < 2) return reply({ ok: false, error: "Minimal dua pemain." });
-    if (room.status === "finished") {
-      room.round = 0; room.winnerId = null; room.answerReveal = null; room.result = null;
-      room.players.forEach((item) => { item.score = 0; item.wins = 0; item.totalGuessMs = 0; });
-    }
+
     room.roundsPerPlayer = rounds; room.activeIds = new Set(participants.map((item) => item.id)); room.totalRounds = participants.length * rounds; reply({ ok: true }); startRound(room); emitLobby(room.siteId);
   });
   socket.on("clue:stroke", ({ clueIndex, points, color, size } = {}, reply = () => {}) => {
