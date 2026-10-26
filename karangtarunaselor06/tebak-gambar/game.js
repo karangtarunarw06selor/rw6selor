@@ -36,11 +36,19 @@
     $("#lobby-players").innerHTML = room.players.map((player, index) => `<article class="player-card ${player.connected ? "" : "offline"}"><b>${escapeHtml(player.name)}</b><small>${index === 0 ? "HOST" : player.participant ? "PEMAIN" : "PENONTON"}</small></article>`).join("");
     $("#scoreboard").innerHTML = [...room.players].sort((a, b) => b.score - a.score).map((player) => `<div class="score-row ${player.id === room.drawerId ? "drawer" : ""}"><b>${escapeHtml(player.name)}${player.id === state.playerId ? " · Kamu" : ""}</b><strong>${player.score}</strong><small>${player.id === room.drawerId ? "Sedang menggambar" : `${player.wins} jawaban tercepat`}${player.connected ? "" : " · offline"}</small></div>`).join("");
   };
+  const renderRoomMessages = () => {
+    const container = $("#room-messages");
+    container.replaceChildren();
+    const messages = state.room?.messages || [];
+    if (!messages.length) { const empty = document.createElement("p"); empty.className = "room-message empty"; empty.textContent = "Belum ada pesan. Mulai menebak atau ngobrol."; container.append(empty); return; }
+    messages.forEach((message) => { const row = document.createElement("p"); row.className = `room-message ${message.type}`; const name = document.createElement("b"); name.textContent = `${message.name}: `; row.append(name); row.append(message.type === "correct" ? "berhasil menebak!" : message.text); container.append(row); });
+    container.scrollTop = container.scrollHeight;
+  };
   const render = () => {
     const room = state.room; if (!room) return;
     const waiting = room.status === "waiting";
     $("#welcome").hidden = true; $("#lobby").hidden = !waiting; $("#game").hidden = waiting;
-    $("#room-display").textContent = room.code; renderPlayers();
+    $("#room-display").textContent = room.code; renderPlayers(); renderRoomMessages();
     $("#restart-game").hidden = room.status !== "finished" || room.hostId !== state.playerId;
     $("#start-game").hidden = room.hostId !== state.playerId; $("#lobby-note").hidden = room.hostId === state.playerId;
     if (waiting) return;
@@ -48,7 +56,8 @@
     $("#round-label").textContent = `RONDE ${Math.min(room.round, room.totalRounds)} / ${room.totalRounds}`;
     $("#drawer-label").textContent = !isParticipant() && room.status !== "finished" ? `Mode penonton · ${drawer?.name || "Pemain"} sedang menggambar` : room.status === "finished" ? "Permainan selesai" : `${drawer?.name || "Pemain"} sedang menggambar`;
     $("#draw-tools").hidden = !isDrawer() || room.status !== "playing";
-    $("#guess-form").hidden = isDrawer() || !isParticipant() || room.status !== "playing";
+    $("#guess-form").hidden = false;
+    $("#chat-mode").textContent = room.status !== "playing" || isDrawer() || !isParticipant() ? "Mode chat" : "Chat atau tebak jawaban";
     $("#report-round").hidden = isDrawer() || !isParticipant() || room.status !== "playing";
     $("#next-clue").disabled = room.clueCount >= 4;
     $("#secret-panel").hidden = !isDrawer() || !state.secret || room.status !== "playing";
@@ -114,13 +123,14 @@
   $("#skip-question").addEventListener("click", () => socket.emit("round:skip", {}, (reply) => { if (!reply?.ok) toast(reply.error); }));
   $("#report-round").addEventListener("click", () => socket.emit("round:report", {}, (reply) => toast(reply?.ok ? "Laporan dikirim ke host." : "Laporan gagal.")));
   $("#moderation").querySelectorAll("[data-mod]").forEach((button) => button.addEventListener("click", () => socket.emit("round:moderate", { action: button.dataset.mod })));
-  $("#guess-form").addEventListener("submit", (event) => { event.preventDefault(); const input = $("#guess-input"); socket.emit("guess:submit", { text: input.value }, (reply) => { $("#guess-feedback").textContent = reply?.correct ? "Benar!" : reply?.error || "Belum tepat."; if (reply?.ok) input.value = ""; }); });
+  $("#guess-form").addEventListener("submit", (event) => { event.preventDefault(); const input = $("#guess-input"); socket.emit("guess:submit", { text: input.value }, (reply) => { $("#guess-feedback").textContent = reply?.correct ? "Jawaban benar!" : reply?.error || (reply?.kind === "chat" ? "Pesan terkirim." : "Tebakan terkirim."); if (reply?.ok) input.value = ""; }); });
   const point = (event) => { const box = canvas.getBoundingClientRect(), touch = event.touches?.[0] || event; return [(touch.clientX - box.left) / box.width, (touch.clientY - box.top) / box.height]; };
   const startDraw = (event) => { if (!isDrawer() || state.room?.status !== "playing") return; event.preventDefault(); state.drawing = true; state.points = [point(event)]; };
   const moveDraw = (event) => { if (!state.drawing) return; event.preventDefault(); state.points.push(point(event)); const last = state.points.slice(-2); context.strokeStyle = $("#draw-color").value; context.lineWidth = Number($("#draw-size").value); context.lineCap = "round"; context.beginPath(); context.moveTo(last[0][0] * canvas.width, last[0][1] * canvas.height); context.lineTo(last.at(-1)[0] * canvas.width, last.at(-1)[1] * canvas.height); context.stroke(); };
   const endDraw = () => { if (!state.drawing) return; state.drawing = false; if (state.points.length >= 2) socket.emit("clue:stroke", { clueIndex: state.activeClue, points: state.points.slice(0, 100), color: $("#draw-color").value, size: Number($("#draw-size").value) }); state.points = []; };
   canvas.addEventListener("pointerdown", startDraw); canvas.addEventListener("pointermove", moveDraw); window.addEventListener("pointerup", endDraw);
   socket.on("room:state", (room) => { state.room = room; if (state.lastStatus === "playing" && room.status !== "playing") state.secret = null; state.lastStatus = room.status; render(); });
+  socket.on("room:message", (message) => { if (!state.room || state.room.messages.some((item) => item.id === message.id)) return; state.room.messages.push(message); if (state.room.messages.length > 60) state.room.messages.shift(); renderRoomMessages(); });
   socket.on("round:secret", showSecret);
   socket.on("clue:stroke", (stroke) => { if (!state.room) return; state.room.strokes[stroke.clueIndex].push(stroke); if (stroke.clueIndex === state.activeClue) redraw(); });
   socket.on("clue:clear", ({ clueIndex }) => { if (!state.room) return; state.room.strokes[clueIndex] = []; if (clueIndex === state.activeClue) redraw(); });

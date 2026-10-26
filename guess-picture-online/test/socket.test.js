@@ -51,7 +51,7 @@ test("public lobby chat discovers active same-site rooms without cross-tenant le
   assert.equal((await active).rooms[0].code, created.room.code);
 });
 
-test("late joiner spectates an active game and cannot affect scoring", async (context) => {
+test("late joiner spectates gameplay but can use room chat", async (context) => {
   const { host, guest, created } = await setup(context);
   assert.equal((await emit(host, "game:start")).ok, true);
   const spectator = await connect(server.address().port);
@@ -61,7 +61,11 @@ test("late joiner spectates an active game and cannot affect scoring", async (co
   assert.equal(joined.ok, true);
   assert.equal(joined.room.status, "playing");
   assert.equal(joined.room.players.find((player) => player.id === joined.playerId).participant, false);
-  assert.equal((await emit(spectator, "guess:submit", { text: "apa saja" })).ok, false);
+  const spectatorChat = waitFor(host, "room:message", (message) => message.name === "Citra");
+  const spectatorReply = await emit(spectator, "guess:submit", { text: "semangat ya <b>" });
+  assert.deepEqual({ ok: spectatorReply.ok, kind: spectatorReply.kind }, { ok: true, kind: "chat" });
+  const chatMessage = await spectatorChat;
+  assert.deepEqual({ type: chatMessage.type, playerId: chatMessage.playerId, name: chatMessage.name, text: chatMessage.text }, { type: "chat", playerId: joined.playerId, name: "Citra", text: "semangat ya <b>" });
   assert.equal((await emit(spectator, "round:report")).ok, false);
   assert.equal((await emit(spectator, "media:update", { voice: true, video: false })).ok, true);
   await new Promise((resolve) => setTimeout(resolve, 20));
@@ -100,6 +104,9 @@ test("only the drawer receives the secret question", async (context) => {
   assert.equal(encoded.includes("aliases"), false);
   assert.equal(encoded.includes("forbidden"), false);
   assert.equal(encoded.includes("image"), false);
+  const drawerLeak = await emit(host, "guess:submit", { text: `jawabannya ${value.answer}` });
+  assert.equal(drawerLeak.ok, false);
+  assert.match(drawerLeak.error, /rahasia/);
 });
 
 test("fastest normalized answer wins and points are recorded immediately", async (context) => {
@@ -109,8 +116,10 @@ test("fastest normalized answer wins and points are recorded immediately", async
   const answer = `  ${secret.answer.toUpperCase().replace(/ /g, "---")}!! `;
   const hostResult = waitFor(host, "room:state", (room) => room.status === "result");
   const guestResult = waitFor(guest, "room:state", (room) => room.status === "result");
+  const correctMessage = waitFor(host, "room:message", (message) => message.type === "correct");
   const result = await emit(guest, "guess:submit", { text: answer });
   assert.equal(result.correct, true);
+  assert.equal((await correctMessage).text, "");
   const [hostState, guestState] = await Promise.all([hostResult, guestResult]);
   assert.equal(hostState.result.winnerId, joined.playerId);
   assert.equal(guestState.result.winnerId, joined.playerId);
@@ -123,13 +132,14 @@ test("fastest normalized answer wins and points are recorded immediately", async
   assert.ok(room.result.elapsedMs >= 0);
 });
 
-test("wrong answers stay private and do not affect score", async (context) => {
+test("wrong answers appear in room chat without affecting score", async (context) => {
   const { host, guest } = await setup(context);
   await emit(host, "game:start");
-  let leaked = false; host.on("guess:feedback", () => { leaked = true; });
-  const result = await emit(guest, "guess:submit", { text: "jawaban salah" });
-  assert.equal(result.correct, false); await new Promise((resolve) => setTimeout(resolve, 10));
-  assert.equal(leaked, false);
+  const publicGuess = waitFor(host, "room:message", (message) => message.type === "guess");
+  const result = await emit(guest, "guess:submit", { text: "jawaban salah <img>" });
+  assert.deepEqual({ correct: result.correct, kind: result.kind }, { correct: false, kind: "guess" });
+  const message = await publicGuess;
+  assert.equal(message.text, "jawaban salah <img>");
   assert.equal([...rooms.values()][0].players[1].score, 0);
 });
 

@@ -45,7 +45,7 @@ const publicView = (room) => ({
   code: room.code, siteId: room.siteId, status: room.status, hostId: room.players[0]?.id || null,
   drawerId: room.drawerId, round: room.round, totalRounds: room.totalRounds, clueCount: room.clueCount,
   deadline: room.deadline, winnerId: room.winnerId, answerReveal: room.answerReveal, result: room.result,
-  strokes: room.strokes, reports: room.reports.size,
+  strokes: room.strokes, reports: room.reports.size, messages: room.messages,
   players: room.players.map(({ id, name, score, connected, media, wins, totalGuessMs }) => ({ id, name, score, connected, media, wins, totalGuessMs, participant: room.status === "waiting" || room.activeIds?.has(id) })),
 });
 const secretView = (question) => ({ id: question.id, answer: question.answer, aliases: question.aliases, category: question.category, forbidden: question.forbidden, examples: question.examples, image: questionImage(question) });
@@ -53,6 +53,13 @@ const emitRoom = (room) => {
   io.to(room.code).emit("room:state", publicView(room));
   const drawer = room.players.find((player) => player.id === room.drawerId && player.connected);
   if (drawer && room.question) io.to(drawer.socketId).emit("round:secret", secretView(room.question));
+};
+const addRoomMessage = (room, player, type, text = "") => {
+  const message = { id: crypto.randomUUID(), type, playerId: player?.id || null, name: player?.name || "Sistem", text, createdAt: Date.now() };
+  room.messages.push(message);
+  if (room.messages.length > 60) room.messages.splice(0, room.messages.length - 60);
+  io.to(room.code).emit("room:message", message);
+  return message;
 };
 const sessionReply = (room, player) => ({ ok: true, room: publicView(room), playerId: player.id, reconnectToken: player.token });
 const lobbyChannel = (siteId) => `lobby:${siteId}`;
@@ -151,7 +158,7 @@ io.on("connection", (socket) => {
     const nameClean = cleanName(name); if (!nameClean) return reply({ ok: false, error: "Nama wajib diisi." });
     let roomCode = code(); while (rooms.has(roomCode)) roomCode = code();
     const player = { id: crypto.randomUUID(), token: crypto.randomBytes(24).toString("base64url"), socketId: socket.id, name: nameClean, score: 0, wins: 0, totalGuessMs: 0, connected: true, media: { voice: false, video: false } };
-    const room = { code: roomCode, siteId: cleanSite(rawSite), status: "waiting", players: [player], createdAt: Date.now(), round: 0, totalRounds: 0, drawerId: null, clueCount: 0, strokes: [[], [], [], []], reports: new Set(), usedQuestions: new Set(), winnerId: null };
+    const room = { code: roomCode, siteId: cleanSite(rawSite), status: "waiting", players: [player], createdAt: Date.now(), round: 0, totalRounds: 0, drawerId: null, clueCount: 0, strokes: [[], [], [], []], reports: new Set(), usedQuestions: new Set(), winnerId: null, messages: [] };
     rooms.set(roomCode, room); socket.join(roomCode); socket.data.roomCode = roomCode; reply(sessionReply(room, player)); emitRoom(room); emitLobby(room.siteId);
   });
   socket.on("room:join", ({ name, code: rawCode, siteId: rawSite } = {}, reply = () => {}) => {
@@ -218,14 +225,25 @@ io.on("connection", (socket) => {
   });
   socket.on("guess:submit", ({ text } = {}, reply = () => {}) => {
     const room = rooms.get(socket.data.roomCode); const player = playerBySocket(room, socket);
-    if (!room || room.status !== "playing" || !player || !room.activeIds?.has(player.id) || player.id === room.drawerId) return reply({ ok: false, error: room && player && !room.activeIds?.has(player.id) ? "Penonton tidak bisa menebak pada game ini." : "Tidak bisa menebak." });
+    if (!room || !player) return reply({ ok: false, error: "Tidak bisa mengirim pesan." });
     const now = Date.now();
-    if (now - (player.lastGuessAt || 0) < 350) return reply({ ok: false, error: "Tunggu sebentar sebelum menebak lagi." });
+    if (now - (player.lastGuessAt || 0) < 350) return reply({ ok: false, error: "Tunggu sebentar sebelum mengirim lagi." });
     player.lastGuessAt = now;
-    const guess = normalize(String(text || "").slice(0, 80)); if (!guess) return reply({ ok: false, error: "Jawaban kosong." });
-    const accepted = [room.question.answer, ...room.question.aliases].some((answer) => normalize(answer) === guess);
-    if (!accepted) { socket.emit("guess:feedback", { correct: false }); return reply({ ok: true, correct: false }); }
-    const elapsedMs = Date.now() - room.startedAt; reply({ ok: true, correct: true, elapsedMs }); finishRound(room, { reason: "guessed", winner: player, elapsedMs });
+    const rawText = cleanChat(String(text || "").slice(0, 80));
+    const guess = normalize(rawText); if (!guess) return reply({ ok: false, error: "Pesan kosong." });
+    const canGuess = room.status === "playing" && room.activeIds?.has(player.id) && player.id !== room.drawerId;
+    const answers = room.status === "playing" ? [room.question.answer, ...room.question.aliases].map(normalize).filter(Boolean) : [];
+    const accepted = answers.includes(guess);
+    const containsAnswer = answers.some((answer) => ` ${guess} `.includes(` ${answer} `));
+    if (!canGuess) {
+      if (containsAnswer) return reply({ ok: false, error: "Jawaban rahasia tidak boleh ditulis di chat." });
+      addRoomMessage(room, player, "chat", rawText); return reply({ ok: true, correct: false, kind: "chat" });
+    }
+    if (!accepted) {
+      if (containsAnswer) return reply({ ok: true, correct: false, kind: "private" });
+      addRoomMessage(room, player, "guess", rawText); return reply({ ok: true, correct: false, kind: "guess" });
+    }
+    const elapsedMs = Date.now() - room.startedAt; addRoomMessage(room, player, "correct"); reply({ ok: true, correct: true, kind: "correct", elapsedMs }); finishRound(room, { reason: "guessed", winner: player, elapsedMs });
   });
   socket.on("round:skip", (_data, reply = () => {}) => {
     const room = rooms.get(socket.data.roomCode); const player = playerBySocket(room, socket);
