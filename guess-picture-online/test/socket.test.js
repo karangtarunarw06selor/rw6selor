@@ -275,6 +275,20 @@ test("explicit leave removes the seat and returns the socket to lobby state", as
   assert.equal((await emit(guest, "room:create", { name: "Bima", siteId: "MMS" })).ok, true);
 });
 
+test("authenticated page exit removes the seat immediately", async (context) => {
+  const { host, guest, created, joined } = await setup(context);
+  const hostUpdate = waitFor(host, "room:state", (room) => room.players.length === 1);
+  const response = await fetch(`http://127.0.0.1:${server.address().port}/tebak-gambar/api/leave`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ code: created.room.code, siteId: "MMS", playerId: joined.playerId, reconnectToken: joined.reconnectToken }),
+  });
+  assert.equal(response.status, 204);
+  const room = await hostUpdate;
+  assert.equal(room.players.some((player) => player.id === joined.playerId), false);
+  assert.equal((await emit(guest, "room:create", { name: "Bima", siteId: "MMS" })).ok, true);
+});
+
 test("host transfer and final standings return the same room to waiting", async (context) => {
   const { host, guest, created, joined } = await setup(context);
   assert.equal((await emit(guest, "room:transfer-host", { targetId: joined.playerId })).ok, false);

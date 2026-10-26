@@ -8,6 +8,7 @@ const { Server } = require("socket.io");
 const questions = require("./questions");
 
 const app = express();
+app.use(express.json({ limit: "2kb" }));
 const server = http.createServer(app);
 const socketPath = process.env.SOCKET_PATH || "/tebak-gambar/socket.io";
 const io = new Server(server, { path: socketPath, cors: { origin: false } });
@@ -77,17 +78,34 @@ const lobbyRooms = (siteId) => [...rooms.values()].filter((room) => room.siteId 
 const lobbyPayload = (siteId) => ({ messages: lobbyMessages.get(siteId) || [], rooms: lobbyRooms(siteId) });
 const emitLobby = (siteId) => io.to(lobbyChannel(siteId)).emit("lobby:state", lobbyPayload(siteId));
 const removeRoom = (room) => { clearTimeout(room.roundTimer); clearTimeout(room.nextTimer); rooms.delete(room.code); emitLobby(room.siteId); };
+const removePlayer = (room, player) => {
+  clearTimeout(player.cleanupTimer); player.media = { voice: false, video: false };
+  io.to(room.code).emit("media:peer-left", { playerId: player.id });
+  room.players = room.players.filter((item) => item.id !== player.id);
+  if (!room.players.length) return removeRoom(room);
+  if (room.drawerId === player.id && room.status === "playing") finishRound(room, { reason: "drawer-left", drawerPenalty: -1 });
+  else emitRoom(room);
+  emitLobby(room.siteId);
+};
 const scheduleCleanup = (room, player) => {
   clearTimeout(player.cleanupTimer);
   player.cleanupTimer = setTimeout(() => {
     if (player.connected) return;
-    room.players = room.players.filter((item) => item.id !== player.id);
-    if (!room.players.length) return removeRoom(room);
-    if (room.drawerId === player.id && room.status === "playing") finishRound(room, { reason: "drawer-left", drawerPenalty: -1 });
-    emitRoom(room); emitLobby(room.siteId);
+    removePlayer(room, player);
   }, RECONNECT_MS);
   player.cleanupTimer.unref();
 };
+app.post("/tebak-gambar/api/leave", (req, res) => {
+  const { code: rawCode, siteId: rawSite, playerId, reconnectToken } = req.body || {};
+  const room = rooms.get(String(rawCode || "").trim().toUpperCase());
+  const player = room?.players.find((item) => item.id === playerId && item.token === reconnectToken);
+  if (room && room.siteId === cleanSite(rawSite) && player) {
+    const playerSocket = io.sockets.sockets.get(player.socketId);
+    playerSocket?.leave(room.code); if (playerSocket?.data.roomCode === room.code) playerSocket.data.roomCode = null;
+    removePlayer(room, player);
+  }
+  res.sendStatus(204);
+});
 const chooseQuestion = (room) => {
   const available = questions.filter((question) => !room.usedQuestions.has(question.id));
   if (!available.length) room.usedQuestions.clear();
@@ -201,17 +219,8 @@ io.on("connection", (socket) => {
   socket.on("room:leave", (_data, reply = () => {}) => {
     const room = rooms.get(socket.data.roomCode); const player = playerBySocket(room, socket);
     if (!room || !player) return reply({ ok: false, error: "Sesi tidak ditemukan." });
-    clearTimeout(player.cleanupTimer);
-    player.media = { voice: false, video: false };
-    socket.to(room.code).emit("media:peer-left", { playerId: player.id });
-    room.players = room.players.filter((item) => item.id !== player.id);
     socket.leave(room.code); socket.data.roomCode = null;
-    if (!room.players.length) removeRoom(room);
-    else {
-      if (room.drawerId === player.id && room.status === "playing") finishRound(room, { reason: "drawer-left", drawerPenalty: -1 });
-      else emitRoom(room);
-      emitLobby(room.siteId);
-    }
+    removePlayer(room, player);
     reply({ ok: true });
   });
   socket.on("room:transfer-host", ({ targetId } = {}, reply = () => {}) => {

@@ -161,6 +161,12 @@
   socket.on("lobby:chat", appendLobbyMessage);
   socket.on("disconnect", () => { $("#lobby-online").textContent = "Terputus"; });
   socket.on("connect", () => { joinPublicLobby(); reconnect(); });
+  window.addEventListener("pagehide", () => {
+    const saved = JSON.parse(sessionStorage.getItem(sessionKey) || "null");
+    if (!state.room || !saved) return;
+    navigator.sendBeacon("/tebak-gambar/api/leave", new Blob([JSON.stringify({ ...saved, siteId })], { type: "application/json" }));
+    sessionStorage.removeItem(sessionKey);
+  });
   setInterval(() => { if (!state.room?.deadline) return $("#timer").textContent = "--:--"; const seconds = Math.max(0, Math.ceil((state.room.deadline - Date.now()) / 1000)); $("#timer").textContent = `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`; }, 250);
   window.guessGame = { socket, state, toast, currentPlayer };
   if (socket.connected) { joinPublicLobby(); reconnect(); }
