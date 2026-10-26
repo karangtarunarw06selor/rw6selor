@@ -5,7 +5,7 @@
   <title>Tebak Gambar • RW06 Selor</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext y='.9em' font-size='56'%3E🎨%3C/text%3E%3C/svg%3E"><link rel="stylesheet" href="game.css?v=6">
 </head>
 <body data-site="MMS">
-<header class="topbar"><button id="back-button" class="back-link" type="button">← Kembali</button><div><b>TEBAK GAMBAR</b><small>Clue kreatif, jawaban tercepat</small></div><button id="media-toggle" type="button" hidden>Voice / Video</button></header>
+<header class="topbar"><button id="back-button" class="back-link" type="button">← Kembali</button><div><b>TEBAK GAMBAR</b><small>Clue kreatif, jawaban tercepat</small></div><button id="media-toggle" type="button" disabled title="Masuk ke room untuk mengaktifkan media">Voice / Video</button></header>
 <main>
   <section id="welcome" class="welcome">
     <div class="hero"><span>GAME SOSIAL RW06</span><h1>Gambar clue.<br><em>Tebak tercepat.</em></h1><p>Jawaban rahasia hanya terlihat oleh penggambar. Buat clue tidak langsung dan kumpulkan poin.</p></div>
@@ -37,5 +37,5 @@
 <dialog id="leave-dialog" class="leave-dialog"><h2>Keluar dari room?</h2><p>Kamu akan keluar dari permainan dan kembali ke lobby awal Tebak Gambar.</p><div><button id="cancel-leave" class="secondary" type="button">Batal</button><button id="confirm-leave" type="button">Keluar Room</button></div></dialog>
 <dialog id="media-dialog"><button class="close-dialog">×</button><h2>Voice & Video</h2><p>Opsional. Media tidak direkam. Maksimal empat kamera.</p><button id="voice-only">Aktifkan Voice</button><button id="voice-video">Voice + Kamera</button><button id="media-off" class="secondary">Matikan Media</button><small id="media-error"></small></dialog>
 <div id="toast" class="toast"></div>
-<script src="/tebak-gambar/socket.io/socket.io.js"></script><script src="game.js?v=7"></script><script src="media.js?v=3"></script>
+<script src="/tebak-gambar/socket.io/socket.io.js"></script><script src="game.js?v=8"></script><script src="media.js?v=3"></script>
 </body></html>
