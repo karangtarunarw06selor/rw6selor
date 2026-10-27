@@ -2693,29 +2693,31 @@ if (isMatchFinished) {
     function connectRealtime() {
       if (!matchData || !localPlayer) return;
 
-      if (socket && socket.readyState === WebSocket.OPEN) {
-        joinRealtimeRoom();
-        return;
-      }
+      if (socket?.readyState === WebSocket.CONNECTING) return;
+      if (socket?.readyState === WebSocket.OPEN) return joinRealtimeRoom();
 
-      socket = new WebSocket(REALTIME_URL);
+      const activeSocket = new WebSocket(REALTIME_URL);
+      socket = activeSocket;
 
-      socket.onopen = function () {
+      activeSocket.onopen = function () {
+        if (socket !== activeSocket) return activeSocket.close();
         socketConnected = true;
         socketJoinedRoom = false;
         updateUI();
         joinRealtimeRoom();
       };
 
-      socket.onmessage = function (event) {
+      activeSocket.onmessage = function (event) {
+        if (socket !== activeSocket) return;
         handleRealtimeMessage(event.data);
       };
 
-      socket.onerror = function (error) {
+      activeSocket.onerror = function (error) {
         console.log("Realtime socket error", error);
       };
 
-      socket.onclose = function () {
+      activeSocket.onclose = function () {
+        if (socket !== activeSocket) return;
         socketConnected = false;
         socketJoinedRoom = false;
         remoteAim = null;
