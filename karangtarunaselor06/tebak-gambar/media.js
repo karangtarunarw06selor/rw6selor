@@ -21,7 +21,7 @@
     const slot = document.querySelector(`${scope} [data-player="${CSS.escape(id)}"] .player-camera`);
     let node = document.querySelector(`.video-tile[data-peer="${CSS.escape(id)}"]`);
     if (!node) {
-      node = document.createElement("div"); node.className = "video-tile"; node.dataset.peer = id; node.title = name; node.innerHTML = `<video autoplay playsinline ${local ? "muted" : ""}></video><span class="video-off-label">Kamera off</span>${local ? "" : '<button class="peer-mute" type="button">Bisukan</button>'}`;
+      node = document.createElement("div"); node.className = "video-tile"; node.dataset.peer = id; node.title = name; node.innerHTML = `<video autoplay playsinline ${local ? "muted" : ""}></video>${local ? "" : '<button class="peer-mute" type="button">Bisukan</button>'}`;
       node.querySelector(".peer-mute")?.addEventListener("click", async () => { const audio = audioNode(id); if (!audio) return; if (audio.paused || mutedPeers.has(id)) { mutedPeers.delete(id); await playRemoteAudio(id); } else { mutedPeers.add(id); audio.muted = true; updateAudioButton(id); } });
     }
     (slot || dock).append(node); return node;
