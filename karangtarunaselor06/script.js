@@ -806,54 +806,41 @@ window.tutupFoto = function() { const modal = document.getElementById('modal-fot
 function initSistemPWA() {
     const popup = document.getElementById('pwa-install-popup');
     const tombolInstal = document.getElementById('btn-instal-pwa');
+    const tombolNanti = document.getElementById('btn-nanti-pwa');
+    const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    if (!popup || standalone || sessionStorage.getItem('pwa-install-dismissed') === '1') return;
 
-    // Amankan: Langsung paksa tampil secara visual di gateway login
-    if (popup) {
+    window.addEventListener('beforeinstallprompt', (event) => {
+        event.preventDefault();
+        pemicuInstal = event;
+        popup.hidden = false;
         popup.style.display = 'block';
-    }
-
-    // Tangkap pemicu instalasi resmi dari browser HP
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault(); 
-        pemicuInstal = e;
-        if (popup) popup.style.display = 'block';
     });
 
-    // Logika klik tombol "Instal Sekarang"
-    if (tombolInstal) {
-        tombolInstal.addEventListener('click', async () => {
-            // JIKA DI HP PEMICU OTOMATIS BELUM SIAP / MACET, JALANKAN ALTERNATIF INI:
-            if (!pemicuInstal) {
-                // Deteksi apakah user pakai perangkat iOS (iPhone/iPad)
-                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-                
-                if (isIOS) {
-                    alert("Untuk iPhone/iOS, silakan klik tombol 'Share' (ikon kotak panah ke atas) di bagian bawah Safari, lalu pilih 'Add to Home Screen' / 'Tambahkan ke Layar Utama', Bro!");
-                } else {
-                    alert("Sistem browser HP kamu sedang memproses. Silakan klik tombol Titik Tiga di pojok kanan atas browser Chrome kamu, lalu pilih 'Tambahkan ke Layar Utama' atau 'Instal Aplikasi' ya, Bro!");
-                }
-                return;
-            }
-            
-            // Jika pemicu otomatis browser siap, langsung jalankan instalasi resmi
-            pemicuInstal.prompt();
-            const { outcome } = await pemicuInstal.userChoice;
-            console.log(`Pilihan user PWA: ${outcome}`);
-            
-            pemicuInstal = null; 
-            tutupPopupInstal();
-        });
-    }
+    tombolNanti?.addEventListener('click', () => {
+        sessionStorage.setItem('pwa-install-dismissed', '1');
+        tutupPopupInstal();
+    });
 
-    window.addEventListener('appinstalled', () => { 
-        console.log('Karang Taruna RW06 Sukses Terinstal!');
-        tutupPopupInstal(); 
+    tombolInstal?.addEventListener('click', async () => {
+        if (!pemicuInstal) return;
+        pemicuInstal.prompt();
+        await pemicuInstal.userChoice;
+        pemicuInstal = null;
+        tutupPopupInstal();
+    });
+
+    window.addEventListener('appinstalled', () => {
+        pemicuInstal = null;
+        tutupPopupInstal();
     });
 }
 
-function tutupPopupInstal() { 
-    const popup = document.getElementById('pwa-install-popup'); 
-    if (popup) popup.style.display = 'none'; 
+function tutupPopupInstal() {
+    const popup = document.getElementById('pwa-install-popup');
+    if (!popup) return;
+    popup.hidden = true;
+    popup.style.display = 'none';
 }
 /* ==========================================================================
    9. GATEWAY LOGIN & VALIDASI ADMIN SECURITY

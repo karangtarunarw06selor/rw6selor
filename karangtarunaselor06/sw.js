@@ -1,6 +1,6 @@
-const CACHE = 'kt-rw06-pwa-v1';
+const CACHE = 'kt-rw06-pwa-v2';
 const SHELL = [
-  '/', '/index.html', '/style.css?v=game-nav-1', '/script.js', '/pwa.js', '/manifest.json',
+  '/', '/index.html', '/style.css?v=pwa-click-1', '/script.js?v=pwa-click-1', '/pwa.js?v=1', '/manifest.json?v=pwa-1',
   '/images/pwa-icon-192.png', '/images/pwa-icon-512.png', '/images/pwa-maskable-512.png'
 ];
 
