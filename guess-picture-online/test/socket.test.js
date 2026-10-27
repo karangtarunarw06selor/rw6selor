@@ -149,6 +149,37 @@ test("only the drawer receives the secret question", async (context) => {
   assert.match(drawerLeak.error, /rahasia/);
 });
 
+test("unlocking another clue updates state without resending the drawer secret", async (context) => {
+  const { host } = await setup(context);
+  let secrets = 0; host.on("round:secret", () => { secrets += 1; });
+  assert.equal((await emit(host, "game:start")).ok, true);
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  assert.equal(secrets, 1);
+  assert.equal((await emit(host, "clue:unlock")).ok, true);
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  assert.equal(secrets, 1);
+});
+
+test("the next round starts immediately after every online player closes the result", async (context) => {
+  const { host, guest } = await setup(context);
+  assert.equal((await emit(host, "game:start")).ok, true);
+  const room = [...rooms.values()][0];
+  const { finishRound } = require("../server");
+  finishRound(room, { reason: "timeout" });
+  assert.equal(room.status, "result");
+  assert.equal(room.nextTimer._idleTimeout, 30_000);
+
+  const first = await emit(host, "round:result-ack", { round: 1 });
+  assert.deepEqual(first, { ok: true, advanced: false });
+  assert.equal(room.status, "result");
+
+  const roundTwo = waitFor(host, "room:state", (state) => state.status === "playing" && state.round === 2);
+  const last = await emit(guest, "round:result-ack", { round: 1 });
+  assert.deepEqual(last, { ok: true, advanced: true });
+  assert.equal((await roundTwo).round, 2);
+  assert.equal(room.status, "playing");
+});
+
 test("fastest normalized answer wins and points are recorded immediately", async (context) => {
   const { host, guest, joined } = await setup(context);
   const secretPromise = new Promise((resolve) => host.once("round:secret", resolve));

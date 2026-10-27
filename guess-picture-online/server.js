@@ -56,6 +56,8 @@ const publicView = (room) => ({
 const secretView = (question) => ({ id: question.id, answer: question.answer, aliases: question.aliases, category: question.category, forbidden: question.forbidden, examples: question.examples, image: questionImage(question) });
 const emitRoom = (room) => {
   io.to(room.code).emit("room:state", publicView(room));
+};
+const emitSecret = (room) => {
   const drawer = room.players.find((player) => player.id === room.drawerId && player.connected);
   if (drawer && room.question) io.to(drawer.socketId).emit("round:secret", secretView(room.question));
 };
@@ -84,7 +86,7 @@ const removePlayer = (room, player) => {
   room.players = room.players.filter((item) => item.id !== player.id);
   if (!room.players.length) return removeRoom(room);
   if (room.drawerId === player.id && room.status === "playing") finishRound(room, { reason: "drawer-left", drawerPenalty: -1 });
-  else emitRoom(room);
+  else { emitRoom(room); if (room.status === "result") advanceAfterResultAcks(room); }
   emitLobby(room.siteId);
 };
 const scheduleCleanup = (room, player) => {
@@ -143,10 +145,17 @@ const startRound = (room) => {
   room.deadline = room.startedAt + ROUND_MS;
   room.answerReveal = null;
   room.result = null;
+  room.resultAcks = new Set();
   clearTimeout(room.roundTimer);
   room.roundTimer = setTimeout(() => finishRound(room, { reason: "timeout" }), ROUND_MS);
   room.roundTimer.unref();
-  emitRoom(room);
+  emitRoom(room); emitSecret(room);
+};
+const advanceAfterResultAcks = (room) => {
+  if (room.status !== "result") return false;
+  const onlineIds = room.players.filter((player) => player.connected).map((player) => player.id);
+  if (!onlineIds.length || !onlineIds.every((id) => room.resultAcks.has(id))) return false;
+  clearTimeout(room.nextTimer); startRound(room); return true;
 };
 function finishRound(room, { reason, winner = null, elapsedMs = null, drawerPenalty = 0 } = {}) {
   if (room.status !== "playing") return;
@@ -164,6 +173,7 @@ function finishRound(room, { reason, winner = null, elapsedMs = null, drawerPena
   room.status = "result";
   room.answerReveal = room.question.answer;
   room.result = { reason, winnerId: winner?.id || null, elapsedMs, guessPoints, drawerPoints };
+  room.resultAcks = new Set();
   room.deadline = null;
   emitRoom(room);
   room.nextTimer = setTimeout(() => startRound(room), RESULT_MS);
@@ -211,10 +221,7 @@ io.on("connection", (socket) => {
     if (!room || room.siteId !== cleanSite(rawSite) || !player) return reply({ ok: false, error: "Sesi berakhir." });
     clearTimeout(player.cleanupTimer); io.sockets.sockets.get(player.socketId)?.disconnect(true);
     player.socketId = socket.id; player.connected = true; player.media = { voice: false, video: false }; player.mediaWatching = false;
-    socket.join(room.code); socket.data.roomCode = room.code; reply(sessionReply(room, player)); emitRoom(room); emitLobby(room.siteId);
-    if (room.status === "result" && room.players.filter((item) => item.connected && room.activeIds?.has(item.id)).length >= 2) {
-      clearTimeout(room.nextTimer); room.nextTimer = setTimeout(() => startRound(room), 500); room.nextTimer.unref();
-    }
+    socket.join(room.code); socket.data.roomCode = room.code; reply(sessionReply(room, player)); emitRoom(room); if (room.status === "playing" && player.id === room.drawerId) emitSecret(room); emitLobby(room.siteId);
   });
   socket.on("room:leave", (_data, reply = () => {}) => {
     const room = rooms.get(socket.data.roomCode); const player = playerBySocket(room, socket);
@@ -260,6 +267,11 @@ io.on("connection", (socket) => {
     if (room.clueCount >= 4) return reply({ ok: false, error: "Semua clue sudah terbuka." });
     room.clueCount += 1; emitRoom(room); reply({ ok: true });
   });
+  socket.on("round:result-ack", ({ round } = {}, reply = () => {}) => {
+    const room = rooms.get(socket.data.roomCode); const player = playerBySocket(room, socket);
+    if (!room || !player || room.status !== "result" || Number(round) !== room.round) return reply({ ok: false });
+    room.resultAcks.add(player.id); const advanced = advanceAfterResultAcks(room); reply({ ok: true, advanced });
+  });
   socket.on("clue:clear", ({ clueIndex } = {}, reply = () => {}) => {
     const room = rooms.get(socket.data.roomCode); const player = playerBySocket(room, socket); const index = Number(clueIndex);
     if (!room || player?.id !== room.drawerId || !Number.isInteger(index) || index < 0 || index >= room.clueCount) return reply({ ok: false });
@@ -291,7 +303,7 @@ io.on("connection", (socket) => {
     const room = rooms.get(socket.data.roomCode); const player = playerBySocket(room, socket);
     if (!room || player?.id !== room.drawerId || room.status !== "playing") return reply({ ok: false });
     if (room.skipUsed) return reply({ ok: false, error: "Ganti soal hanya sekali." });
-    room.skipUsed = true; room.question = chooseQuestion(room); room.strokes = [[], [], [], []]; room.clueCount = 1; room.startedAt = Date.now(); room.deadline = room.startedAt + ROUND_MS; clearTimeout(room.roundTimer); room.roundTimer = setTimeout(() => finishRound(room, { reason: "timeout" }), ROUND_MS); room.roundTimer.unref(); emitRoom(room); reply({ ok: true });
+    room.skipUsed = true; room.question = chooseQuestion(room); room.strokes = [[], [], [], []]; room.clueCount = 1; room.startedAt = Date.now(); room.deadline = room.startedAt + ROUND_MS; clearTimeout(room.roundTimer); room.roundTimer = setTimeout(() => finishRound(room, { reason: "timeout" }), ROUND_MS); room.roundTimer.unref(); emitRoom(room); emitSecret(room); reply({ ok: true });
   });
   socket.on("round:report", (_data, reply = () => {}) => {
     const room = rooms.get(socket.data.roomCode); const player = playerBySocket(room, socket);
@@ -331,7 +343,7 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     const room = rooms.get(socket.data.roomCode); const player = playerBySocket(room, socket); if (!room || !player) return;
     player.connected = false; player.media = { voice: false, video: false }; socket.to(room.code).emit("media:peer-left", { playerId: player.id });
-    emitRoom(room);
+    emitRoom(room); if (room.status === "result") advanceAfterResultAcks(room);
     emitLobby(room.siteId); scheduleCleanup(room, player);
   });
 });

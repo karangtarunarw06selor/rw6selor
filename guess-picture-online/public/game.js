@@ -72,7 +72,7 @@
     $("#chat-mode").textContent = room.status !== "playing" || isDrawer() || !isParticipant() ? "Mode chat" : "Chat atau tebak jawaban";
     $("#report-round").hidden = isDrawer() || !isParticipant() || room.status !== "playing";
     $("#next-clue").disabled = room.clueCount >= 4;
-    $("#secret-panel").hidden = !isDrawer() || !state.secret || room.status !== "playing";
+    if (!isDrawer() || !state.secret || room.status !== "playing") $("#secret-panel").hidden = true;
     $("#moderation").hidden = room.hostId !== state.playerId || room.reports < Math.max(2, Math.ceil((room.players.length - 1) / 2));
     $("#round-result").hidden = true;
     if (room.status === "playing" && $("#correct-dialog").open) $("#correct-dialog").close();
@@ -89,7 +89,7 @@
         $("#correct-answer").textContent = room.questionReveal.answer;
         const seconds = winner ? (room.result.elapsedMs / 1000).toLocaleString("id-ID", { minimumFractionDigits: 3, maximumFractionDigits: 3 }) : null;
         $("#correct-time").textContent = winner ? `Waktu tercepat ${seconds} detik · Bonus +${room.result.guessPoints} poin` : "Jawaban ditampilkan kepada semua pemain.";
-        $("#correct-dialog").showModal();
+        state.resultDialogRound = room.round; $("#correct-dialog").showModal();
         $("#correct-dialog").focus();
         clearTimeout(state.answerTimer); state.answerTimer = setTimeout(() => { if ($("#correct-dialog").open) $("#correct-dialog").close(); }, 30_000);
       }
@@ -141,6 +141,10 @@
 
   $("#room-display").addEventListener("click", () => navigator.clipboard?.writeText(state.room?.code));
   $("#close-correct").addEventListener("click", () => $("#correct-dialog").close());
+  $("#correct-dialog").addEventListener("close", () => {
+    const round = state.resultDialogRound; if (!round) return;
+    state.resultDialogRound = null; socket.emit("round:result-ack", { round });
+  });
   $("#return-lobby").addEventListener("click", () => socket.emit("game:return-lobby", {}, (reply) => { if (!reply?.ok) toast(reply?.error || "Gagal kembali ke lobby."); }));
   $("#lobby-players").addEventListener("click", (event) => { const targetId = event.target.dataset.transferHost; if (!targetId) return; socket.emit("room:transfer-host", { targetId }, (reply) => { if (!reply?.ok) toast(reply?.error || "Gagal memindahkan host."); }); });
   $("#next-clue").addEventListener("click", () => socket.emit("clue:unlock", {}, (reply) => { if (!reply?.ok) toast(reply.error); else { state.activeClue = state.room.clueCount; } }));
