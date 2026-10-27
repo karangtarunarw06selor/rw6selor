@@ -60,3 +60,5 @@ body.game-active main{width:min(1280px,calc(100% - 16px));height:calc(100dvh - c
 .standings-list article>strong{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.12)}
 .standings-list article>span{font-weight:900;color:var(--accent)}
 .standings-dialog>button{width:100%;margin-top:2px}
+/* Keep absolute camera tiles inside their player card in waiting and active rooms. */
+.player-camera{position:relative;overflow:hidden;contain:layout paint}
