@@ -1540,6 +1540,8 @@ let pendingRemoteFinalBalls = null;
 let ballInHandLocalPlaced = false;
 let ballInHandLastOwnerId = null;
 let ballInHandDragging = false;
+let lastCueBallTapAt = 0;
+let lastCueBallTapPoint = null;
 
 let lastBallInHandSyncAt = 0;
 
@@ -2463,9 +2465,9 @@ if (isMatchFinished) {
   noticeText = "Bola sedang bergerak...";
 } else if (bih.active && isBallInHandActiveForMe()) {
  if (ballInHandLocalPlaced) {
-  noticeText = "Ball in hand: bola putih sudah diletakkan. Tarik dari bola putih untuk memukul, atau tap area kosong untuk pindah posisi.";
+  noticeText = "Ball in hand: posisi dikunci. Tarik stick untuk memukul.";
 } else {
-  noticeText = "Ball in hand: tap/drag area meja kosong untuk menaruh bola putih.";
+  noticeText = "Ball in hand: drag bola putih, lalu double-click/double-tap untuk mengunci.";
 }
 } else if (bih.active && !isBallInHandActiveForMe()) {
   noticeText = "Lawan mendapat ball in hand.";
@@ -4706,11 +4708,11 @@ const maxY = PLAY_BOTTOM;
   cueBall.vy = 0;
   cueBall.pocketed = false;
 
-  ballInHandLocalPlaced = true;
+  ballInHandLocalPlaced = false;
 
   lastShotResult = {
     success: true,
-    message: "Bola putih diletakkan. Masih boleh dipindah sebelum dipukul."
+    message: "Posisi sementara. Double-click atau double-tap bola putih untuk mengunci."
   };
 
   updateUI();
@@ -5302,7 +5304,7 @@ if (isBallInHandModeForMe()) {
     - klik/drag tepat di bola putih = pindah bola
     - klik stick / area kosong = aim normal, tidak pindah bola
   */
-  if (touchingCueBall && !isAiming) {
+  if (touchingCueBall && !ballInHandLocalPlaced && !isAiming) {
     ballInHandDragging = true;
     return;
   }
@@ -5337,7 +5339,7 @@ if (isBallInHandModeForMe()) {
     const placed = placeCueBallForBallInHand(point);
 
     if (placed) {
-      ballInHandLocalPlaced = true;
+      ballInHandLocalPlaced = false;
       updateUI();
       draw();
       sendRealtimeBallInHandMove();
@@ -5447,6 +5449,23 @@ async function submitBallInHandPosition(options = {}) {
   }
 }
 
+function lockCueBallPlacement(point) {
+  if (!isBallInHandModeForMe() || ballInHandDragging || !isPointerOnCueBall(point.x, point.y)) return false;
+  ballInHandLocalPlaced = true;
+  lastShotResult = { success: true, message: "Posisi bola putih dikunci. Siap membidik." };
+  sendRealtimeBallInHandMove();
+  submitBallInHandPosition();
+  updateUI();
+  draw();
+  return true;
+}
+
+function onCueBallDoubleClick(event) {
+  if (!isBallInHandModeForMe()) return;
+  const point = getCanvasPoint(event);
+  if (lockCueBallPlacement(point)) event.preventDefault();
+}
+
 function submitBallInHandPositionThrottled() {
   const now = Date.now();
 
@@ -5469,7 +5488,7 @@ function submitBallInHandPositionThrottled() {
 
     if (ballInHandDragging) {
     ballInHandDragging = false;
-    ballInHandLocalPlaced = true;
+    ballInHandLocalPlaced = false;
 
     updateUI();
     draw();
@@ -6000,6 +6019,7 @@ function startPocketSink(ball, pocket) {
 }
 
     window.addEventListener("mousedown", onAimStart);
+window.addEventListener("dblclick", onCueBallDoubleClick);
 window.addEventListener("mousemove", onAimMove);
 window.addEventListener("mouseup", onAimEnd);
 
@@ -6151,13 +6171,21 @@ function onTouchAimStart(event) {
     typeof isBallInHandModeForMe === "function" && isBallInHandModeForMe();
 
   const touchingCueBall = isPointerOnCueBall(point.x, point.y);
+  const now = Date.now();
+  if (bihActiveForMe && touchingCueBall && lastCueBallTapPoint && now - lastCueBallTapAt <= 350 && Math.hypot(point.x - lastCueBallTapPoint.x, point.y - lastCueBallTapPoint.y) <= 18) {
+    lastCueBallTapAt = 0;
+    lastCueBallTapPoint = null;
+    lockCueBallPlacement(point);
+    resetTouchState();
+    return;
+  }
 
 /*
   Mobile ball in hand:
   - touch/drag tepat di bola putih = pindah bola putih
   - touch stick / area kosong = aim normal, tidak pindah bola
 */
-if (bihActiveForMe && touchingCueBall) {
+if (bihActiveForMe && touchingCueBall && !ballInHandLocalPlaced) {
   touchBallInHandMode = true;
   ballInHandDragging = true;
   return;
@@ -6236,6 +6264,11 @@ function onTouchAimEnd(event) {
 
 // Ball in hand: selesai drag bola putih
 if (touchBallInHandMode) {
+  const endPoint = touchLastPoint || touchStartPoint;
+  if (endPoint && touchStartPoint && Math.hypot(endPoint.x - touchStartPoint.x, endPoint.y - touchStartPoint.y) <= 12) {
+    lastCueBallTapAt = Date.now();
+    lastCueBallTapPoint = endPoint;
+  }
   onAimEnd(event);
   resetTouchState();
   return;
