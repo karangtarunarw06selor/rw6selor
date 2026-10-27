@@ -1455,7 +1455,7 @@ let socketConnected = false;
 let socketJoinedRoom = false;
 let socketReconnectTimer = null;
 
-const REALTIME_URL = "wss://billiard-realtime-server-production.up.railway.app/";
+const REALTIME_URL = `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/billiard-realtime`;
 
 // Audio
 let audioContext = null;
@@ -2580,9 +2580,10 @@ if (isMatchFinished) {
       socket.send(JSON.stringify({
         type: "join_room",
         room_code: matchData.room.room_code,
+        site_id: "MMS",
+        player_key: getPlayerKey(),
         player_id: localPlayer.id,
         username: localPlayer.username,
-        player_key: playerKey,
         spectator: Boolean(matchData.players?.find(player => Number(player.player_id) === Number(localPlayer.id))?.spectator)
       }));
     }
