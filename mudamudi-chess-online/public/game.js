@@ -221,6 +221,8 @@ document.getElementById("roomChatForm")?.addEventListener("submit", (event) => {
 
 socket.on("joinedRoom", (data) => {
 
+    document.body.classList.add("game-active");
+
     roomCode = data.roomCode;
 
     playerColor = data.color;
@@ -747,6 +749,8 @@ function autoJoinFromUrl() {
 window.addEventListener("DOMContentLoaded", autoJoinFromUrl);
 
 function startComputerMode() {
+
+    document.body.classList.add("game-active");
 
     roomCode = "VS-COMPUTER";
 
