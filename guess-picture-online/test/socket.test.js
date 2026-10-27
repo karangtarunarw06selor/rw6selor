@@ -51,6 +51,21 @@ test("public lobby chat discovers active same-site rooms without cross-tenant le
   assert.equal((await active).rooms[0].code, created.room.code);
 });
 
+test("private rooms stay out of the lobby but remain joinable by code", async (context) => {
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const port = server.address().port;
+  const host = await connect(port), guest = await connect(port), outsider = await connect(port);
+  context.after(() => { host.close(); guest.close(); outsider.close(); io.close(); server.close(); rooms.clear(); lobbyMessages.clear(); });
+  const created = await emit(host, "room:create", { name: "Ayu", siteId: "MMS", visibility: "private" });
+  assert.equal(created.ok, true);
+  assert.equal(created.room.visibility, "private");
+  assert.deepEqual((await emit(outsider, "lobby:join", { siteId: "MMS" })).rooms, []);
+  const joined = await emit(guest, "room:join", { name: "Bima", code: created.room.code, siteId: "MMS" });
+  assert.equal(joined.ok, true);
+  assert.equal(joined.room.visibility, "private");
+  assert.equal((await emit(outsider, "room:join", { name: "Citra", code: created.room.code, siteId: "KT" })).ok, false);
+});
+
 test("waiting room supports chat and media while one socket remains isolated to one room", async (context) => {
   const { host, guest, created } = await setup(context);
   const outsider = await connect(server.address().port); context.after(() => outsider.close());

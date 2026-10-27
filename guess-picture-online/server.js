@@ -29,6 +29,7 @@ app.get("/", (_req, res) => res.redirect("/tebak-gambar/"));
 const normalize = (value) => String(value || "").normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().replace(/\s+/g, " ");
 const cleanName = (value) => String(value || "").replace(/[<>&"'`]/g, "").trim().replace(/\s+/g, " ").slice(0, 24);
 const cleanSite = (value) => String(value || "").toUpperCase() === "KT" ? "KT" : "MMS";
+const cleanVisibility = (value) => String(value || "").toLowerCase() === "private" ? "private" : "public";
 const cleanChat = (value) => String(value || "").trim().replace(/\s+/g, " ").slice(0, 180);
 const code = () => crypto.randomBytes(3).toString("hex").slice(0, 6).toUpperCase();
 const playerBySocket = (room, socket) => room?.players.find((player) => player.socketId === socket.id);
@@ -45,7 +46,7 @@ const questionImage = (question) => {
 };
 
 const publicView = (room) => ({
-  code: room.code, siteId: room.siteId, status: room.status, hostId: room.players[0]?.id || null,
+  code: room.code, siteId: room.siteId, visibility: room.visibility || "public", status: room.status, hostId: room.players[0]?.id || null,
   drawerId: room.drawerId, round: room.round, totalRounds: room.totalRounds, roundsPerPlayer: room.roundsPerPlayer || 2, clueCount: room.clueCount,
   deadline: room.deadline, winnerId: room.winnerId, answerReveal: room.answerReveal, result: room.result,
   questionReveal: room.status === "result" && room.question ? { answer: room.question.answer, category: room.question.category, image: questionImage(room.question) } : null,
@@ -76,7 +77,7 @@ const returnToLobby = (room) => {
   emitRoom(room); emitLobby(room.siteId);
 };
 const lobbyChannel = (siteId) => `lobby:${siteId}`;
-const lobbyRooms = (siteId) => [...rooms.values()].filter((room) => room.siteId === siteId && room.status !== "finished" && room.players.some((player) => player.connected)).map((room) => ({ code: room.code, host: room.players[0]?.name || "Pemain", players: room.players.filter((player) => player.connected).length, capacity: 8, status: room.status, createdAt: room.createdAt }));
+const lobbyRooms = (siteId) => [...rooms.values()].filter((room) => room.siteId === siteId && (room.visibility || "public") === "public" && room.status !== "finished" && room.players.some((player) => player.connected)).map((room) => ({ code: room.code, host: room.players[0]?.name || "Pemain", players: room.players.filter((player) => player.connected).length, capacity: 8, status: room.status, createdAt: room.createdAt }));
 const lobbyPayload = (siteId) => ({ messages: lobbyMessages.get(siteId) || [], rooms: lobbyRooms(siteId) });
 const emitLobby = (siteId) => io.to(lobbyChannel(siteId)).emit("lobby:state", lobbyPayload(siteId));
 const removeRoom = (room) => { clearTimeout(room.roundTimer); clearTimeout(room.nextTimer); rooms.delete(room.code); emitLobby(room.siteId); };
@@ -192,17 +193,17 @@ io.on("connection", (socket) => {
     if (!nameClean || !textClean) return reply({ ok: false, error: "Nama dan pesan wajib diisi." });
     if (now - (socket.data.lastLobbyChatAt || 0) < LOBBY_CHAT_COOLDOWN_MS) return reply({ ok: false, error: "Tunggu sebentar sebelum mengirim lagi." });
     socket.data.lastLobbyChatAt = now;
-    const validCodes = [...new Set((textClean.toUpperCase().match(/\b[A-F0-9]{6}\b/g) || []).filter((roomCode) => { const room = rooms.get(roomCode); return room?.siteId === siteId && room.status !== "finished" && room.players.some((player) => player.connected); }))];
+    const validCodes = [...new Set((textClean.toUpperCase().match(/\b[A-F0-9]{6}\b/g) || []).filter((roomCode) => { const room = rooms.get(roomCode); return room?.siteId === siteId && (room.visibility || "public") === "public" && room.status !== "finished" && room.players.some((player) => player.connected); }))];
     const message = { id: crypto.randomUUID(), name: nameClean, text: textClean, createdAt: now, roomCodes: validCodes };
     const history = lobbyMessages.get(siteId) || []; history.push(message); if (history.length > LOBBY_HISTORY_LIMIT) history.splice(0, history.length - LOBBY_HISTORY_LIMIT); lobbyMessages.set(siteId, history);
     io.to(lobbyChannel(siteId)).emit("lobby:chat", message); reply({ ok: true });
   });
-  socket.on("room:create", ({ name, siteId: rawSite } = {}, reply = () => {}) => {
+  socket.on("room:create", ({ name, siteId: rawSite, visibility } = {}, reply = () => {}) => {
     if (socket.data.roomCode) return reply({ ok: false, error: "Keluar dari room saat ini terlebih dahulu." });
     const nameClean = cleanName(name); if (!nameClean) return reply({ ok: false, error: "Nama wajib diisi." });
     let roomCode = code(); while (rooms.has(roomCode)) roomCode = code();
     const player = { id: crypto.randomUUID(), token: crypto.randomBytes(24).toString("base64url"), socketId: socket.id, name: nameClean, score: 0, wins: 0, totalGuessMs: 0, connected: true, media: { voice: false, video: false }, mediaWatching: false };
-    const room = { code: roomCode, siteId: cleanSite(rawSite), status: "waiting", players: [player], createdAt: Date.now(), round: 0, totalRounds: 0, roundsPerPlayer: 2, drawerId: null, clueCount: 0, strokes: [[], [], [], []], reports: new Set(), usedQuestions: new Set(), winnerId: null, messages: [] };
+    const room = { code: roomCode, siteId: cleanSite(rawSite), visibility: cleanVisibility(visibility), status: "waiting", players: [player], createdAt: Date.now(), round: 0, totalRounds: 0, roundsPerPlayer: 2, drawerId: null, clueCount: 0, strokes: [[], [], [], []], reports: new Set(), usedQuestions: new Set(), winnerId: null, messages: [] };
     rooms.set(roomCode, room); socket.join(roomCode); socket.data.roomCode = roomCode; reply(sessionReply(room, player)); emitRoom(room); emitLobby(room.siteId);
   });
   socket.on("room:join", ({ name, code: rawCode, siteId: rawSite } = {}, reply = () => {}) => {

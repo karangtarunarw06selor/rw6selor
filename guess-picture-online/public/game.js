@@ -60,7 +60,7 @@
     const chat = $(".room-chat"); const mount = $(waiting ? "#lobby-chat-mount" : "#game-chat-mount"); if (chat.parentElement !== mount) mount.append(chat);
     $("#chat-mode").textContent = waiting ? "Chat sebelum permainan dimulai" : room.status !== "playing" || isDrawer() || !isParticipant() ? "Mode chat" : "Chat atau tebak jawaban";
     $("#guess-form").hidden = false;
-    $("#room-display").textContent = room.code; renderPlayers(); renderRoomMessages();
+    $("#room-display").textContent = `${room.code} · ${room.visibility === "private" ? "PRIVAT" : "PUBLIK"}`; renderPlayers(); renderRoomMessages();
     const isHost = room.hostId === state.playerId;
     $("#start-game").hidden = !isHost; $("#round-options").hidden = !isHost; $("#lobby-note").hidden = isHost;
     if (waiting) return;
@@ -115,9 +115,11 @@
     event.preventDefault(); const action = event.submitter?.value; const name = $("#player-name").value.trim();
     if (name) localStorage.setItem(lobbyNameKey, name);
     if (action === "join" && $("#code-wrap").hidden) { $("#code-wrap").hidden = false; $("#room-code").focus(); return; }
-    socket.emit(action === "create" ? "room:create" : "room:join", { name, code: $("#room-code").value, siteId }, (reply) => { $("#room-error").textContent = reply?.ok ? "" : reply?.error || "Gagal masuk room."; if (!reply?.ok) return; state.playerId = reply.playerId; state.room = reply.room; saveSession(reply); render(); });
+    socket.emit(action === "create" ? "room:create" : "room:join", { name, code: $("#room-code").value, siteId, visibility: $("#room-visibility").value }, (reply) => { $("#room-error").textContent = reply?.ok ? "" : reply?.error || "Gagal masuk room."; if (!reply?.ok) return; state.playerId = reply.playerId; state.room = reply.room; saveSession(reply); render(); });
   });
   $("#player-name").value = localStorage.getItem(lobbyNameKey) || "";
+  const invitedCode = new URLSearchParams(location.search).get("room")?.trim().toUpperCase();
+  if (/^[A-F0-9]{6}$/.test(invitedCode || "")) { $("#code-wrap").hidden = false; $("#room-code").value = invitedCode; }
   $("#player-name").addEventListener("change", () => { const name = $("#player-name").value.trim(); if (name) localStorage.setItem(lobbyNameKey, name); });
   $("#lobby-chat-form").addEventListener("submit", (event) => { event.preventDefault(); const name = $("#player-name").value.trim(); const input = $("#lobby-chat-input"); socket.emit("lobby:chat", { siteId, name, text: input.value }, (reply) => { $("#lobby-chat-error").textContent = reply?.ok ? "Pesan terkirim." : reply?.error || "Pesan gagal dikirim."; if (reply?.ok) { input.value = ""; if (name) localStorage.setItem(lobbyNameKey, name); } }); });
   $("#back-button").addEventListener("click", () => {
@@ -139,7 +141,7 @@
   $("#round-options").addEventListener("click", (event) => { const rounds = Number(event.target.dataset.rounds); if (![2, 3, 5].includes(rounds)) return; state.selectedRounds = rounds; $("#round-options").querySelectorAll("[data-rounds]").forEach((button) => button.classList.toggle("active", Number(button.dataset.rounds) === rounds)); $("#start-game").textContent = `Mulai ${rounds} Putaran`; });
   $("#start-game").addEventListener("click", () => socket.emit("game:start", { roundsPerPlayer: state.selectedRounds }, (reply) => { if (!reply?.ok) toast(reply.error); }));
 
-  $("#room-display").addEventListener("click", () => navigator.clipboard?.writeText(state.room?.code));
+  $("#room-display").addEventListener("click", () => { const invite = new URL(location.href); invite.search = ""; invite.searchParams.set("room", state.room?.code || ""); navigator.clipboard?.writeText(invite.href); toast("Link undangan disalin."); });
   $("#close-correct").addEventListener("click", () => $("#correct-dialog").close());
   $("#correct-dialog").addEventListener("close", () => {
     const round = state.resultDialogRound; if (!round) return;
