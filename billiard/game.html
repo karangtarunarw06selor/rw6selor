@@ -1531,6 +1531,7 @@ const POCKET_TRAY_RADIUS = 8;
 // Remote aim / shot
 let remoteAim = null;
 let lastAimSendAt = 0;
+let lastBallFrameSendAt = 0;
 
 let remoteShotOwnerId = null;
 let pendingRemoteFinalBalls = null;
@@ -2738,7 +2739,13 @@ if (isMatchFinished) {
 
         return;
       }
-    }
+
+
+      if (data.type === "ball_frame") {
+        if (localPlayer && Number(data.player_id) === Number(localPlayer.id)) return;
+        if (Array.isArray(data.balls)) { localBalls = JSON.parse(JSON.stringify(data.balls)); draw(); }
+        return;
+      }    }
 
     function sendRealtime(data) {
       if (!socket || socket.readyState !== WebSocket.OPEN || !socketJoinedRoom) return;
@@ -5527,6 +5534,10 @@ function submitBallInHandPositionThrottled() {
 
     function physicsLoopLocal() {
       updateBalls();
+      if (Date.now() - lastBallFrameSendAt >= 50) {
+        lastBallFrameSendAt = Date.now();
+        sendRealtime({ type: "ball_frame", balls: cleanBallsForSubmit() });
+      }
       draw();
 
       if (areBallsMoving()) {

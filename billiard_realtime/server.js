@@ -222,6 +222,14 @@ wss.on("connection", (ws) => {
       return;
     }
 
+    if (data.type === "ball_frame") {
+      if (ws.spectator || !Array.isArray(data.balls) || data.balls.length > 16) return;
+      const balls = data.balls.map((ball) => ({ number: Number(ball.number), x: Number(ball.x), y: Number(ball.y), vx: Number(ball.vx || 0), vy: Number(ball.vy || 0), pocketed: Boolean(ball.pocketed) }));
+      if (balls.some((ball) => ![ball.number, ball.x, ball.y, ball.vx, ball.vy].every(Number.isFinite))) return;
+      broadcastToRoom(ws.roomKey, { type: "ball_frame", player_id: ws.playerId, balls, timestamp: Date.now() }, ws);
+      return;
+    }
+
     if (data.type === "ping") {
       safeSend(ws, { type: "pong", timestamp: Date.now() });
       return;

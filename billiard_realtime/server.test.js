@@ -83,6 +83,9 @@ test("legacy gameplay events still relay in the joined site room", async () => {
   const aim = waitFor(guest, "aim_update");
   send(host, { type: "aim_update", aim: { x: 5, y: 8 }, power: 30 });
   assert.deepEqual((await aim).aim, { x: 5, y: 8 });
+  const frame = waitFor(guest, "ball_frame");
+  send(host, { type: "ball_frame", balls: [{ number: 0, x: 221.5, y: 250, vx: 4, vy: 0, pocketed: false }] });
+  assert.deepEqual((await frame).balls[0], { number: 0, x: 221.5, y: 250, vx: 4, vy: 0, pocketed: false });
   host.close();
   guest.close();
 });
