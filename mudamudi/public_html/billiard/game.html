@@ -6415,7 +6415,7 @@ window.addEventListener("touchcancel", (event) => {
 }, { passive: false });
 
     async function boot() {
-      await loadLocalPlayer();
+      if (!await loadLocalPlayer()) return setTimeout(boot, 1000);
       startHeartbeat();
       startMatchPolling();
       connectRealtime();
