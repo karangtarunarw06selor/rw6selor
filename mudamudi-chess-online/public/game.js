@@ -23,6 +23,8 @@ const gameMode = new URLSearchParams(window.location.search).get("mode") === "co
 
 let computerThinking = false;
 
+let computerMoveTimer = null;
+
 let audioContext = null;
 
 function playMoveSound(captured = false) {
@@ -184,6 +186,8 @@ function resetGame() {
     }
 
     if (gameMode === "computer") {
+
+        cancelComputerMove();
 
         board = ChessCore.createInitialBoard();
 
@@ -459,67 +463,77 @@ function renderBoard() {
 
     const boardElement = document.getElementById("board");
 
-    boardElement.innerHTML = "";
+    if (!Array.isArray(board) || board.length !== 8) return;
 
-    if (!Array.isArray(board) || board.length !== 8) {
+    if (boardElement.children.length !== 64) {
 
-        return;
+        boardElement.replaceChildren();
 
-    }
+        for (let displayRow = 0; displayRow < 8; displayRow++) {
 
-    for (let displayRow = 0; displayRow < 8; displayRow++) {
+            for (let displayCol = 0; displayCol < 8; displayCol++) {
 
-        for (let displayCol = 0; displayCol < 8; displayCol++) {
+                const square = document.createElement("div");
 
-            const realPosition = getBoardPosition(displayRow, displayCol);
+                square.className = "square";
 
-            const row = realPosition.row;
+                square.addEventListener("click", () => {
 
-            const col = realPosition.col;
+                    const row = Number(square.dataset.row);
 
-            const square = document.createElement("div");
+                    const col = Number(square.dataset.col);
 
-            square.classList.add("square");
+                    handleSquareClick(row, col);
 
-            square.classList.add((row + col) % 2 === 0 ? "light" : "dark");
+                });
 
-            if (
-
-                selectedSquare &&
-
-                selectedSquare.row === row &&
-
-                selectedSquare.col === col
-
-            ) {
-
-                square.classList.add("selected");
+                boardElement.appendChild(square);
 
             }
-
-            const piece = board[row][col];
-
-            if (piece && pieceImages[piece]) {
-
-                const img = document.createElement("img");
-
-                img.src = pieceImages[piece];
-
-                img.alt = piece;
-
-                img.classList.add("piece-img");
-
-                square.appendChild(img);
-
-            }
-
-            square.addEventListener("click", () => handleSquareClick(row, col));
-
-            boardElement.appendChild(square);
 
         }
 
     }
+
+    Array.from(boardElement.children).forEach((square, index) => {
+
+        const displayRow = Math.floor(index / 8);
+
+        const displayCol = index % 8;
+
+        const { row, col } = getBoardPosition(displayRow, displayCol);
+
+        const piece = board[row][col] || "";
+
+        square.dataset.row = row;
+
+        square.dataset.col = col;
+
+        square.className = `square ${(row + col) % 2 === 0 ? "light" : "dark"}`;
+
+        square.classList.toggle("selected", selectedSquare?.row === row && selectedSquare?.col === col);
+
+        if (square.dataset.piece === piece) return;
+
+        square.dataset.piece = piece;
+
+        square.replaceChildren();
+
+        if (piece && pieceImages[piece]) {
+
+            const img = document.createElement("img");
+
+            img.src = pieceImages[piece];
+
+            img.alt = piece;
+
+            img.className = "piece-img";
+
+            square.appendChild(img);
+
+        }
+
+    });
 
 }
 
@@ -750,6 +764,8 @@ window.addEventListener("DOMContentLoaded", autoJoinFromUrl);
 
 function startComputerMode() {
 
+    cancelComputerMove();
+
     document.body.classList.add("game-active");
 
     roomCode = "VS-COMPUTER";
@@ -772,7 +788,19 @@ function startComputerMode() {
 
 }
 
+function cancelComputerMove() {
+
+    if (computerMoveTimer) clearTimeout(computerMoveTimer);
+
+    computerMoveTimer = null;
+
+    computerThinking = false;
+
+}
+
 function runComputerMove() {
+
+    if (computerThinking || computerMoveTimer) return;
 
     computerThinking = true;
 
@@ -780,23 +808,27 @@ function runComputerMove() {
 
     if (turnChip) turnChip.textContent = "COMPUTER BERPIKIR…";
 
-    setTimeout(() => {
+    computerMoveTimer = setTimeout(() => {
+
+        computerMoveTimer = null;
 
         const move = ChessCore.chooseComputerMove(board, "black");
 
-        if (!move) return;
+        if (move) {
 
-        const result = ChessCore.applyMove(board, move);
+            const result = ChessCore.applyMove(board, move);
 
-        board = result.board;
+            board = result.board;
+
+            playMoveSound(Boolean(result.move.captured));
+
+            renderBoard();
+
+        }
 
         currentTurn = "white";
 
         computerThinking = false;
-
-        playMoveSound(Boolean(result.move.captured));
-
-        renderBoard();
 
         updateStatus({ players: 2, status: "playing", turn: currentTurn });
 
