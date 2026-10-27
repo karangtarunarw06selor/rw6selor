@@ -2593,6 +2593,19 @@ if (isMatchFinished) {
       }));
     }
 
+      function mergeRealtimeBalls(frames) {
+        const currentBalls = new Map(localBalls.map((ball) => [Number(ball.number), ball]));
+        return frames.map((frame) => {
+          const current = currentBalls.get(Number(frame.number)) || {};
+          return {
+            ...current,
+            ...frame,
+            type: frame.type || current.type,
+            color: frame.color || current.color
+          };
+        });
+      }
+
     function handleRealtimeMessage(raw) {
       let data;
 
@@ -2717,7 +2730,7 @@ if (isMatchFinished) {
         pendingRemoteFinalBalls = null;
 
         if (data.balls && Array.isArray(data.balls)) {
-          localBalls = JSON.parse(JSON.stringify(data.balls));
+          localBalls = mergeRealtimeBalls(data.balls);
         }
 
         if (data.shot) {
@@ -2746,11 +2759,7 @@ if (isMatchFinished) {
       if (data.type === "ball_frame") {
         if (localPlayer && Number(data.player_id) === Number(localPlayer.id)) return;
         if (Array.isArray(data.balls)) {
-          const currentBalls = new Map(localBalls.map((ball) => [Number(ball.number), ball]));
-          localBalls = data.balls.map((frame) => ({
-            ...(currentBalls.get(Number(frame.number)) || {}),
-            ...frame
-          }));
+          localBalls = mergeRealtimeBalls(data.balls);
           draw();
         }
         return;
@@ -5617,7 +5626,7 @@ function submitBallInHandPositionThrottled() {
 
     function applyPendingRemoteFinal() {
       if (pendingRemoteFinalBalls && Array.isArray(pendingRemoteFinalBalls)) {
-        localBalls = JSON.parse(JSON.stringify(pendingRemoteFinalBalls));
+        localBalls = mergeRealtimeBalls(pendingRemoteFinalBalls);
         pendingRemoteFinalBalls = null;
         draw();
       }
