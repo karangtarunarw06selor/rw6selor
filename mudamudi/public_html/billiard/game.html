@@ -2902,9 +2902,17 @@ if (isMatchFinished) {
 
       if (data.type === "ball_frame") {
         if (localPlayer && Number(data.player_id) === Number(localPlayer.id)) return;
-        if (Array.isArray(data.balls)) { localBalls = JSON.parse(JSON.stringify(data.balls)); draw(); }
+        if (Array.isArray(data.balls)) {
+          const currentBalls = new Map(localBalls.map((ball) => [Number(ball.number), ball]));
+          localBalls = data.balls.map((frame) => ({
+            ...(currentBalls.get(Number(frame.number)) || {}),
+            ...frame
+          }));
+          draw();
+        }
         return;
-      }    }
+      }
+    }
 
     function sendRealtime(data) {
       if (!socket || socket.readyState !== WebSocket.OPEN || !socketJoinedRoom) return;
