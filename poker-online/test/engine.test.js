@@ -66,6 +66,40 @@ test("table deals private cards and exposes only own hole cards", () => {
   assert.throws(() => table.startHand(() => 0), /sedang berjalan/i);
 });
 
+test("dealer, blinds, and first action rotate clockwise across hands", () => {
+  const table = new PokerTable({ code: "ROTATE", siteId: "MMS" });
+  ["a", "b", "c"].forEach((id) => table.addPlayer({ id, name: id.toUpperCase() }));
+  const expected = [
+    { dealer: "a", smallBlind: "b", bigBlind: "c", turn: "a" },
+    { dealer: "b", smallBlind: "c", bigBlind: "a", turn: "b" },
+    { dealer: "c", smallBlind: "a", bigBlind: "b", turn: "c" },
+  ];
+  expected.forEach((positions) => {
+    table.startHand(() => 0.5);
+    const view = table.viewFor(null);
+    assert.equal(view.dealerId, positions.dealer);
+    assert.equal(view.turnId, positions.turn);
+    assert.equal(view.players.find((player) => player.id === positions.smallBlind).bet, table.smallBlind);
+    assert.equal(view.players.find((player) => player.id === positions.bigBlind).bet, table.bigBlind);
+    table.act(positions.turn, { type: "fold" });
+    table.act(table.currentPlayer().id, { type: "fold" });
+    assert.equal(table.phase, "finished");
+  });
+});
+
+test("heads-up button acts first preflop and big blind acts first postflop", () => {
+  const table = new PokerTable({ code: "HEADSUP", siteId: "MMS" });
+  table.addPlayer({ id: "a", name: "A" });
+  table.addPlayer({ id: "b", name: "B" });
+  table.startHand(() => 0.5);
+  assert.equal(table.viewFor(null).dealerId, "a");
+  assert.equal(table.currentPlayer().id, "a");
+  table.act("a", { type: "call" });
+  table.act("b", { type: "check" });
+  assert.equal(table.phase, "flop");
+  assert.equal(table.currentPlayer().id, "b");
+});
+
 test("preflop enforces turn and valid call amount", () => {
   const table = new PokerTable({ code: "ABC123", siteId: "MMS", smallBlind: 10, bigBlind: 20 });
   table.addPlayer({ id: "a", name: "A" });

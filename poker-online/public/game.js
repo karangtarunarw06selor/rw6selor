@@ -392,7 +392,7 @@
     const chat = await request("lobby:chat:join", { siteId });
     if (chat?.ok) { lobbyMessages.splice(0, lobbyMessages.length, ...chat.messages); renderLobbyChat(); }
     const saved = JSON.parse(localStorage.getItem(storageKey) || "null");
-    if (!saved || state.room) return;
+    if (!saved) return;
     const response = await request("room:reconnect", { code: saved.code, token: saved.token, siteId });
     if (!response?.ok) return localStorage.removeItem(storageKey);
     remember(response, saved.name);
