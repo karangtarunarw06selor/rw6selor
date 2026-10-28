@@ -338,6 +338,9 @@ class CangkulanTable extends BaseCardTable {
     this.completedTrickWinnerId = null;
     this.bandarId = null;
     this.houseCollectorId = null;
+    this.houseCollectionQueue = [];
+    this.houseCollectionActive = false;
+    this.houseCollectionStarterId = null;
     this.passedPlayerIds = new Set();
     this.rankings = [];
     this.trickPlayerIds = [];
@@ -359,6 +362,9 @@ class CangkulanTable extends BaseCardTable {
     this.completedTrickWinnerId = null;
     this.bandarId = null;
     this.houseCollectorId = null;
+    this.houseCollectionQueue = [];
+    this.houseCollectionActive = false;
+    this.houseCollectionStarterId = null;
     this.passedPlayerIds.clear();
     this.rankings = [];
     this.trickPlayerIds = active.map((player) => player.id);
@@ -371,12 +377,14 @@ class CangkulanTable extends BaseCardTable {
     return Boolean(card && (!this.houseSuit || card.suit === this.houseSuit));
   }
 
-  waitForHouse(player) {
-    if (!this.houseCollectorId) {
+  waitForHouse(player, take) {
+    const startingCollection = !this.houseCollectionActive;
+    if (startingCollection) {
       const playedCount = this.currentTrick.length;
       this.spent.push(...this.currentTrick.map((play) => play.card));
       this.currentTrick = [];
-      this.houseCollectorId = player.id;
+      this.houseCollectionActive = true;
+      this.houseCollectionStarterId = player.id;
       const remainingCount = this.activePlayers().length - playedCount - 1;
       this.trickPlayerIds = [];
       let index = this.turnIndex;
@@ -384,9 +392,10 @@ class CangkulanTable extends BaseCardTable {
         index = this.nextActiveIndex(index);
         this.trickPlayerIds.push(this.players[index].id);
       }
-    } else {
-      this.passedPlayerIds.add(player.id);
     }
+    if (take && !this.houseCollectionQueue.includes(player.id)) this.houseCollectionQueue.push(player.id);
+    this.houseCollectorId = this.houseCollectionQueue[0] || null;
+    if (!startingCollection) this.passedPlayerIds.add(player.id);
     this.turnIndex = this.nextActiveIndex(this.turnIndex);
     if (this.currentTrick.length + this.passedPlayerIds.size === this.trickPlayerIds.length) this.completeTrick();
   }
@@ -419,10 +428,14 @@ class CangkulanTable extends BaseCardTable {
     const eligible = this.currentTrick.filter((play) => !this.rankings.some((entry) => entry.id === play.playerId));
     const winner = eligible.length
       ? eligible.reduce((best, play) => rankOrder.indexOf(play.card.rank) > rankOrder.indexOf(best.card.rank) ? play : best)
-      : { playerId: this.houseCollectorId };
-    if (this.houseCollectorId) {
-      const collector = this.players.find((player) => player.id === this.houseCollectorId);
-      collector.hand.push(...this.currentTrick.map((play) => play.card));
+      : { playerId: this.houseCollectionStarterId };
+    if (this.houseCollectionActive || this.houseCollectionQueue.length) {
+      for (const play of this.currentTrick) {
+        const collectorId = this.houseCollectionQueue.shift();
+        const collector = this.players.find((player) => player.id === collectorId);
+        if (collector) collector.hand.push(play.card);
+        else this.spent.push(play.card);
+      }
       this.completedTrick = [];
       this.completedTrickWinnerId = null;
     } else {
@@ -433,7 +446,9 @@ class CangkulanTable extends BaseCardTable {
     this.currentTrick = [];
     this.houseSuit = null;
     this.bandarId = winner.playerId;
-    this.houseCollectorId = null;
+    this.houseCollectionActive = false;
+    this.houseCollectionStarterId = null;
+    this.houseCollectorId = this.houseCollectionQueue[0] || null;
     this.passedPlayerIds.clear();
     this.turnIndex = this.players.findIndex((player) => player.id === winner.playerId);
     this.trickPlayerIds = this.activePlayers().map((player) => player.id);
@@ -466,11 +481,13 @@ class CangkulanTable extends BaseCardTable {
       if (!Number.isInteger(index) || !this.isPlayable(card)) throw new Error("Kartu harus mengikuti house.");
       player.hand.splice(index, 1);
       this.recordPlay(player, card);
-    } else if (action.type === "draw") {
+    } else if (["draw", "take", "skip"].includes(action.type)) {
       if (!this.houseSuit) throw new Error("Bandar harus membuka house dengan kartu sendiri.");
       if (player.hand.some((card) => this.isPlayable(card))) throw new Error("Masih ada kartu house yang bisa dibuang.");
-      if (this.stock.length) player.hand.push(this.stock.pop());
-      else this.waitForHouse(player);
+      if (this.stock.length) {
+        if (action.type !== "draw") throw new Error("Kartu stock masih tersedia.");
+        player.hand.push(this.stock.pop());
+      } else this.waitForHouse(player, action.type === "take");
     } else throw new Error("Aksi tidak valid.");
     if (action.actionId) this.processedActions.set(action.actionId, playerId);
     return { duplicate: false, view: this.viewFor(playerId) };
@@ -491,6 +508,7 @@ class CangkulanTable extends BaseCardTable {
       completedTrickWinnerId: this.completedTrickWinnerId,
       bandarId: this.bandarId,
       houseCollectorId: this.houseCollectorId,
+      houseCollectionQueue: [...this.houseCollectionQueue],
       rankings: this.rankings,
       stockCount: this.stock.length,
       lastResult: this.lastResult,

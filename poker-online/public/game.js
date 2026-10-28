@@ -207,7 +207,9 @@
     $("#capsaPlay").disabled = state.selectedCards.size < 1;
     $("#capsaPlay").textContent = state.selectedCards.size ? `Mainkan ${state.selectedCards.size} kartu` : "Mainkan pilihan";
     $("#drawCard").disabled = !room.houseSuit || (me?.hand || []).some((card) => card?.suit === room.houseSuit);
-    $("#drawCard").textContent = room.stockCount ? "Ambil kartu" : "Lewati";
+    $("#drawCard").textContent = room.stockCount ? "Ambil kartu" : "Ambil antrean";
+    $("#skipCard").classList.toggle("hidden", Boolean(room.stockCount));
+    $("#skipCard").disabled = $("#drawCard").disabled;
     elements.raisePanel.classList.add("hidden");
     if (myTurn && me) {
       const owed = Math.max(0, room.currentBet - me.bet);
@@ -299,7 +301,8 @@
   $("#raiseOpen").addEventListener("click", () => elements.raisePanel.classList.toggle("hidden"));
   elements.raiseAmount.addEventListener("input", () => { elements.raiseOutput.textContent = elements.raiseAmount.value; });
   $("#raiseConfirm").addEventListener("click", () => roomAction("game:action", { type: "raise", amount: Number(elements.raiseAmount.value), actionId: actionId() }));
-  $("#drawCard").addEventListener("click", () => roomAction("game:action", { type: "draw", actionId: actionId() }));
+  $("#drawCard").addEventListener("click", () => roomAction("game:action", { type: state.room.stockCount ? "draw" : "take", actionId: actionId() }));
+  $("#skipCard").addEventListener("click", () => roomAction("game:action", { type: "skip", actionId: actionId() }));
   $("#minumanPlay").addEventListener("click", async () => {
     const [cardIndex] = state.selectedCards;
     if (cardIndex === undefined) return elements.notice.textContent = "Pilih satu kartu dahulu.";

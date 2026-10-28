@@ -140,20 +140,40 @@ test("minuman skips an empty stock and takes house cards only from later players
   const before = cardCount();
 
   table.act("a", { type: "play", cardIndex: 0, actionId: "house-a" });
-  table.act("b", { type: "draw", actionId: "skip-b" });
+  table.act("b", { type: "take", actionId: "take-b" });
   assert.deepEqual(table.players[1].hand, cards("4c"));
   assert.deepEqual(table.spent, cards("4d", "5s", "9h", "3h"));
   assert.equal(table.currentPlayer().id, "c");
 
   table.act("c", { type: "play", cardIndex: 0, actionId: "house-c" });
   assert.equal(table.currentPlayer().id, "d");
-  table.act("d", { type: "draw", actionId: "pass-d" });
+  table.act("d", { type: "skip", actionId: "skip-d" });
 
   assert.deepEqual(table.players[1].hand, cards("4c", "Kh"));
   assert.deepEqual(table.spent, cards("4d", "5s", "9h", "3h"));
   assert.equal(table.currentTrick.length, 0);
   assert.equal(table.currentPlayer().id, "c");
   assert.equal(cardCount(), before);
+});
+
+test("minuman distributes later house cards to empty-stock takers in FIFO order", () => {
+  const table = new CangkulanTable({ code: "MINUMFIFO", siteId: "KT" });
+  for (const id of ["a", "b", "c", "d", "e"]) table.addPlayer({ id, name: id.toUpperCase() });
+  table.startRound({
+    hands: { a: cards("3h", "2c"), b: cards("4h", "3c"), c: cards("4c"), d: cards("5d"), e: cards("Kh", "6s") },
+    stock: [],
+    openingCard: cards("9h")[0],
+  });
+
+  table.act("a", { type: "play", cardIndex: 0, actionId: "fifo-a" });
+  table.act("b", { type: "play", cardIndex: 0, actionId: "fifo-b" });
+  table.act("c", { type: "take", actionId: "fifo-c" });
+  table.act("d", { type: "take", actionId: "fifo-d" });
+  table.act("e", { type: "play", cardIndex: 0, actionId: "fifo-e" });
+
+  assert.deepEqual(table.players[2].hand, cards("4c", "Kh"));
+  assert.deepEqual(table.players[3].hand, cards("5d"));
+  assert.deepEqual(table.houseCollectionQueue, ["d"]);
 });
 
 test("minuman draws one card at a time and requires confirmation before playing", () => {
