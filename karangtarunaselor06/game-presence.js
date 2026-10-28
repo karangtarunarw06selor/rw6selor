@@ -4,6 +4,8 @@
   const siteId = requestedSite === "KT" || (requestedSite === "AUTO" && location.hostname.includes("karangtaruna")) ? "KT" : "MMS";
   const gameId = String(script?.dataset.game || "").toLowerCase();
   const chatMode = script?.dataset.chat || "";
+  const activeTarget = script?.dataset.activeTarget || "";
+  const badgeDisabled = script?.dataset.badge === "hidden";
   if (!gameId) return;
 
   const key = "rw06_game_presence_id";
@@ -17,13 +19,27 @@
   const protocol = location.protocol === "https:" ? "wss:" : "ws:";
   const socket = new WebSocket(`${protocol}//${location.host}/billiard-realtime`);
   const style = document.createElement("style");
-  style.textContent = ".game-online-badge{position:fixed;top:max(10px,env(safe-area-inset-top));right:10px;z-index:10000;padding:7px 11px;border-radius:999px;background:rgba(3,12,10,.88);border:1px solid rgba(255,255,255,.22);color:#fff;font:700 12px/1.2 system-ui;box-shadow:0 6px 20px rgba(0,0,0,.25)}.game-online-badge i{display:inline-block;width:7px;height:7px;margin-right:6px;border-radius:50%;background:#35dc78}.game-chat{margin-top:18px;padding:12px;border:1px solid rgba(255,255,255,.16);border-radius:14px;background:rgba(0,0,0,.22);color:#fff}.game-chat h2{margin:0 0 8px;font:800 14px system-ui}.game-chat-log{height:130px;overflow:auto;padding:8px;border-radius:10px;background:rgba(0,0,0,.25);font:13px/1.4 system-ui}.game-chat-log p{margin:0 0 6px;overflow-wrap:anywhere}.game-chat-log b{color:#ffd650}.game-chat form{display:flex;gap:6px;margin-top:8px}.game-chat input{min-width:0;flex:1;margin:0!important;padding:9px 10px!important;text-transform:none!important}.game-chat button{width:auto!important;flex:none;margin:0!important;padding:9px 12px!important;font-size:13px!important}.game-room-chat{position:fixed;right:10px;bottom:10px;z-index:9999;width:min(310px,calc(100vw - 20px));margin:0;box-shadow:0 10px 30px rgba(0,0,0,.4)}@media(max-width:600px){.game-room-chat{position:relative;right:auto;bottom:auto;width:auto;margin:12px}}";
+  style.textContent = ".game-online-badge{position:relative;z-index:20;display:flex;align-items:center;width:max-content;margin:8px 12px 0 auto;padding:7px 11px;border-radius:999px;background:rgba(3,12,10,.88);border:1px solid rgba(255,255,255,.22);color:#fff;font:700 12px/1.2 system-ui;box-shadow:0 6px 20px rgba(0,0,0,.25)}.game-online-badge[hidden]{display:none}.game-online-badge i{display:inline-block;width:7px;height:7px;margin-right:6px;border-radius:50%;background:#35dc78}.game-chat{margin-top:18px;padding:12px;border:1px solid rgba(255,255,255,.16);border-radius:14px;background:rgba(0,0,0,.22);color:#fff}.game-chat h2{margin:0 0 8px;font:800 14px system-ui}.game-chat-log{height:130px;overflow:auto;padding:8px;border-radius:10px;background:rgba(0,0,0,.25);font:13px/1.4 system-ui}.game-chat-log p{margin:0 0 6px;overflow-wrap:anywhere}.game-chat-log b{color:#ffd650}.game-chat form{display:flex;gap:6px;margin-top:8px}.game-chat input{min-width:0;flex:1;margin:0!important;padding:9px 10px!important;text-transform:none!important}.game-chat button{width:auto!important;flex:none;margin:0!important;padding:9px 12px!important;font-size:13px!important}.game-room-chat{position:fixed;right:10px;bottom:10px;z-index:9999;width:min(310px,calc(100vw - 20px));margin:0;box-shadow:0 10px 30px rgba(0,0,0,.4)}@media(max-width:600px){.game-room-chat{position:relative;right:auto;bottom:auto;width:auto;margin:12px}}";
   document.head.appendChild(style);
 
   const badge = document.createElement("div");
   badge.className = "game-online-badge";
   badge.innerHTML = "<i></i><span>0 online</span>";
-  document.body.appendChild(badge);
+  const header = document.querySelector("body > header, .game-header, .topbar");
+  const lobbySurface = document.querySelector(".lobbyCard, .roomCard, #lobby, #welcome, .welcome");
+  if (header) header.insertAdjacentElement("afterend", badge);
+  else if (lobbySurface) lobbySurface.prepend(badge);
+  else document.body.prepend(badge);
+
+  function syncBadgeVisibility() {
+    const active = activeTarget ? document.querySelector(activeTarget) : null;
+    badge.hidden = badgeDisabled || Boolean(active && !active.hidden && !active.classList.contains("hidden"));
+  }
+  syncBadgeVisibility();
+  if (activeTarget) {
+    const active = document.querySelector(activeTarget);
+    if (active) new MutationObserver(syncBadgeVisibility).observe(active, { attributes: true, attributeFilter: ["hidden", "class"] });
+  }
 
   let log = null;
   let form = null;
