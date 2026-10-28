@@ -1,6 +1,7 @@
 (() => {
   const script = document.currentScript;
-  const siteId = String(script?.dataset.site || "MMS").toUpperCase() === "KT" ? "KT" : "MMS";
+  const requestedSite = String(script?.dataset.site || "AUTO").toUpperCase();
+  const siteId = requestedSite === "KT" || (requestedSite === "AUTO" && location.hostname.includes("karangtaruna")) ? "KT" : "MMS";
   const gameId = String(script?.dataset.game || "").toLowerCase();
   const chatMode = script?.dataset.chat || "";
   if (!gameId) return;
