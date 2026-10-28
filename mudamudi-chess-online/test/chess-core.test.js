@@ -21,6 +21,20 @@ test("computer prioritizes capturing a valuable opponent piece", () => {
     assert.deepEqual(move, { fromRow: 0, fromCol: 0, toRow: 7, toCol: 0, piece: "r", captured: "Q" });
 });
 
+test("hard computer avoids a poisoned capture that loses its queen next turn", () => {
+    const board = Array.from({ length: 8 }, () => Array(8).fill(""));
+    board[0][0] = "k";
+    board[3][3] = "q";
+    board[3][5] = "P";
+    board[3][7] = "R";
+    board[7][0] = "K";
+    const move = chooseComputerMove(board, "black", () => 0);
+    assert.notDeepEqual(
+        { fromRow: move.fromRow, fromCol: move.fromCol, toRow: move.toRow, toCol: move.toCol },
+        { fromRow: 3, fromCol: 3, toRow: 3, toCol: 5 }
+    );
+});
+
 test("applyMove returns capture metadata without mutating the source board", () => {
     const board = createInitialBoard();
     const result = applyMove(board, { fromRow: 1, fromCol: 4, toRow: 3, toCol: 4 });

@@ -389,7 +389,7 @@ function updateStatus(data) {
 
                 <div>
 
-                    <span>${gameMode === "computer" ? "AI" : "LAWAN"}</span>
+                    <span>${gameMode === "computer" ? "AI HARD" : "LAWAN"}</span>
 
                     <strong>${enemyLabel}</strong>
 

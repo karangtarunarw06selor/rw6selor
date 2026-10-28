@@ -84,12 +84,49 @@
         return moves;
     }
 
+    function evaluateBoard(board, perspective) {
+        let score = 0;
+        for (let row = 0; row < 8; row += 1) {
+            for (let col = 0; col < 8; col += 1) {
+                const piece = board[row][col];
+                if (!piece) continue;
+                const value = piece.toLowerCase() === "k" ? 1000 : values[piece.toLowerCase()] || 0;
+                const center = 3.5 - (Math.abs(3.5 - row) + Math.abs(3.5 - col)) / 2;
+                score += (colorOf(piece) === perspective ? 1 : -1) * (value + center * 0.03);
+            }
+        }
+        const opponent = perspective === "white" ? "black" : "white";
+        return score + (legalMoves(board, perspective).length - legalMoves(board, opponent).length) * 0.02;
+    }
+
+    function minimax(board, turn, perspective, depth, alpha, beta) {
+        const moves = legalMoves(board, turn);
+        if (!depth || !moves.length) return evaluateBoard(board, perspective);
+        const maximizing = turn === perspective;
+        const nextTurn = turn === "white" ? "black" : "white";
+        let best = maximizing ? -Infinity : Infinity;
+        for (const move of moves) {
+            const next = applyMove(board, move).board;
+            const score = minimax(next, nextTurn, perspective, depth - 1, alpha, beta);
+            best = maximizing ? Math.max(best, score) : Math.min(best, score);
+            if (maximizing) alpha = Math.max(alpha, best);
+            else beta = Math.min(beta, best);
+            if (beta <= alpha) break;
+        }
+        return best;
+    }
+
     function chooseComputerMove(board, color = "black", random = Math.random) {
         const moves = legalMoves(board, color);
         if (!moves.length) return null;
-        const bestValue = Math.max(...moves.map((move) => values[(move.captured || "").toLowerCase()] || 0));
-        const best = moves.filter((move) => (values[(move.captured || "").toLowerCase()] || 0) === bestValue);
-        return best[Math.min(best.length - 1, Math.floor(random() * best.length))];
+        const opponent = color === "white" ? "black" : "white";
+        const scored = moves.map((move) => ({
+            move,
+            score: minimax(applyMove(board, move).board, opponent, color, 2, -Infinity, Infinity)
+        }));
+        const bestScore = Math.max(...scored.map(({ score }) => score));
+        const best = scored.filter(({ score }) => Math.abs(score - bestScore) < 1e-9);
+        return best[Math.min(best.length - 1, Math.floor(random() * best.length))].move;
     }
 
     function applyMove(board, move) {
