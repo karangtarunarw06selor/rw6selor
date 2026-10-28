@@ -330,6 +330,7 @@
     allowLeave = true;
     localStorage.removeItem(storageKey);
     await window.PokerMedia?.leave();
+    await request("room:leave");
     state.room = null;
     state.playerId = null;
     state.token = null;

@@ -86,6 +86,27 @@ test("room chat is membership-scoped, bounded, and available before game starts"
   assert.equal((await emit(host, "room:chat:send", { text: "" })).ok, false);
 });
 
+test("explicit waiting-room leave removes the seat and transfers host without reload", async () => {
+  const host = await connect();
+  const guest = await connect();
+  const created = await emit(host, "room:create", { name: "Host", siteId: "MMS" });
+  const joined = await emit(guest, "room:join", { name: "Guest", code: created.room.code, siteId: "MMS" });
+  const updated = new Promise((resolve) => {
+    const onState = (room) => {
+      if (room.players.length !== 1) return;
+      guest.off("room:state", onState);
+      resolve(room);
+    };
+    guest.on("room:state", onState);
+  });
+  assert.equal((await emit(host, "room:leave")).ok, true);
+  const room = await updated;
+  assert.equal(room.players.length, 1);
+  assert.equal(room.players[0].id, joined.playerId);
+  assert.equal(room.hostId, joined.playerId);
+  assert.equal((await emit(host, "room:get")).ok, false);
+});
+
 test("rooms are isolated by site and expose only viewer hole cards", async () => {
   const host = await connect();
   const guest = await connect();

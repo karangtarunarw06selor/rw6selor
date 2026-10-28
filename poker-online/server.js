@@ -375,6 +375,33 @@ io.on("connection", (socket) => {
     } catch (error) { reply({ ok: false, error: error.message }); }
   });
 
+  socket.on("room:leave", (_payload, reply = () => {}) => {
+    const { room, player } = session(socket);
+    if (!room || !player) return reply({ ok: false, error: "Sesi tidak ditemukan." });
+    leaveMedia(room, player);
+    room.readyIds.delete(player.id);
+    socket.leave(roomChannel(room));
+    socket.data.roomCode = null;
+    socket.data.siteId = null;
+    socket.data.playerId = null;
+    if (room.table.phase === "waiting") {
+      room.table.players = room.table.players.filter((item) => item.id !== player.id);
+      if (room.hostId === player.id) room.hostId = room.table.players.find((item) => item.connected)?.id || null;
+    } else {
+      player.connected = false;
+      player.socketId = null;
+    }
+    if (!room.table.players.length) {
+      if (room.turnTimer) clearTimeout(room.turnTimer);
+      if (room.emptyTimer) clearTimeout(room.emptyTimer);
+      rooms.delete(room.code);
+      removeRoomFromLobby(room.siteId, room.code);
+    } else {
+      emitRoom(room);
+    }
+    reply({ ok: true });
+  });
+
   socket.on("media:join", ({ audio = true, video = false } = {}, reply = () => {}) => {
     const { room, player } = session(socket);
     if (!room || !player) return reply({ ok: false, error: "Sesi tidak ditemukan." });
