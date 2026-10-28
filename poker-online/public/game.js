@@ -58,7 +58,6 @@
   function cardHtml(card) {
     if (card === null) return '<span class="playing-card back">?</span>';
     if (!card) return '<span class="playing-card empty"></span>';
-    if (card.suit === "j") return `<span class="playing-card joker">🃏${card.rank === "RJ" ? "R" : "B"}</span>`;
     const red = card.suit === "h" || card.suit === "d";
     return `<span class="playing-card${red ? " red" : ""}">${card.rank}${suit[card.suit]}</span>`;
   }

@@ -1,7 +1,6 @@
 "use strict";
 
 const { createDeck, shuffle } = require("./poker-engine");
-const createMinumanDeck = () => [...createDeck(), { rank: "RJ", suit: "j" }, { rank: "BJ", suit: "j" }];
 
 class BaseCardTable {
   constructor({ code, siteId, mode }) {
@@ -345,15 +344,11 @@ class CangkulanTable extends BaseCardTable {
   startRound({ hands, stock, openingCard, random } = {}) {
     if (!["waiting", "finished"].includes(this.phase)) throw new Error("Ronde sedang berjalan.");
     const active = this.requirePlayers();
-    const deck = shuffle(createMinumanDeck(), random);
+    const deck = shuffle(createDeck(), random);
     this.players.forEach((player) => { player.hand = hands?.[player.id] ? [...hands[player.id]] : []; });
     if (!hands) for (let round = 0; round < 7; round += 1) for (const player of active) player.hand.push(deck.pop());
     this.stock = stock ? [...stock] : deck;
-    if (openingCard) this.openingCard = openingCard;
-    else {
-      const openingIndex = this.stock.findLastIndex((card) => card.suit !== "j");
-      this.openingCard = openingIndex < 0 ? null : this.stock.splice(openingIndex, 1)[0];
-    }
+    this.openingCard = openingCard || this.stock.pop();
     if (!this.openingCard) throw new Error("Kartu pembuka tidak tersedia.");
     this.spent = [this.openingCard];
     this.houseSuit = this.openingCard.suit;
@@ -369,7 +364,7 @@ class CangkulanTable extends BaseCardTable {
   }
 
   isPlayable(card) {
-    return Boolean(card && (!this.houseSuit || card.suit === "j" || card.suit === this.houseSuit));
+    return Boolean(card && (!this.houseSuit || card.suit === this.houseSuit));
   }
 
   takeTablePile(player) {
@@ -407,7 +402,7 @@ class CangkulanTable extends BaseCardTable {
   }
 
   completeTrick() {
-    const rankOrder = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A", "BJ", "RJ"];
+    const rankOrder = "23456789TJQKA";
     const eligible = this.currentTrick.filter((play) => !this.rankings.some((entry) => entry.id === play.playerId));
     const winner = eligible.reduce((best, play) => rankOrder.indexOf(play.card.rank) > rankOrder.indexOf(best.card.rank) ? play : best);
     this.completedTrick = [...this.currentTrick];
@@ -424,7 +419,7 @@ class CangkulanTable extends BaseCardTable {
     if (!this.houseSuit) {
       this.completedTrick = [];
       this.completedTrickWinnerId = null;
-      if (card.suit !== "j") this.houseSuit = card.suit;
+      this.houseSuit = card.suit;
     }
     this.currentTrick.push({ playerId: player.id, card });
     if (!player.hand.length) this.rankPlayer(player);

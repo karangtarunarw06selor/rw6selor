@@ -112,15 +112,15 @@ test("minuman follows the system house and keeps opponents private", () => {
   assert.deepEqual(bView.players.find((p) => p.id === "b").hand, cards("9h", "3d"));
 });
 
-test("minuman keeps exactly 54 physical cards throughout the round", () => {
-  const table = new CangkulanTable({ code: "MINUM54", siteId: "MMS" });
+test("minuman keeps exactly 52 physical cards throughout the round", () => {
+  const table = new CangkulanTable({ code: "MINUM52", siteId: "MMS" });
   table.addPlayer({ id: "a", name: "A" });
   table.addPlayer({ id: "b", name: "B" });
   table.startRound({ random: () => 0.5 });
   const physicalCards = () => table.stock.length + table.spent.length + table.currentTrick.length
     + table.players.reduce((total, player) => total + player.hand.length, 0);
-  assert.equal(physicalCards(), 54);
-  assert.equal(new Set([...table.stock, ...table.spent, ...table.players.flatMap((player) => player.hand)].map((card) => `${card.rank}${card.suit}`)).size, 54);
+  assert.equal(physicalCards(), 52);
+  assert.equal(new Set([...table.stock, ...table.spent, ...table.players.flatMap((player) => player.hand)].map((card) => `${card.rank}${card.suit}`)).size, 52);
 });
 
 test("minuman takes the table discard pile when stock is empty", () => {
