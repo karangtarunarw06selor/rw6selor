@@ -24,6 +24,7 @@ app.get("/", (_request, response) => response.redirect("/poker/"));
 const cleanName = (value) => String(value || "").trim().replace(/\s+/g, " ").slice(0, 20);
 const cleanSiteId = (value) => String(value || "MMS").trim().toUpperCase() === "KT" ? "KT" : "MMS";
 const cleanCode = (value) => String(value || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+const cleanChat = (value) => String(value || "").trim().replace(/\s+/g, " ").slice(0, 240);
 const newCode = () => crypto.randomBytes(4).toString("hex").slice(0, 6).toUpperCase();
 const roomChannel = (room) => `poker:${room.siteId}:${room.code}`;
 const lobbyChannel = (siteId) => `poker:lobby:${siteId}`;
@@ -208,7 +209,7 @@ io.on("connection", (socket) => {
     const player = table.addPlayer({ id: crypto.randomUUID(), name: playerName });
     player.token = crypto.randomBytes(24).toString("base64url");
     player.media = { audio: false, video: false };
-    const room = { code, siteId, mode: null, table, hostId: player.id, readyIds: new Set(), capsaVotes: new Map(), capsaVoteResult: null, emptyTimer: null, turnTimer: null, turnDeadline: null };
+    const room = { code, siteId, mode: null, table, hostId: player.id, readyIds: new Set(), roomChat: [], capsaVotes: new Map(), capsaVoteResult: null, emptyTimer: null, turnTimer: null, turnDeadline: null };
     rooms.set(code, room);
     attach(socket, room, player);
     publishLobbyMessage(siteId, playerName, `${playerName} membuat room ${code}`, code);
@@ -262,6 +263,28 @@ io.on("connection", (socket) => {
     const { room, player } = session(socket);
     if (!room || !player) return reply({ ok: false, error: "Sesi tidak ditemukan." });
     reply({ ok: true, room: publicView(room, player.id) });
+  });
+
+  socket.on("room:chat:history", (_payload, reply = () => {}) => {
+    const { room, player } = session(socket);
+    if (!room || !player) return reply({ ok: false, error: "Sesi tidak ditemukan." });
+    reply({ ok: true, messages: room.roomChat || [] });
+  });
+
+  socket.on("room:chat:send", ({ text } = {}, reply = () => {}) => {
+    const { room, player } = session(socket);
+    if (!room || !player) return reply({ ok: false, error: "Sesi tidak ditemukan." });
+    const messageText = cleanChat(text);
+    if (!messageText) return reply({ ok: false, error: "Pesan tidak boleh kosong." });
+    const now = Date.now();
+    if (socket.data.lastRoomChatAt && now - socket.data.lastRoomChatAt < 800) return reply({ ok: false, error: "Tunggu sebentar sebelum mengirim lagi." });
+    socket.data.lastRoomChatAt = now;
+    const message = { id: crypto.randomUUID(), playerId: player.id, name: player.name, text: messageText, createdAt: now };
+    room.roomChat ||= [];
+    room.roomChat.push(message);
+    if (room.roomChat.length > 50) room.roomChat.splice(0, room.roomChat.length - 50);
+    io.to(roomChannel(room)).emit("room:chat:message", message);
+    reply({ ok: true, message });
   });
 
   socket.on("room:mode", ({ mode } = {}, reply = () => {}) => {

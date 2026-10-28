@@ -62,6 +62,30 @@ test("public lobby chat carries names, history, room codes, and stays site-isola
   assert.equal(cleaned.messages.some((message) => message.roomCode === code), false);
 });
 
+test("room chat is membership-scoped, bounded, and available before game starts", async () => {
+  const host = await connect();
+  const guest = await connect();
+  const outsider = await connect();
+  const otherHost = await connect();
+  const created = await emit(host, "room:create", { name: "Host", siteId: "MMS" });
+  assert.equal((await emit(guest, "room:join", { name: "Guest", code: created.room.code, siteId: "MMS" })).ok, true);
+  assert.equal((await emit(otherHost, "room:create", { name: "Other", siteId: "MMS" })).ok, true);
+  assert.equal((await emit(outsider, "room:chat:send", { text: "menyusup" })).ok, false);
+  const received = new Promise((resolve) => guest.once("room:chat:message", resolve));
+  let leaked = false;
+  otherHost.once("room:chat:message", () => { leaked = true; });
+  const sent = await emit(host, "room:chat:send", { text: "  halo   room  " });
+  assert.equal(sent.ok, true);
+  assert.equal(sent.message.text, "halo room");
+  assert.equal((await received).name, "Host");
+  await new Promise((resolve) => setTimeout(resolve, 25));
+  assert.equal(leaked, false);
+  const history = await emit(guest, "room:chat:history");
+  assert.equal(history.messages.length, 1);
+  assert.equal(history.messages[0].text, "halo room");
+  assert.equal((await emit(host, "room:chat:send", { text: "" })).ok, false);
+});
+
 test("rooms are isolated by site and expose only viewer hole cards", async () => {
   const host = await connect();
   const guest = await connect();

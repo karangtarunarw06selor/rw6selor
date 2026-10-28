@@ -45,7 +45,7 @@
     document.querySelectorAll("#remoteMedia audio").forEach(playRemoteAudio);
   }
   function setSpeaking(id, speaking) {
-    document.querySelector(`.seat[data-player-id="${CSS.escape(id)}"]`)?.classList.toggle("speaking", speaking);
+    document.querySelector(`[data-player-id="${CSS.escape(id)}"]`)?.classList.toggle("speaking", speaking);
   }
   function watchSpeaking(id, stream) {
     if (analysers.has(id) || !stream?.getAudioTracks().length) return;

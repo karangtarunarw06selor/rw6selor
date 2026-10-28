@@ -13,7 +13,7 @@
   document.querySelector("[data-game-brand]").textContent = `GAME KARTU ${siteBrand}`;
 
   const elements = {
-    lobby: $("#lobby"), roomLobby: $("#roomLobby"), game: $("#game"), roomPlayers: $("#roomPlayers"), roomNotice: $("#roomNotice"), gameCode: $("#gameRoomCode"), name: $("#playerName"), code: $("#roomCode"), error: $("#lobbyError"),
+    lobby: $("#lobby"), roomLobby: $("#roomLobby"), game: $("#game"), roomPlayers: $("#roomPlayers"), roomNotice: $("#roomNotice"), gameCode: $("#gameRoomCode"), mediaControls: $("#mediaControls"), gameMediaMount: $("#gameMediaMount"), name: $("#playerName"), code: $("#roomCode"), error: $("#lobbyError"),
     copy: $("#copyCode"), seats: $("#seats"), board: $("#board"), pot: $("#pot"), phase: $("#phase"), handDock: $("#handDock"), notice: $("#notice"),
     start: $("#startGame"), modePicker: $("#modePicker"), readyPanel: $("#readyPanel"), readyToggle: $("#readyToggle"), readyStatus: $("#readyStatus"), capsaVote: $("#capsaVote"), voteStatus: $("#voteStatus"), actions: $("#actions"), cangkulanActions: $("#cangkulanActions"), capsaActions: $("#capsaActions"), samgongActions: $("#samgongActions"), checkCall: $("#checkCall"), raisePanel: $("#raisePanel"),
     raiseAmount: $("#raiseAmount"), raiseOutput: $("#raiseOutput"),
@@ -23,6 +23,10 @@
   const chatMessages = $("#lobbyChatMessages");
   const chatInput = $("#lobbyChatInput");
   const chatError = $("#lobbyChatError");
+  const roomChatMessages = [];
+  const roomChatLog = $("#roomChatMessages");
+  const roomChatInput = $("#roomChatInput");
+  const roomChatError = $("#roomChatError");
   const leaveConfirm = $("#leaveConfirm");
   let allowLeave = false;
   const storageKey = `rw06_poker_session_${siteId}`;
@@ -111,6 +115,20 @@
     if (lobbyMessages.length > 50) lobbyMessages.shift();
     renderLobbyChat();
   }
+  function renderRoomChat() {
+    roomChatLog.innerHTML = roomChatMessages.map((message) => `<article class="${message.playerId === state.playerId ? "mine" : ""}"><b>${escapeHtml(message.name)}</b><p>${escapeHtml(message.text)}</p></article>`).join("") || '<p class="chat-empty">Belum ada pesan room.</p>';
+    roomChatLog.scrollTop = roomChatLog.scrollHeight;
+  }
+  function addRoomMessage(message) {
+    if (roomChatMessages.some((item) => item.id === message.id)) return;
+    roomChatMessages.push(message);
+    if (roomChatMessages.length > 50) roomChatMessages.shift();
+    renderRoomChat();
+  }
+  async function loadRoomChat() {
+    const response = await request("room:chat:history");
+    if (response?.ok) { roomChatMessages.splice(0, roomChatMessages.length, ...response.messages); renderRoomChat(); }
+  }
   function render() {
     const room = state.room;
     if (!room) return;
@@ -118,6 +136,7 @@
     elements.lobby.classList.add("hidden");
     elements.roomLobby.classList.toggle("hidden", !waiting);
     elements.game.classList.toggle("hidden", waiting);
+    (waiting ? elements.roomLobby : elements.gameMediaMount).append(elements.mediaControls);
     elements.copy.textContent = room.code;
     elements.gameCode.textContent = room.code;
     elements.pot.textContent = room.mode ? modeLabel[room.mode] : "PILIH MODE";
@@ -146,7 +165,7 @@
     else elements.board.innerHTML = [...(room.board || []), ...Array(Math.max(0, 5 - (room.board || []).length)).fill(undefined)].map(cardHtml).join("");
     elements.seats.innerHTML = orderedPlayers(room).map(renderSeat).join("");
     const me = room.players.find((player) => player.id === state.playerId);
-    elements.roomPlayers.innerHTML = room.players.map((player) => `<article class="room-player"><b>${escapeHtml(player.name)}</b><span>${player.id === room.hostId ? "HOST" : player.ready ? "READY" : "MENUNGGU"}</span></article>`).join("");
+    elements.roomPlayers.innerHTML = room.players.map((player) => `<article class="room-player${player.media?.audio || player.media?.video ? " media-on" : ""}" data-player-id="${player.id}"><span class="room-avatar" data-video-slot="${player.id}">${escapeHtml(player.name.slice(0, 2).toUpperCase())}<i class="voice-dot"></i></span><b>${escapeHtml(player.name)}</b><span>${player.id === room.hostId ? "HOST" : player.ready ? "READY" : "MENUNGGU"}</span></article>`).join("");
     const dockHand = ["cangkulan", "capsa-banting"].includes(room.mode) || (room.mode === "samgong" && room.phase === "playing") ? (me?.hand || []) : [];
     const nextSelectionKey = `${room.mode}|${room.phase}|${room.turnId}|${dockHand.map((card) => card ? `${card.rank}${card.suit}` : "").join(",")}`;
     if (selectionKey && selectionKey !== nextSelectionKey) state.selectedCards.clear();
@@ -228,6 +247,7 @@
     remember(response, name);
     enter(response.room);
     window.PokerMedia?.configure({ socket, request, playerId: state.playerId });
+    loadRoomChat();
   }
 
   $("#createRoom").addEventListener("click", () => createOrJoin("create"));
@@ -241,6 +261,13 @@
     const response = await request("lobby:chat:send", { siteId, name: elements.name.value, text: chatInput.value });
     if (!response?.ok) return chatError.textContent = response?.error || "Chat gagal dikirim.";
     chatInput.value = "";
+  });
+  $("#roomChatForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    roomChatError.textContent = "";
+    const response = await request("room:chat:send", { text: roomChatInput.value });
+    if (!response?.ok) return roomChatError.textContent = response?.error || "Chat room gagal dikirim.";
+    roomChatInput.value = "";
   });
   chatMessages.addEventListener("click", (event) => {
     const code = event.target.closest("[data-room-code]")?.dataset.roomCode;
@@ -312,6 +339,7 @@
     event.returnValue = "";
   });
   socket.on("room:state", (room) => { state.room = room; render(); });
+  socket.on("room:chat:message", addRoomMessage);
   socket.on("lobby:chat:message", addLobbyMessage);
   socket.on("lobby:chat:remove-room", ({ roomCode } = {}) => {
     for (let index = lobbyMessages.length - 1; index >= 0; index -= 1) {
@@ -334,6 +362,7 @@
     remember(response, saved.name);
     enter(response.room);
     window.PokerMedia?.configure({ socket, request, playerId: state.playerId });
+    loadRoomChat();
   });
   socket.on("disconnect", () => { if (state.room) elements.notice.textContent = "Koneksi terputus. Mencoba menyambung kembali…"; });
   elements.name.value = localStorage.getItem("rw06_poker_name") || "";

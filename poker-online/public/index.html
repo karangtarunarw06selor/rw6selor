@@ -7,7 +7,7 @@
   <title>Game Kartu MMS 05</title>
   <link rel="icon" type="image/avif" href="favicon-mms.avif?v=1">
   <link rel="apple-touch-icon" href="favicon-mms.avif?v=1">
-  <link rel="stylesheet" href="game.css?v=11">
+  <link rel="stylesheet" href="game.css?v=12">
 </head>
 <body>
   <main id="app">
@@ -35,6 +35,8 @@
       <header class="room-lobby-head"><div><small>ROOM MENUNGGU</small><h2>Siap bermain?</h2></div><button id="copyCode" title="Salin kode">------</button></header>
       <p class="room-lobby-intro">Bagikan kode room. Pemain yang bergabung akan muncul di bawah sebelum host memulai.</p>
       <div id="roomPlayers" class="room-player-list"></div>
+      <div id="mediaControls" class="media-controls room-media-controls"><button id="audioToggle" class="icon-button" aria-label="Aktifkan voice">🎧</button><button id="videoToggle" class="icon-button" aria-label="Aktifkan kamera">▣</button><small>Voice/video room · tidak direkam</small></div>
+      <section class="room-chat" aria-label="Chat khusus room"><header><b>Chat Room</b><small>Hanya pemain di room ini</small></header><div id="roomChatMessages" class="room-chat-messages" aria-live="polite"></div><form id="roomChatForm"><input id="roomChatInput" maxlength="240" autocomplete="off" placeholder="Tulis pesan ke pemain room…"><button type="submit">Kirim</button></form><small id="roomChatError" class="room-chat-error"></small></section>
       <aside id="roomNotice" class="notice">Menunggu pemain lain bergabung.</aside>
       <div id="modePicker" class="mode-picker hidden" aria-label="Pilih mode permainan">
         <strong>HOST PILIH MODE</strong>
@@ -57,7 +59,7 @@
       <header class="game-head">
         <button id="leaveGame" class="icon-button" aria-label="Keluar">←</button>
         <div><strong data-game-brand>GAME KARTU MMS 05</strong><small>ROOM <span id="gameRoomCode">------</span></small></div>
-        <div class="media-controls"><button id="audioToggle" class="icon-button" aria-label="Aktifkan voice">🎧</button><button id="videoToggle" class="icon-button" aria-label="Aktifkan kamera">▣</button></div>
+        <div id="gameMediaMount"></div>
       </header>
 
       <div id="tableArea" class="table-area">
@@ -113,8 +115,8 @@
   </dialog>
   <div id="remoteMedia" aria-hidden="true"></div>
   <script src="/poker/socket.io/socket.io.js"></script>
-  <script src="media.js?v=3"></script>
-  <script src="game.js?v=12"></script>
+  <script src="media.js?v=4"></script>
+  <script src="game.js?v=13"></script>
 <script src="/billiard/game-presence.js?v=20261028-5" data-site="AUTO" data-game="poker" data-active-target="#game"></script>
 </body>
 </html>
