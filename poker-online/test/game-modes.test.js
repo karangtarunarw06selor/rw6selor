@@ -123,21 +123,37 @@ test("minuman keeps exactly 52 physical cards throughout the round", () => {
   assert.equal(new Set([...table.stock, ...table.spent, ...table.players.flatMap((player) => player.hand)].map((card) => `${card.rank}${card.suit}`)).size, 52);
 });
 
-test("minuman takes the table discard pile when stock is empty", () => {
+test("minuman takes only the last house card plus later plays when stock is empty", () => {
   const table = new CangkulanTable({ code: "MINUMPILE", siteId: "MMS" });
   table.addPlayer({ id: "a", name: "A" });
   table.addPlayer({ id: "b", name: "B" });
-  table.startRound({ hands: { a: cards("2c"), b: cards("3h") }, stock: [], openingCard: cards("9h")[0] });
-  table.spent.push(...cards("4d", "5s"));
-  table.completedTrick = [
-    { playerId: "a", card: table.spent[1] },
-    { playerId: "b", card: table.spent[2] },
-  ];
-  table.act("a", { type: "draw", actionId: "take-pile" });
-  assert.deepEqual(table.players[0].hand, cards("2c", "9h", "4d", "5s"));
-  assert.equal(table.stock.length, 0);
-  assert.equal(table.spent.length, 0);
-  assert.equal(table.completedTrick.length, 0);
+  table.addPlayer({ id: "c", name: "C" });
+  table.addPlayer({ id: "d", name: "D" });
+  table.startRound({
+    hands: { a: cards("3h", "2c"), b: cards("4c"), c: cards("Kh", "5d"), d: cards("6s") },
+    stock: [],
+    openingCard: cards("9h")[0],
+  });
+  table.spent.unshift(...cards("4d", "5s"));
+  const cardCount = () => table.spent.length + table.currentTrick.length
+    + table.players.reduce((total, player) => total + player.hand.length, 0);
+  const before = cardCount();
+
+  table.act("a", { type: "play", cardIndex: 0, actionId: "house-a" });
+  table.act("b", { type: "draw", actionId: "collect-house" });
+  assert.deepEqual(table.players[1].hand, cards("4c", "3h"));
+  assert.deepEqual(table.spent, cards("4d", "5s", "9h"));
+  assert.equal(table.currentPlayer().id, "c");
+
+  table.act("c", { type: "play", cardIndex: 0, actionId: "house-c" });
+  assert.equal(table.currentPlayer().id, "d");
+  table.act("d", { type: "draw", actionId: "pass-d" });
+
+  assert.deepEqual(table.players[1].hand, cards("4c", "3h", "Kh"));
+  assert.deepEqual(table.spent, cards("4d", "5s", "9h"));
+  assert.equal(table.currentTrick.length, 0);
+  assert.equal(table.currentPlayer().id, "c");
+  assert.equal(cardCount(), before);
 });
 
 test("minuman draws one card at a time and requires confirmation before playing", () => {

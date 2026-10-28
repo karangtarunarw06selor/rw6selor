@@ -207,6 +207,7 @@
     $("#capsaPlay").disabled = state.selectedCards.size < 1;
     $("#capsaPlay").textContent = state.selectedCards.size ? `Mainkan ${state.selectedCards.size} kartu` : "Mainkan pilihan";
     $("#drawCard").disabled = !room.houseSuit || (me?.hand || []).some((card) => card?.suit === room.houseSuit);
+    $("#drawCard").textContent = room.stockCount ? "Ambil kartu" : room.houseCollectorId ? "Lewati" : "Ambil house terakhir";
     elements.raisePanel.classList.add("hidden");
     if (myTurn && me) {
       const owed = Math.max(0, room.currentBet - me.bet);

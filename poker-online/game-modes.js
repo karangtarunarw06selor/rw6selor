@@ -337,6 +337,8 @@ class CangkulanTable extends BaseCardTable {
     this.completedTrick = [];
     this.completedTrickWinnerId = null;
     this.bandarId = null;
+    this.houseCollectorId = null;
+    this.passedPlayerIds = new Set();
     this.rankings = [];
     this.trickPlayerIds = [];
   }
@@ -356,6 +358,8 @@ class CangkulanTable extends BaseCardTable {
     this.completedTrick = [];
     this.completedTrickWinnerId = null;
     this.bandarId = null;
+    this.houseCollectorId = null;
+    this.passedPlayerIds.clear();
     this.rankings = [];
     this.trickPlayerIds = active.map((player) => player.id);
     this.phase = "playing";
@@ -367,15 +371,31 @@ class CangkulanTable extends BaseCardTable {
     return Boolean(card && (!this.houseSuit || card.suit === this.houseSuit));
   }
 
-  takeTablePile(player) {
-    const cards = [...this.spent, ...this.currentTrick.map((play) => play.card)];
-    if (!cards.length) throw new Error("Deck dan kartu meja sudah habis.");
-    player.hand.push(...cards);
-    this.spent = [];
-    this.currentTrick = [];
-    this.completedTrick = [];
-    this.completedTrickWinnerId = null;
-    this.openingCard = null;
+  waitForHouse(player) {
+    if (!this.houseCollectorId) {
+      const playedCount = this.currentTrick.length;
+      const lastPlay = this.currentTrick.pop();
+      if (this.currentTrick.length) this.spent.push(...this.currentTrick.map((play) => play.card));
+      this.currentTrick = [];
+      if (lastPlay) player.hand.push(lastPlay.card);
+      else {
+        const cardIndex = this.spent.findLastIndex((card) => card.suit === this.houseSuit);
+        if (cardIndex < 0) throw new Error("Kartu house terakhir tidak tersedia.");
+        player.hand.push(...this.spent.splice(cardIndex, 1));
+      }
+      this.houseCollectorId = player.id;
+      const remainingCount = this.activePlayers().length - playedCount - 1;
+      this.trickPlayerIds = [];
+      let index = this.turnIndex;
+      for (let step = 0; step < remainingCount; step += 1) {
+        index = this.nextActiveIndex(index);
+        this.trickPlayerIds.push(this.players[index].id);
+      }
+    } else {
+      this.passedPlayerIds.add(player.id);
+    }
+    this.turnIndex = this.nextActiveIndex(this.turnIndex);
+    if (this.currentTrick.length + this.passedPlayerIds.size === this.trickPlayerIds.length) this.completeTrick();
   }
 
   activePlayers() {
@@ -404,13 +424,24 @@ class CangkulanTable extends BaseCardTable {
   completeTrick() {
     const rankOrder = "23456789TJQKA";
     const eligible = this.currentTrick.filter((play) => !this.rankings.some((entry) => entry.id === play.playerId));
-    const winner = eligible.reduce((best, play) => rankOrder.indexOf(play.card.rank) > rankOrder.indexOf(best.card.rank) ? play : best);
-    this.completedTrick = [...this.currentTrick];
-    this.completedTrickWinnerId = winner.playerId;
-    this.spent.push(...this.currentTrick.map((play) => play.card));
+    const winner = eligible.length
+      ? eligible.reduce((best, play) => rankOrder.indexOf(play.card.rank) > rankOrder.indexOf(best.card.rank) ? play : best)
+      : { playerId: this.houseCollectorId };
+    if (this.houseCollectorId) {
+      const collector = this.players.find((player) => player.id === this.houseCollectorId);
+      collector.hand.push(...this.currentTrick.map((play) => play.card));
+      this.completedTrick = [];
+      this.completedTrickWinnerId = null;
+    } else {
+      this.completedTrick = [...this.currentTrick];
+      this.completedTrickWinnerId = winner.playerId;
+      this.spent.push(...this.currentTrick.map((play) => play.card));
+    }
     this.currentTrick = [];
     this.houseSuit = null;
     this.bandarId = winner.playerId;
+    this.houseCollectorId = null;
+    this.passedPlayerIds.clear();
     this.turnIndex = this.players.findIndex((player) => player.id === winner.playerId);
     this.trickPlayerIds = this.activePlayers().map((player) => player.id);
   }
@@ -424,7 +455,7 @@ class CangkulanTable extends BaseCardTable {
     this.currentTrick.push({ playerId: player.id, card });
     if (!player.hand.length) this.rankPlayer(player);
     if (this.phase === "finished") return;
-    if (this.currentTrick.length === this.trickPlayerIds.length) this.completeTrick();
+    if (this.currentTrick.length + this.passedPlayerIds.size === this.trickPlayerIds.length) this.completeTrick();
     else this.turnIndex = this.nextActiveIndex(this.turnIndex);
   }
 
@@ -446,7 +477,7 @@ class CangkulanTable extends BaseCardTable {
       if (!this.houseSuit) throw new Error("Bandar harus membuka house dengan kartu sendiri.");
       if (player.hand.some((card) => this.isPlayable(card))) throw new Error("Masih ada kartu house yang bisa dibuang.");
       if (this.stock.length) player.hand.push(this.stock.pop());
-      else this.takeTablePile(player);
+      else this.waitForHouse(player);
     } else throw new Error("Aksi tidak valid.");
     if (action.actionId) this.processedActions.set(action.actionId, playerId);
     return { duplicate: false, view: this.viewFor(playerId) };
@@ -466,6 +497,7 @@ class CangkulanTable extends BaseCardTable {
       completedTrick: this.completedTrick,
       completedTrickWinnerId: this.completedTrickWinnerId,
       bandarId: this.bandarId,
+      houseCollectorId: this.houseCollectorId,
       rankings: this.rankings,
       stockCount: this.stock.length,
       lastResult: this.lastResult,
