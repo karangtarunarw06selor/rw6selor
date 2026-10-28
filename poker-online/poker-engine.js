@@ -286,6 +286,7 @@ class PokerTable {
       siteId: this.siteId,
       phase: this.phase,
       handNumber: this.handNumber,
+      dealerType: "system",
       dealerId: this.players[this.dealerIndex]?.id || null,
       turnId: this.currentPlayer()?.id || null,
       board: this.board,

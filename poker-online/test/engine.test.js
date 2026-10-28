@@ -57,8 +57,12 @@ test("table deals private cards and exposes only own hole cards", () => {
   table.startHand(() => 0);
   assert.equal(a.hole.length, 2);
   assert.equal(b.hole.length, 2);
-  assert.deepEqual(table.viewFor("a").players.find((p) => p.id === "a").hole, a.hole);
-  assert.deepEqual(table.viewFor("a").players.find((p) => p.id === "b").hole, [null, null]);
+  const viewerState = table.viewFor("a");
+  assert.deepEqual(viewerState.players.find((p) => p.id === "a").hole, a.hole);
+  assert.deepEqual(viewerState.players.find((p) => p.id === "b").hole, [null, null]);
+  assert.equal(viewerState.dealerType, "system");
+  assert.equal(viewerState.dealerId, a.id, "dealerId hanya posisi dealer button, bukan pembagi kartu");
+  assert.equal(Object.hasOwn(viewerState, "deck"), false, "deck sistem tidak boleh dikirim ke client");
   assert.throws(() => table.startHand(() => 0), /sedang berjalan/i);
 });
 

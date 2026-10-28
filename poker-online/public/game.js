@@ -32,7 +32,7 @@
   const storageKey = `rw06_poker_session_${siteId}`;
   const suit = { c: "♣", d: "♦", h: "♥", s: "♠" };
   const phaseLabel = { waiting: "LOBBY", playing: "BERMAIN", preflop: "PRE-FLOP", flop: "FLOP", turn: "TURN", river: "RIVER", finished: "RONDE SELESAI" };
-  const modeLabel = { holdem: "TEXAS HOLD’EM", "capsa-banting": "CAPSA BANTING", cangkulan: "MINUMAN", samgong: "SAMGONG BANDAR" };
+  const modeLabel = { holdem: "TEXAS HOLD’EM · DEALER SISTEM", "capsa-banting": "CAPSA BANTING", cangkulan: "MINUMAN", samgong: "SAMGONG BANDAR" };
   let countdownTimer = null;
   let selectionKey = "";
 
@@ -89,7 +89,7 @@
         <b class="seat-name">${escapeHtml(player.name)}${player.folded ? " · FOLD" : player.allIn ? " · ALL-IN" : ""}</b>
         <span class="seat-stack">${state.room.mode === "holdem" ? `♢ ${player.stack}` : state.room.mode === "samgong" ? `${player.cardCount ?? cards.length} KARTU · SKOR ${player.score >= 0 ? "+" : ""}${player.score}` : `${player.cardCount ?? cards.length} KARTU`}</span>
         ${["waiting", "finished"].includes(state.room.phase) && state.room.mode ? `<i class="ready-badge ${player.id === state.room.hostId || player.ready ? "is-ready" : ""}">${player.id === state.room.hostId ? "MASTER" : player.ready ? "READY" : "REHAT"}</i>` : player.playingRound === false ? '<i class="ready-badge">PENONTON · IKUT RONDE BERIKUTNYA</i>' : ""}
-        ${state.room.mode === "holdem" && player.id === state.room.dealerId ? `<i class="dealer">${state.room.players.length >= 3 ? "BANDAR" : "D"}</i>` : ""}
+        ${state.room.mode === "holdem" && player.id === state.room.dealerId ? '<i class="dealer" title="Dealer button — kartu dibagikan sistem">BUTTON</i>' : ""}
         ${state.room.mode === "cangkulan" && player.id === state.room.bandarId ? '<i class="dealer">BANDAR</i>' : ""}
         ${state.room.mode === "samgong" && player.id === state.room.bandarId ? '<i class="dealer">BANDAR</i>' : ""}
         ${state.room.mode === "cangkulan" && player.rank ? `<i class="rank-badge">${player.rank === state.room.players.length ? "KALAH" : `#${player.rank}`}</i>` : ""}
