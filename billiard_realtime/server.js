@@ -8,10 +8,17 @@ const server = http.createServer((req, res) => {
 });
 const wss = new WebSocket.Server({ server });
 const rooms = new Map();
+const presenceChannels = new Map();
+const lobbyHistory = new Map();
 
 const cleanSiteId = (value) => String(value || "MMS").trim().toUpperCase() === "KT" ? "KT" : "MMS";
 const cleanRoomCode = (value) => String(value || "").trim().toUpperCase().slice(0, 16);
+const cleanGameId = (value) => String(value || "").trim().toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 32);
+const cleanClientId = (value) => String(value || "").trim().replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 80);
+const cleanName = (value) => String(value || "Pemain").trim().replace(/\s+/g, " ").slice(0, 40) || "Pemain";
+const cleanMessage = (value) => String(value || "").trim().replace(/\s+/g, " ").slice(0, 240);
 const roomKey = (siteId, roomCode) => `${siteId}:${roomCode}`;
+const presenceKey = (siteId, gameId) => `${siteId}:${gameId}`;
 const roleEndpoint = (siteId) => siteId === "KT"
   ? "https://karangtaruna.rw6selor.org/billiard/api/realtime_role.php"
   : "https://mudamudiselor.rw6selor.org/billiard/api/realtime_role.php";
@@ -54,8 +61,35 @@ function broadcastToRoom(key, data, exceptWs = null) {
   }
 }
 
+function uniquePresenceCount(key) {
+  const clients = presenceChannels.get(key);
+  return clients ? new Set([...clients].map((client) => client.clientId)).size : 0;
+}
+
+function broadcastPresence(key) {
+  const clients = presenceChannels.get(key);
+  if (!clients) return;
+  const onlineCount = uniquePresenceCount(key);
+  for (const client of clients) safeSend(client, { type: "presence_update", site_id: client.siteId, game_id: client.gameId, online_count: onlineCount });
+}
+
+function removePresence(ws) {
+  if (!ws.presenceKey) return;
+  const key = ws.presenceKey;
+  const clients = presenceChannels.get(key);
+  if (clients) {
+    clients.delete(ws);
+    if (clients.size) broadcastPresence(key);
+    else presenceChannels.delete(key);
+  }
+  ws.presenceKey = null;
+  ws.gameId = null;
+  ws.clientId = null;
+}
+
 function getRoomClientCount(key) {
-  return rooms.get(key)?.clients.size || 0;
+  const clients = rooms.get(key)?.clients;
+  return clients ? new Set([...clients].map((client) => client.playerId || client.clientId)).size : 0;
 }
 
 function removeClientFromRoom(ws) {
@@ -88,6 +122,10 @@ wss.on("connection", (ws) => {
   ws.username = null;
   ws.voice = false;
   ws.spectator = false;
+  ws.presenceKey = null;
+  ws.gameId = null;
+  ws.clientId = null;
+  ws.lastChatAt = 0;
 
   safeSend(ws, { type: "connected", message: "Connected to Pocket Clash realtime server" });
   ws.on("pong", () => { ws.isAlive = true; });
@@ -98,6 +136,37 @@ wss.on("connection", (ws) => {
       data = JSON.parse(raw.toString());
     } catch {
       safeSend(ws, { type: "error", message: "Invalid JSON" });
+      return;
+    }
+
+    if (data.type === "presence_join") {
+      const siteId = cleanSiteId(data.site_id);
+      const gameId = cleanGameId(data.game_id);
+      const clientId = cleanClientId(data.client_id);
+      if (!gameId || !clientId) return safeSend(ws, { type: "error", message: "Presence tidak valid" });
+      removePresence(ws);
+      ws.siteId = siteId;
+      ws.gameId = gameId;
+      ws.clientId = clientId;
+      ws.username = cleanName(data.username);
+      ws.presenceKey = presenceKey(siteId, gameId);
+      if (!presenceChannels.has(ws.presenceKey)) presenceChannels.set(ws.presenceKey, new Set());
+      presenceChannels.get(ws.presenceKey).add(ws);
+      safeSend(ws, { type: "presence_history", messages: lobbyHistory.get(ws.presenceKey) || [] });
+      broadcastPresence(ws.presenceKey);
+      return;
+    }
+
+    if (data.type === "lobby_chat_send") {
+      const message = cleanMessage(data.message);
+      if (!ws.presenceKey || ws.gameId !== "billiard" || !message) return safeSend(ws, { type: "chat_rejected", message: "Chat lobby tidak valid" });
+      if (Date.now() - ws.lastChatAt < 700) return safeSend(ws, { type: "chat_rejected", message: "Terlalu cepat" });
+      ws.lastChatAt = Date.now();
+      const item = { type: "lobby_chat", id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, username: ws.username, message, timestamp: Date.now() };
+      const history = lobbyHistory.get(ws.presenceKey) || [];
+      history.push(item);
+      lobbyHistory.set(ws.presenceKey, history.slice(-50));
+      for (const client of presenceChannels.get(ws.presenceKey) || []) safeSend(client, item);
       return;
     }
 
@@ -142,6 +211,15 @@ wss.on("connection", (ws) => {
 
     if (!ws.roomKey) {
       safeSend(ws, { type: "error", message: "Belum join room realtime" });
+      return;
+    }
+
+    if (data.type === "room_chat_send") {
+      const message = cleanMessage(data.message);
+      if (!message) return safeSend(ws, { type: "chat_rejected", message: "Pesan kosong" });
+      if (Date.now() - ws.lastChatAt < 700) return safeSend(ws, { type: "chat_rejected", message: "Terlalu cepat" });
+      ws.lastChatAt = Date.now();
+      broadcastToRoom(ws.roomKey, { type: "room_chat", id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, player_id: ws.playerId, username: ws.username, message, timestamp: Date.now() });
       return;
     }
 
@@ -238,14 +316,15 @@ wss.on("connection", (ws) => {
     safeSend(ws, { type: "error", message: "Unknown message type" });
   });
 
-  ws.on("close", () => removeClientFromRoom(ws));
-  ws.on("error", () => removeClientFromRoom(ws));
+  ws.on("close", () => { removeClientFromRoom(ws); removePresence(ws); });
+  ws.on("error", () => { removeClientFromRoom(ws); removePresence(ws); });
 });
 
 setInterval(() => {
   for (const ws of wss.clients) {
     if (!ws.isAlive) {
       removeClientFromRoom(ws);
+      removePresence(ws);
       ws.terminate();
       continue;
     }

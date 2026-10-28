@@ -23,6 +23,11 @@ const connect = () => new Promise((resolve, reject) => {
   ws.once("error", reject);
 });
 const send = (ws, message) => ws.send(JSON.stringify(message));
+const presence = async (ws, siteId, gameId, clientId, username) => {
+  const update = waitFor(ws, "presence_update");
+  send(ws, { type: "presence_join", site_id: siteId, game_id: gameId, client_id: clientId, username });
+  return update;
+};
 const join = async (ws, siteId, roomCode, playerId, username, spectator = false) => {
   const joined = waitFor(ws, "joined_room");
   send(ws, { type: "join_room", site_id: siteId, room_code: roomCode, player_id: playerId, username, spectator });
@@ -108,4 +113,44 @@ test("spectator keeps voice access but gameplay relays are rejected", async () =
     assert.match((await rejected).message, /Penonton/);
   }
   player.close(); spectator.close();
+});
+
+test("presence counts unique browsers per site and game", async () => {
+  const first = await connect();
+  const duplicate = await connect();
+  const otherSite = await connect();
+  assert.equal((await presence(first, "MMS", "billiard", "browser-1", "Satu")).online_count, 1);
+  assert.equal((await presence(duplicate, "MMS", "billiard", "browser-1", "Satu")).online_count, 1);
+  assert.equal((await presence(otherSite, "KT", "billiard", "browser-2", "Dua")).online_count, 1);
+  first.close(); duplicate.close(); otherSite.close();
+});
+
+test("billiard lobby chat stays inside the site", async () => {
+  const sender = await connect();
+  const receiver = await connect();
+  const otherSite = await connect();
+  await presence(sender, "MMS", "billiard", "sender", "Host");
+  await presence(receiver, "MMS", "billiard", "receiver", "Guest");
+  await presence(otherSite, "KT", "billiard", "other", "KT");
+  const received = waitFor(receiver, "lobby_chat");
+  send(sender, { type: "lobby_chat_send", message: "Ayo main" });
+  assert.equal((await received).message, "Ayo main");
+  const blocked = waitFor(otherSite, "lobby_chat").then(() => false, () => true);
+  assert.equal(await blocked, true);
+  sender.close(); receiver.close(); otherSite.close();
+});
+
+test("billiard room chat requires membership and stays inside the room", async () => {
+  const host = await connect();
+  const guest = await connect();
+  const outsider = await connect();
+  await join(host, "MMS", "CHAT01", 31, "Host");
+  await join(guest, "MMS", "CHAT01", 32, "Guest");
+  await join(outsider, "MMS", "CHAT02", 33, "Other");
+  const received = waitFor(guest, "room_chat");
+  send(host, { type: "room_chat_send", message: "Gas" });
+  assert.equal((await received).message, "Gas");
+  const blocked = waitFor(outsider, "room_chat").then(() => false, () => true);
+  assert.equal(await blocked, true);
+  host.close(); guest.close(); outsider.close();
 });
