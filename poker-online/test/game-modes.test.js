@@ -123,7 +123,7 @@ test("minuman keeps exactly 52 physical cards throughout the round", () => {
   assert.equal(new Set([...table.stock, ...table.spent, ...table.players.flatMap((player) => player.hand)].map((card) => `${card.rank}${card.suit}`)).size, 52);
 });
 
-test("minuman takes only the last house card plus later plays when stock is empty", () => {
+test("minuman skips an empty stock and takes house cards only from later players", () => {
   const table = new CangkulanTable({ code: "MINUMPILE", siteId: "MMS" });
   table.addPlayer({ id: "a", name: "A" });
   table.addPlayer({ id: "b", name: "B" });
@@ -140,17 +140,17 @@ test("minuman takes only the last house card plus later plays when stock is empt
   const before = cardCount();
 
   table.act("a", { type: "play", cardIndex: 0, actionId: "house-a" });
-  table.act("b", { type: "draw", actionId: "collect-house" });
-  assert.deepEqual(table.players[1].hand, cards("4c", "3h"));
-  assert.deepEqual(table.spent, cards("4d", "5s", "9h"));
+  table.act("b", { type: "draw", actionId: "skip-b" });
+  assert.deepEqual(table.players[1].hand, cards("4c"));
+  assert.deepEqual(table.spent, cards("4d", "5s", "9h", "3h"));
   assert.equal(table.currentPlayer().id, "c");
 
   table.act("c", { type: "play", cardIndex: 0, actionId: "house-c" });
   assert.equal(table.currentPlayer().id, "d");
   table.act("d", { type: "draw", actionId: "pass-d" });
 
-  assert.deepEqual(table.players[1].hand, cards("4c", "3h", "Kh"));
-  assert.deepEqual(table.spent, cards("4d", "5s", "9h"));
+  assert.deepEqual(table.players[1].hand, cards("4c", "Kh"));
+  assert.deepEqual(table.spent, cards("4d", "5s", "9h", "3h"));
   assert.equal(table.currentTrick.length, 0);
   assert.equal(table.currentPlayer().id, "c");
   assert.equal(cardCount(), before);

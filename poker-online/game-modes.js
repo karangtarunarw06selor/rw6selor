@@ -374,15 +374,8 @@ class CangkulanTable extends BaseCardTable {
   waitForHouse(player) {
     if (!this.houseCollectorId) {
       const playedCount = this.currentTrick.length;
-      const lastPlay = this.currentTrick.pop();
-      if (this.currentTrick.length) this.spent.push(...this.currentTrick.map((play) => play.card));
+      this.spent.push(...this.currentTrick.map((play) => play.card));
       this.currentTrick = [];
-      if (lastPlay) player.hand.push(lastPlay.card);
-      else {
-        const cardIndex = this.spent.findLastIndex((card) => card.suit === this.houseSuit);
-        if (cardIndex < 0) throw new Error("Kartu house terakhir tidak tersedia.");
-        player.hand.push(...this.spent.splice(cardIndex, 1));
-      }
       this.houseCollectorId = player.id;
       const remainingCount = this.activePlayers().length - playedCount - 1;
       this.trickPlayerIds = [];
