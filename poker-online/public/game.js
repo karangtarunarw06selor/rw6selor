@@ -14,7 +14,7 @@
 
   const elements = {
     lobby: $("#lobby"), roomLobby: $("#roomLobby"), game: $("#game"), roomPlayers: $("#roomPlayers"), roomNotice: $("#roomNotice"), gameCode: $("#gameRoomCode"), mediaControls: $("#mediaControls"), gameMediaMount: $("#gameMediaMount"), name: $("#playerName"), code: $("#roomCode"), error: $("#lobbyError"),
-    copy: $("#copyCode"), seats: $("#seats"), board: $("#board"), pot: $("#pot"), phase: $("#phase"), handDock: $("#handDock"), notice: $("#notice"),
+    copy: $("#copyCode"), seats: $("#seats"), board: $("#board"), pot: $("#pot"), phase: $("#phase"), handDock: $("#handDock"), notice: $("#notice"), finalStandings: $("#finalStandings"),
     start: $("#startGame"), modePicker: $("#modePicker"), readyPanel: $("#readyPanel"), readyToggle: $("#readyToggle"), readyStatus: $("#readyStatus"), capsaVote: $("#capsaVote"), voteStatus: $("#voteStatus"), actions: $("#actions"), cangkulanActions: $("#cangkulanActions"), capsaActions: $("#capsaActions"), samgongActions: $("#samgongActions"), checkCall: $("#checkCall"), raisePanel: $("#raisePanel"),
     raiseAmount: $("#raiseAmount"), raiseOutput: $("#raiseOutput"),
   };
@@ -70,6 +70,20 @@
     if (room.lastResult.rankings) return room.lastResult.rankings.map((entry, index, all) => `${index + 1}. ${entry.name}${index === all.length - 1 ? " · KALAH" : ""}`).join(" · ");
     const winners = room.lastResult.winners.map((winner) => `${winner.name}${winner.amount ? ` +${winner.amount}` : ""}${winner.hand ? ` · ${winner.hand}` : ""}`).join(" · ");
     return `Pemenang: ${winners}`;
+  }
+  function standingsFor(room) {
+    if (room.phase !== "finished") return [];
+    if (room.lastResult?.rankings) return room.lastResult.rankings.map((entry) => ({ ...entry, detail: entry.rank === room.lastResult.rankings.length ? "Kalah" : `Juara ${entry.rank}` }));
+    if (room.mode === "holdem") return [...room.players].sort((a, b) => b.stack - a.stack).map((player) => ({ ...player, detail: `${player.stack} chip` }));
+    if (room.mode === "samgong") return [...room.players].sort((a, b) => b.score - a.score).map((player) => ({ ...player, detail: `${player.score >= 0 ? "+" : ""}${player.score} poin` }));
+    return [...room.players].sort((a, b) => a.cardCount - b.cardCount).map((player) => ({ ...player, detail: `${player.cardCount} kartu tersisa` }));
+  }
+  function renderStandings(room) {
+    const standings = standingsFor(room);
+    elements.finalStandings.classList.toggle("hidden", !standings.length);
+    if (!standings.length) return;
+    const medals = ["🥇", "🥈", "🥉"];
+    elements.finalStandings.innerHTML = `<header><small>RONDE SELESAI</small><h3>Klasemen Akhir</h3></header><ol>${standings.map((entry, index) => `<li><b><span>${medals[index] || `#${index + 1}`}</span>${escapeHtml(entry.name)}</b><small>${escapeHtml(entry.detail)}</small></li>`).join("")}</ol>`;
   }
   function renderSeat(player, index) {
     const classes = ["seat"];
@@ -137,6 +151,7 @@
     elements.lobby.classList.add("hidden");
     elements.roomLobby.classList.toggle("hidden", !waiting);
     elements.game.classList.toggle("hidden", waiting);
+    renderStandings(room);
     (waiting ? elements.roomLobby : elements.gameMediaMount).append(elements.mediaControls);
     elements.copy.textContent = room.code;
     elements.gameCode.textContent = room.code;
