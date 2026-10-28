@@ -617,6 +617,14 @@ function handleSquareClick(row, col) {
 
             renderBoard();
 
+            if (result.move.captured === "k") {
+
+                finishComputerGame("white");
+
+                return;
+
+            }
+
             updateStatus({ players: 2, status: "playing", turn: currentTurn });
 
             runComputerMove();
@@ -798,6 +806,22 @@ function cancelComputerMove() {
 
 }
 
+function finishComputerGame(winner) {
+
+    cancelComputerMove();
+
+    window.chessGameState.gameOver = true;
+
+    window.chessGameState.winner = winner;
+
+    currentTurn = winner;
+
+    updateStatus({ players: 2, status: "finished", turn: currentTurn });
+
+    showGameResultOverlay(winner === playerColor, winner);
+
+}
+
 function runComputerMove() {
 
     if (computerThinking || computerMoveTimer) return;
@@ -823,6 +847,14 @@ function runComputerMove() {
             playMoveSound(Boolean(result.move.captured));
 
             renderBoard();
+
+            if (result.move.captured === "K") {
+
+                finishComputerGame("black");
+
+                return;
+
+            }
 
         }
 
@@ -1011,6 +1043,14 @@ window.requestRematch = function () {
     lastWinnerState = null;
 
     lastCheckState = null;
+
+    if (gameMode === "computer") {
+
+        startComputerMode();
+
+        return;
+
+    }
 
     socket.emit("resetGame");
 
