@@ -1,6 +1,7 @@
 "use strict";
 
 const { createDeck, shuffle } = require("./poker-engine");
+const createMinumanDeck = () => [...createDeck(), { rank: "RJ", suit: "j" }, { rank: "BJ", suit: "j" }];
 
 class BaseCardTable {
   constructor({ code, siteId, mode }) {
@@ -344,11 +345,15 @@ class CangkulanTable extends BaseCardTable {
   startRound({ hands, stock, openingCard, random } = {}) {
     if (!["waiting", "finished"].includes(this.phase)) throw new Error("Ronde sedang berjalan.");
     const active = this.requirePlayers();
-    const deck = shuffle(createDeck(), random);
+    const deck = shuffle(createMinumanDeck(), random);
     this.players.forEach((player) => { player.hand = hands?.[player.id] ? [...hands[player.id]] : []; });
     if (!hands) for (let round = 0; round < 7; round += 1) for (const player of active) player.hand.push(deck.pop());
     this.stock = stock ? [...stock] : deck;
-    this.openingCard = openingCard || this.stock.pop();
+    if (openingCard) this.openingCard = openingCard;
+    else {
+      const openingIndex = this.stock.findLastIndex((card) => card.suit !== "j");
+      this.openingCard = openingIndex < 0 ? null : this.stock.splice(openingIndex, 1)[0];
+    }
     if (!this.openingCard) throw new Error("Kartu pembuka tidak tersedia.");
     this.spent = [this.openingCard];
     this.houseSuit = this.openingCard.suit;
@@ -364,11 +369,18 @@ class CangkulanTable extends BaseCardTable {
   }
 
   isPlayable(card) {
-    return Boolean(card && (!this.houseSuit || card.suit === this.houseSuit));
+    return Boolean(card && (!this.houseSuit || card.suit === "j" || card.suit === this.houseSuit));
   }
 
-  refillStock() {
-    if (!this.stock.length && this.spent.length) this.stock = shuffle(this.spent.splice(0));
+  takeTablePile(player) {
+    const cards = [...this.spent, ...this.currentTrick.map((play) => play.card)];
+    if (!cards.length) throw new Error("Deck dan kartu meja sudah habis.");
+    player.hand.push(...cards);
+    this.spent = [];
+    this.currentTrick = [];
+    this.completedTrick = [];
+    this.completedTrickWinnerId = null;
+    this.openingCard = null;
   }
 
   activePlayers() {
@@ -395,7 +407,7 @@ class CangkulanTable extends BaseCardTable {
   }
 
   completeTrick() {
-    const rankOrder = "23456789TJQKA";
+    const rankOrder = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A", "BJ", "RJ"];
     const eligible = this.currentTrick.filter((play) => !this.rankings.some((entry) => entry.id === play.playerId));
     const winner = eligible.reduce((best, play) => rankOrder.indexOf(play.card.rank) > rankOrder.indexOf(best.card.rank) ? play : best);
     this.completedTrick = [...this.currentTrick];
@@ -412,7 +424,7 @@ class CangkulanTable extends BaseCardTable {
     if (!this.houseSuit) {
       this.completedTrick = [];
       this.completedTrickWinnerId = null;
-      this.houseSuit = card.suit;
+      if (card.suit !== "j") this.houseSuit = card.suit;
     }
     this.currentTrick.push({ playerId: player.id, card });
     if (!player.hand.length) this.rankPlayer(player);
@@ -438,9 +450,8 @@ class CangkulanTable extends BaseCardTable {
     } else if (action.type === "draw") {
       if (!this.houseSuit) throw new Error("Bandar harus membuka house dengan kartu sendiri.");
       if (player.hand.some((card) => this.isPlayable(card))) throw new Error("Masih ada kartu house yang bisa dibuang.");
-      this.refillStock();
-      if (!this.stock.length) throw new Error("Deck habis dan kartu house tidak tersedia.");
-      player.hand.push(this.stock.pop());
+      if (this.stock.length) player.hand.push(this.stock.pop());
+      else this.takeTablePile(player);
     } else throw new Error("Aksi tidak valid.");
     if (action.actionId) this.processedActions.set(action.actionId, playerId);
     return { duplicate: false, view: this.viewFor(playerId) };

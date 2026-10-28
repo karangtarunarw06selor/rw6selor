@@ -112,6 +112,34 @@ test("minuman follows the system house and keeps opponents private", () => {
   assert.deepEqual(bView.players.find((p) => p.id === "b").hand, cards("9h", "3d"));
 });
 
+test("minuman keeps exactly 54 physical cards throughout the round", () => {
+  const table = new CangkulanTable({ code: "MINUM54", siteId: "MMS" });
+  table.addPlayer({ id: "a", name: "A" });
+  table.addPlayer({ id: "b", name: "B" });
+  table.startRound({ random: () => 0.5 });
+  const physicalCards = () => table.stock.length + table.spent.length + table.currentTrick.length
+    + table.players.reduce((total, player) => total + player.hand.length, 0);
+  assert.equal(physicalCards(), 54);
+  assert.equal(new Set([...table.stock, ...table.spent, ...table.players.flatMap((player) => player.hand)].map((card) => `${card.rank}${card.suit}`)).size, 54);
+});
+
+test("minuman takes the table discard pile when stock is empty", () => {
+  const table = new CangkulanTable({ code: "MINUMPILE", siteId: "MMS" });
+  table.addPlayer({ id: "a", name: "A" });
+  table.addPlayer({ id: "b", name: "B" });
+  table.startRound({ hands: { a: cards("2c"), b: cards("3h") }, stock: [], openingCard: cards("9h")[0] });
+  table.spent.push(...cards("4d", "5s"));
+  table.completedTrick = [
+    { playerId: "a", card: table.spent[1] },
+    { playerId: "b", card: table.spent[2] },
+  ];
+  table.act("a", { type: "draw", actionId: "take-pile" });
+  assert.deepEqual(table.players[0].hand, cards("2c", "9h", "4d", "5s"));
+  assert.equal(table.stock.length, 0);
+  assert.equal(table.spent.length, 0);
+  assert.equal(table.completedTrick.length, 0);
+});
+
 test("minuman draws one card at a time and requires confirmation before playing", () => {
   const table = new CangkulanTable({ code: "MINUM2", siteId: "KT" });
   table.addPlayer({ id: "a", name: "A" });
