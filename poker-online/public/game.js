@@ -193,13 +193,14 @@
     elements.start.classList.toggle("hidden", !isHost || !preparing || (room.mode === "capsa-banting" && !room.voteResult));
     elements.start.disabled = readyCount < 1;
     elements.start.textContent = readyCount < 1 ? "Menunggu pemain Ready" : `${room.phase === "finished" ? "Ronde Berikutnya" : `Mulai ${modeLabel[room.mode] || "Permainan"}`} · ${readyCount + 1} pemain`;
-    const myTurn = room.turnId === state.playerId && ["preflop", "flop", "turn", "river"].includes(room.phase);
+    const activeViewer = me?.playingRound !== false;
+    const myTurn = activeViewer && room.turnId === state.playerId && ["preflop", "flop", "turn", "river"].includes(room.phase);
     elements.actions.classList.toggle("hidden", !myTurn);
-    const cangkulanTurn = room.mode === "cangkulan" && room.phase === "playing" && room.turnId === state.playerId;
+    const cangkulanTurn = activeViewer && room.mode === "cangkulan" && room.phase === "playing" && room.turnId === state.playerId;
     elements.cangkulanActions.classList.toggle("hidden", !cangkulanTurn);
-    const capsaTurn = room.mode === "capsa-banting" && room.phase === "playing" && room.turnId === state.playerId;
+    const capsaTurn = activeViewer && room.mode === "capsa-banting" && room.phase === "playing" && room.turnId === state.playerId;
     elements.capsaActions.classList.toggle("hidden", !capsaTurn);
-    const samgongTurn = room.mode === "samgong" && room.phase === "playing" && room.turnId === state.playerId;
+    const samgongTurn = activeViewer && room.mode === "samgong" && room.phase === "playing" && room.turnId === state.playerId;
     elements.samgongActions.classList.toggle("hidden", !samgongTurn);
     $("#minumanPlay").disabled = state.selectedCards.size !== 1;
     $("#minumanPlay").textContent = state.selectedCards.size ? "Buang kartu ✓" : "Pilih lalu buang";

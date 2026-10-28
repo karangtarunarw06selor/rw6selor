@@ -212,6 +212,24 @@ test("late joiner spectates the active hand, can use media, and waits for the ne
   assert.equal((await emit(spectator, "game:action", { type: "fold", actionId: "late-spectator" })).ok, false);
   assert.equal((await emit(spectator, "media:join", { audio: true, video: false })).ok, true);
   assert.equal((await emit(spectator, "room:ready", { ready: true })).ok, false);
+
+  for (let step = 0; step < 12; step += 1) {
+    const state = (await emit(host, "room:get")).room;
+    const spectatorState = state.players.find((player) => player.id === joined.playerId);
+    assert.equal(spectatorState.playingRound, false);
+    assert.deepEqual(spectatorState.hole, []);
+    assert.notEqual(state.turnId, joined.playerId);
+    if (state.phase === "finished") break;
+    const actor = state.turnId === created.playerId ? host : guest;
+    const actorState = state.players.find((player) => player.id === state.turnId);
+    const action = state.currentBet > actorState.bet ? "call" : "check";
+    assert.equal((await emit(actor, "game:action", { type: action, actionId: `finish-hand-${step}` })).ok, true);
+  }
+
+  const finished = (await emit(spectator, "room:get")).room;
+  assert.equal(finished.phase, "finished");
+  assert.equal(finished.players.find((player) => player.id === joined.playerId).playingRound, false);
+  assert.equal((await emit(spectator, "room:ready", { ready: true })).ok, true);
 });
 
 test("host selects a mode only after another player joins and mode locks during play", async () => {

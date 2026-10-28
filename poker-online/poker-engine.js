@@ -195,8 +195,8 @@ class PokerTable {
     this.pending.delete(player.id);
     if (this.activePlayers().length === 1) return this.finishByFold();
     if (raised) this.pending = new Set(this.canActPlayers().filter((item) => item.id !== player.id).map((item) => item.id));
-    for (const item of this.players) {
-      if (!item.folded && !item.allIn && item.streetBet < this.currentBet) this.pending.add(item.id);
+    for (const item of this.activePlayers()) {
+      if (!item.allIn && item.streetBet < this.currentBet) this.pending.add(item.id);
     }
     if (!this.pending.size) this.advanceStreet();
     else this.turnIndex = this.nextEligibleIndex(this.turnIndex, (item) => this.pending.has(item.id));
