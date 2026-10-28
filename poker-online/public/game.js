@@ -50,6 +50,7 @@
     localStorage.setItem(storageKey, JSON.stringify({ code: result.room.code, token: result.token, name }));
   }
   function enter(room) {
+    allowLeave = false;
     state.room = room;
     elements.lobby.classList.add("hidden");
     render();
@@ -165,7 +166,7 @@
     else elements.board.innerHTML = [...(room.board || []), ...Array(Math.max(0, 5 - (room.board || []).length)).fill(undefined)].map(cardHtml).join("");
     elements.seats.innerHTML = orderedPlayers(room).map(renderSeat).join("");
     const me = room.players.find((player) => player.id === state.playerId);
-    elements.roomPlayers.innerHTML = room.players.map((player) => `<article class="room-player${player.media?.audio || player.media?.video ? " media-on" : ""}" data-player-id="${player.id}"><span class="room-avatar" data-video-slot="${player.id}">${escapeHtml(player.name.slice(0, 2).toUpperCase())}<i class="voice-dot"></i></span><b>${escapeHtml(player.name)}</b><span>${player.id === room.hostId ? "HOST" : player.ready ? "READY" : "MENUNGGU"}</span></article>`).join("");
+    elements.roomPlayers.innerHTML = room.players.map((player) => `<article class="room-player${player.media?.audio || player.media?.video ? " media-on" : ""}" data-player-id="${player.id}"><span class="room-avatar" data-video-slot="${player.id}">${escapeHtml(player.name.slice(0, 2).toUpperCase())}<i class="voice-dot"></i></span><b>${escapeHtml(player.name)}</b><span>${player.connected === false ? "KELUAR" : player.id === room.hostId ? "HOST" : player.ready ? "READY" : "MENUNGGU"}</span></article>`).join("");
     const dockHand = ["cangkulan", "capsa-banting"].includes(room.mode) || (room.mode === "samgong" && room.phase === "playing") ? (me?.hand || []) : [];
     const nextSelectionKey = `${room.mode}|${room.phase}|${room.turnId}|${dockHand.map((card) => card ? `${card.rank}${card.suit}` : "").join(",")}`;
     if (selectionKey && selectionKey !== nextSelectionKey) state.selectedCards.clear();
@@ -325,14 +326,25 @@
     }
   });
   elements.copy.addEventListener("click", async () => { await navigator.clipboard?.writeText(state.room.code); elements.notice.textContent = "Kode room disalin."; });
-  $("#leaveGame").addEventListener("click", () => leaveConfirm.showModal());
-  $("#leaveRoom").addEventListener("click", () => leaveConfirm.showModal());
-  $("#leaveConfirmButton").addEventListener("click", () => {
+  async function returnToLobby(message = "") {
     allowLeave = true;
     localStorage.removeItem(storageKey);
-    window.PokerMedia?.leave();
-    location.reload();
-  });
+    await window.PokerMedia?.leave();
+    state.room = null;
+    state.playerId = null;
+    state.token = null;
+    roomChatMessages.length = 0;
+    renderRoomChat();
+    elements.roomLobby.classList.add("hidden");
+    elements.game.classList.add("hidden");
+    elements.lobby.classList.remove("hidden");
+    leaveConfirm.close();
+    elements.error.textContent = message;
+    socket.disconnect().connect();
+  }
+  $("#leaveGame").addEventListener("click", () => leaveConfirm.showModal());
+  $("#leaveRoom").addEventListener("click", () => leaveConfirm.showModal());
+  $("#leaveConfirmButton").addEventListener("click", () => returnToLobby());
   window.addEventListener("beforeunload", (event) => {
     if (!state.room || allowLeave) return;
     event.preventDefault();
@@ -347,11 +359,7 @@
     }
     renderLobbyChat();
   });
-  socket.on("session:replaced", () => {
-    localStorage.removeItem(storageKey);
-    alert("Sesi dipindahkan ke perangkat atau tab lain.");
-    location.reload();
-  });
+  socket.on("session:replaced", () => returnToLobby("Sesi dipindahkan ke perangkat atau tab lain."));
   socket.on("connect", async () => {
     const chat = await request("lobby:chat:join", { siteId });
     if (chat?.ok) { lobbyMessages.splice(0, lobbyMessages.length, ...chat.messages); renderLobbyChat(); }

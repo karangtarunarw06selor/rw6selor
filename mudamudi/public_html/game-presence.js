@@ -17,7 +17,10 @@
 
   const name = localStorage.getItem("pocket_clash_player_name") || localStorage.getItem("playerName") || "Pemain";
   const protocol = location.protocol === "https:" ? "wss:" : "ws:";
-  const socket = new WebSocket(`${protocol}//${location.host}/billiard-realtime`);
+  let socket = null;
+  let reconnectTimer = null;
+  let reconnectDelay = 1_000;
+  let stopped = false;
   const style = document.createElement("style");
   style.textContent = ".game-online-badge{position:relative;z-index:20;display:flex;align-items:center;width:max-content;margin:8px 12px 0 auto;padding:7px 11px;border-radius:999px;background:rgba(3,12,10,.88);border:1px solid rgba(255,255,255,.22);color:#fff;font:700 12px/1.2 system-ui;box-shadow:0 6px 20px rgba(0,0,0,.25)}.game-online-badge[hidden]{display:none}.game-online-badge i{display:inline-block;width:7px;height:7px;margin-right:6px;border-radius:50%;background:#35dc78}.game-chat{margin-top:18px;padding:12px;border:1px solid rgba(255,255,255,.16);border-radius:14px;background:rgba(0,0,0,.22);color:#fff}.game-chat h2{margin:0 0 8px;font:800 14px system-ui}.game-chat-log{height:130px;overflow:auto;padding:8px;border-radius:10px;background:rgba(0,0,0,.25);font:13px/1.4 system-ui}.game-chat-log p{margin:0 0 6px;overflow-wrap:anywhere}.game-chat-log b{color:#ffd650}.game-chat form{display:flex;gap:6px;margin-top:8px}.game-chat input{min-width:0;flex:1;margin:0!important;padding:9px 10px!important;text-transform:none!important}.game-chat button{width:auto!important;flex:none;margin:0!important;padding:9px 12px!important;font-size:13px!important}.game-room-chat{position:fixed;right:10px;bottom:10px;z-index:9999;width:min(310px,calc(100vw - 20px));margin:0;box-shadow:0 10px 30px rgba(0,0,0,.4)}@media(max-width:600px){.game-room-chat{position:relative;right:auto;bottom:auto;width:auto;margin:12px}}";
   document.head.appendChild(style);
@@ -56,7 +59,7 @@
       event.preventDefault();
       const input = form.querySelector("input");
       const message = input.value.trim();
-      if (!message || socket.readyState !== WebSocket.OPEN) return;
+      if (!message || socket?.readyState !== WebSocket.OPEN) return;
       socket.send(JSON.stringify({ type: chatMode === "room" ? "room_chat_send" : "lobby_chat_send", message }));
       input.value = "";
     });
@@ -73,20 +76,55 @@
     log.scrollTop = log.scrollHeight;
   }
 
-  socket.addEventListener("open", () => {
+  function joinChannels() {
     socket.send(JSON.stringify({ type: "presence_join", site_id: siteId, game_id: gameId, client_id: clientId, username: name }));
-    if (chatMode === "room") {
-      const params = new URLSearchParams(location.search);
-      const roomCode = params.get("room_code") || params.get("room") || localStorage.getItem("pocket_clash_room_code") || "";
-      const playerKey = params.get("player_key") || localStorage.getItem("pocket_clash_player_key") || localStorage.getItem("billiard_player_key") || "";
-      if (roomCode && playerKey) socket.send(JSON.stringify({ type: "join_room", site_id: siteId, room_code: roomCode, player_key: playerKey }));
-    }
+    if (chatMode !== "room") return;
+    const params = new URLSearchParams(location.search);
+    const roomCode = params.get("room_code") || params.get("room") || localStorage.getItem("pocket_clash_room_code") || "";
+    const playerKey = params.get("player_key") || localStorage.getItem("pocket_clash_player_key") || localStorage.getItem("billiard_player_key") || "";
+    if (roomCode && playerKey) socket.send(JSON.stringify({ type: "join_room", site_id: siteId, room_code: roomCode, player_key: playerKey }));
+  }
+
+  function scheduleReconnect() {
+    if (stopped || reconnectTimer) return;
+    reconnectTimer = setTimeout(() => {
+      reconnectTimer = null;
+      connect();
+    }, reconnectDelay);
+    reconnectDelay = Math.min(reconnectDelay * 2, 15_000);
+  }
+
+  function connect() {
+    if (stopped || socket?.readyState === WebSocket.OPEN || socket?.readyState === WebSocket.CONNECTING) return;
+    socket = new WebSocket(`${protocol}//${location.host}/billiard-realtime`);
+    socket.addEventListener("open", () => {
+      reconnectDelay = 1_000;
+      joinChannels();
+    });
+    socket.addEventListener("message", (event) => {
+      let data;
+      try { data = JSON.parse(event.data); } catch { return; }
+      if (data.type === "presence_update" && data.site_id === siteId && data.game_id === gameId) badge.querySelector("span").textContent = `${data.online_count} online`;
+      if (data.type === "presence_history") {
+        if (log) log.replaceChildren();
+        data.messages?.forEach(appendMessage);
+      }
+      if (data.type === "lobby_chat" || data.type === "room_chat") appendMessage(data);
+    });
+    socket.addEventListener("close", scheduleReconnect, { once: true });
+    socket.addEventListener("error", () => socket.close());
+  }
+
+  window.addEventListener("online", connect);
+  window.addEventListener("pagehide", () => {
+    stopped = true;
+    clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+    socket?.close();
   });
-  socket.addEventListener("message", (event) => {
-    let data;
-    try { data = JSON.parse(event.data); } catch { return; }
-    if (data.type === "presence_update" && data.game_id === gameId) badge.querySelector("span").textContent = `${data.online_count} online`;
-    if (data.type === "presence_history") data.messages?.forEach(appendMessage);
-    if (data.type === "lobby_chat" || data.type === "room_chat") appendMessage(data);
+  window.addEventListener("pageshow", () => {
+    stopped = false;
+    connect();
   });
+  connect();
 })();
