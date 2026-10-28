@@ -107,9 +107,16 @@
   const showSecret = (secret) => {
     state.secret = secret; $("#secret-image").src = secret.image; $("#secret-answer").textContent = secret.answer; $("#secret-category").textContent = secret.category; $("#secret-forbidden").textContent = secret.forbidden.join(", "); $("#secret-examples").textContent = `Contoh clue aman: ${secret.examples.join(" · ")}`; $("#secret-panel").hidden = false; renderTabs();
   };
+  let reconnecting = false;
   const reconnect = () => {
-    const saved = JSON.parse(sessionStorage.getItem(sessionKey) || "null"); if (!saved) return;
-    socket.emit("room:reconnect", { ...saved, siteId }, (reply) => { if (!reply?.ok) return sessionStorage.removeItem(sessionKey); state.playerId = reply.playerId; state.room = reply.room; saveSession(reply); render(); toast("Masuk kembali ke room."); });
+    const saved = JSON.parse(sessionStorage.getItem(sessionKey) || "null");
+    if (!saved || state.room || reconnecting) return;
+    reconnecting = true;
+    socket.emit("room:reconnect", { ...saved, siteId }, (reply) => {
+      reconnecting = false;
+      if (!reply?.ok) return sessionStorage.removeItem(sessionKey);
+      state.playerId = reply.playerId; state.room = reply.room; saveSession(reply); render(); toast("Masuk kembali ke room.");
+    });
   };
   $("#room-form").addEventListener("submit", (event) => {
     event.preventDefault(); const action = event.submitter?.value; const name = $("#player-name").value.trim();
