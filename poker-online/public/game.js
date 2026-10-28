@@ -13,7 +13,7 @@
   document.querySelector("[data-game-brand]").textContent = `GAME KARTU ${siteBrand}`;
 
   const elements = {
-    lobby: $("#lobby"), game: $("#game"), name: $("#playerName"), code: $("#roomCode"), error: $("#lobbyError"),
+    lobby: $("#lobby"), roomLobby: $("#roomLobby"), game: $("#game"), roomPlayers: $("#roomPlayers"), roomNotice: $("#roomNotice"), gameCode: $("#gameRoomCode"), name: $("#playerName"), code: $("#roomCode"), error: $("#lobbyError"),
     copy: $("#copyCode"), seats: $("#seats"), board: $("#board"), pot: $("#pot"), phase: $("#phase"), handDock: $("#handDock"), notice: $("#notice"),
     start: $("#startGame"), modePicker: $("#modePicker"), readyPanel: $("#readyPanel"), readyToggle: $("#readyToggle"), readyStatus: $("#readyStatus"), capsaVote: $("#capsaVote"), voteStatus: $("#voteStatus"), actions: $("#actions"), cangkulanActions: $("#cangkulanActions"), capsaActions: $("#capsaActions"), samgongActions: $("#samgongActions"), checkCall: $("#checkCall"), raisePanel: $("#raisePanel"),
     raiseAmount: $("#raiseAmount"), raiseOutput: $("#raiseOutput"),
@@ -48,7 +48,6 @@
   function enter(room) {
     state.room = room;
     elements.lobby.classList.add("hidden");
-    elements.game.classList.remove("hidden");
     render();
   }
   function cardHtml(card) {
@@ -115,7 +114,12 @@
   function render() {
     const room = state.room;
     if (!room) return;
+    const waiting = ["waiting", "finished"].includes(room.phase);
+    elements.lobby.classList.add("hidden");
+    elements.roomLobby.classList.toggle("hidden", !waiting);
+    elements.game.classList.toggle("hidden", waiting);
     elements.copy.textContent = room.code;
+    elements.gameCode.textContent = room.code;
     elements.pot.textContent = room.mode ? modeLabel[room.mode] : "PILIH MODE";
     elements.phase.textContent = phaseLabel[room.phase] || room.phase.toUpperCase();
     if (room.mode === "cangkulan") {
@@ -142,6 +146,7 @@
     else elements.board.innerHTML = [...(room.board || []), ...Array(Math.max(0, 5 - (room.board || []).length)).fill(undefined)].map(cardHtml).join("");
     elements.seats.innerHTML = orderedPlayers(room).map(renderSeat).join("");
     const me = room.players.find((player) => player.id === state.playerId);
+    elements.roomPlayers.innerHTML = room.players.map((player) => `<article class="room-player"><b>${escapeHtml(player.name)}</b><span>${player.id === room.hostId ? "HOST" : player.ready ? "READY" : "MENUNGGU"}</span></article>`).join("");
     const dockHand = ["cangkulan", "capsa-banting"].includes(room.mode) || (room.mode === "samgong" && room.phase === "playing") ? (me?.hand || []) : [];
     const nextSelectionKey = `${room.mode}|${room.phase}|${room.turnId}|${dockHand.map((card) => card ? `${card.rank}${card.suit}` : "").join(",")}`;
     if (selectionKey && selectionKey !== nextSelectionKey) state.selectedCards.clear();
@@ -200,6 +205,7 @@
       const timer = seconds === null ? "" : ` · ${seconds}d`;
       const ownTurn = myTurn || cangkulanTurn || capsaTurn || samgongTurn;
       elements.notice.textContent = resultText(room) || (!room.mode ? (isHost ? "Pilih mode setelah pemain lain bergabung." : "Menunggu host memilih mode.") : ownTurn ? `Giliranmu. Pilih aksi${timer}.` : room.turnId ? `Giliran ${room.players.find((p) => p.id === room.turnId)?.name || "pemain"}${timer}.` : `Mode ${modeLabel[room.mode]} dipilih.`);
+      elements.roomNotice.textContent = elements.notice.textContent;
     };
     updateNotice();
     if (room.turnDeadline) countdownTimer = setInterval(updateNotice, 1000);
@@ -293,6 +299,7 @@
   });
   elements.copy.addEventListener("click", async () => { await navigator.clipboard?.writeText(state.room.code); elements.notice.textContent = "Kode room disalin."; });
   $("#leaveGame").addEventListener("click", () => leaveConfirm.showModal());
+  $("#leaveRoom").addEventListener("click", () => leaveConfirm.showModal());
   $("#leaveConfirmButton").addEventListener("click", () => {
     allowLeave = true;
     localStorage.removeItem(storageKey);

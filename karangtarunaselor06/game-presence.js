@@ -26,20 +26,21 @@
   badge.className = "game-online-badge";
   badge.innerHTML = "<i></i><span>0 online</span>";
   const header = document.querySelector("body > header, .game-header, .topbar");
-  const lobbySurface = document.querySelector(".lobbyCard, .roomCard, #lobby, #welcome, .welcome");
-  if (header) header.insertAdjacentElement("afterend", badge);
-  else if (lobbySurface) lobbySurface.prepend(badge);
-  else document.body.prepend(badge);
 
   function syncBadgeVisibility() {
     const active = activeTarget ? document.querySelector(activeTarget) : null;
-    badge.hidden = badgeDisabled || Boolean(active && !active.hidden && !active.classList.contains("hidden"));
+    const playing = Boolean(active && !active.hidden && !active.classList.contains("hidden"));
+    const pregame = document.querySelector("#roomLobby:not(.hidden), .lobbyCard:not(.hidden), .roomCard:not(.hidden), #lobby:not(.hidden), #welcome:not([hidden]), .welcome:not([hidden])");
+    if (header && badge.previousElementSibling !== header) header.insertAdjacentElement("afterend", badge);
+    else if (!header && pregame && badge.parentElement !== pregame) pregame.prepend(badge);
+    else if (!header && !pregame && badge.parentElement !== document.body) document.body.prepend(badge);
+    badge.hidden = badgeDisabled || playing;
   }
   syncBadgeVisibility();
-  if (activeTarget) {
-    const active = document.querySelector(activeTarget);
-    if (active) new MutationObserver(syncBadgeVisibility).observe(active, { attributes: true, attributeFilter: ["hidden", "class"] });
-  }
+  const stateObserver = new MutationObserver(syncBadgeVisibility);
+  document.querySelectorAll(`${activeTarget || ".game-online-badge"}, #roomLobby, #lobby, #welcome`).forEach((element) => {
+    if (element !== badge) stateObserver.observe(element, { attributes: true, attributeFilter: ["hidden", "class"] });
+  });
 
   let log = null;
   let form = null;
