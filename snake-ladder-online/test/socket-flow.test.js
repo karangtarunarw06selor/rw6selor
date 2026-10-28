@@ -74,6 +74,25 @@ test("late joiner spectates until reset while active racers are ranked", async (
   assert.equal(room.status, "playing");
 });
 
+test("host kicks an offline player while guests and self-kick are rejected", async (context) => {
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const port = server.address().port;
+  const host = await connect(port);
+  const guest = await connect(port);
+  context.after(() => { host.close(); guest.close(); io.close(); server.close(); rooms.clear(); });
+
+  const created = await emit(host, "room:create", { name: "Host", siteId: "MMS" });
+  const joined = await emit(guest, "room:join", { name: "Teman", code: created.room.code, siteId: "MMS" });
+  assert.equal((await emit(guest, "room:kick", { playerId: created.playerId })).ok, false);
+  assert.equal((await emit(host, "room:kick", { playerId: created.playerId })).ok, false);
+  guest.disconnect();
+  assert.equal((await emit(host, "room:kick", { playerId: joined.playerId })).ok, true);
+  assert.equal(rooms.get(created.room.code).players.length, 1);
+  const retry = await connect(port);
+  context.after(() => retry.close());
+  assert.equal((await emit(retry, "room:reconnect", { code: created.room.code, playerId: joined.playerId, reconnectToken: joined.reconnectToken, siteId: "MMS" })).ok, false);
+});
+
 test("leaving a room removes the seat and reconnect session immediately", async (context) => {
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   const port = server.address().port;

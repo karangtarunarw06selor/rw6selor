@@ -202,10 +202,11 @@
     const turn = room.players.find((player) => player.id === room.turn);
     $("#turn-name").textContent = room.status === "finished" ? "Selesai" : turn?.name || "Menunggu";
     $("#turn-dot").style.background = turn?.color || "#7894a2";
+    const isHost = state.mode === "online" && room.players[0]?.id === state.playerId;
     $("#players").innerHTML = room.players.map((player) => {
       const mine = player.id === state.playerId;
       const voice = state.mode === "online" ? `${mine ? `<button class="player-voice${player.voice ? " active" : ""}" type="button" data-voice-toggle aria-label="${player.voice ? "Mute mikrofon" : "Aktifkan mikrofon"}" title="${player.voice ? "Mute mikrofon" : "Aktifkan mikrofon"}">${headsetIcon}</button>` : `<span class="player-voice${player.voice ? " active" : ""}" aria-label="${player.voice ? "Voice aktif" : "Voice tidak aktif"}">${headsetIcon}</span>`}` : "";
-      return `<article class="player-row" data-player-id="${player.id}"><span class="player-color" style="background:${player.color}"></span><div class="player-identity"><span class="player-name"><b>${escapeHtml(player.name)}</b>${voice}</span><small>${player.participant === false ? (mine ? "Kamu · Penonton" : "Penonton") : mine ? "Kamu" : player.connected === false ? "Terputus" : "Pemain"}</small></div><strong class="player-position">${state.visualPositions.get(player.id) ?? player.position}</strong></article>`;
+      return `<article class="player-row" data-player-id="${player.id}"><span class="player-color" style="background:${player.color}"></span><div class="player-identity"><span class="player-name"><b>${escapeHtml(player.name)}</b>${voice}</span><small>${player.participant === false ? (mine ? "Kamu · Penonton" : "Penonton") : mine ? "Kamu" : player.connected === false ? "Terputus" : "Pemain"}</small></div><strong class="player-position">${state.visualPositions.get(player.id) ?? player.position}</strong>${isHost && !mine ? `<button class="kick-player" type="button" data-kick-player="${player.id}">Kick</button>` : ""}</article>`;
     }).join("");
     syncTokens(room);
     const message = describeMove(room.lastMove);
@@ -406,7 +407,13 @@
     state.sound = !state.sound;
     $("#sound-toggle").classList.toggle("off", !state.sound);
   });
+  $("#players").addEventListener("click", (event) => {
+    const playerId = event.target.closest("[data-kick-player]")?.dataset.kickPlayer;
+    if (!playerId || !confirm("Keluarkan pemain ini dari room?")) return;
+    socket.emit("room:kick", { playerId }, (reply) => { if (!reply?.ok) toast(reply?.error || "Gagal mengeluarkan pemain."); });
+  });
   socket?.on("room:state", (room) => { state.room = room; render(); });
+  socket?.on("room:kicked", ({ message } = {}) => { returnToLobby(); toast(message || "Kamu dikeluarkan oleh host."); });
   socket?.on("connect", () => { joinLobbyChat(); reconnectRoom(); });
   socket?.on("disconnect", () => { $("#lobby-chat-status").textContent = "Terputus"; });
   socket?.on("lobby:chat:message", (message) => { lobbyMessages.push(message); lobbyMessages = lobbyMessages.slice(-50); renderLobbyChat(); });

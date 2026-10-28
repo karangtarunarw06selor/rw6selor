@@ -375,6 +375,30 @@ io.on("connection", (socket) => {
     } catch (error) { reply({ ok: false, error: error.message }); }
   });
 
+  socket.on("room:kick", ({ playerId } = {}, reply = () => {}) => {
+    const { room, player } = session(socket);
+    if (!room || !player) return reply({ ok: false, error: "Sesi tidak ditemukan." });
+    if (room.hostId !== player.id) return reply({ ok: false, error: "Hanya host yang dapat mengeluarkan pemain." });
+    if (playerId === player.id) return reply({ ok: false, error: "Host tidak dapat mengeluarkan diri sendiri." });
+    if (room.table.phase !== "waiting") return reply({ ok: false, error: "Pemain hanya dapat dikeluarkan saat di Lobby Room." });
+    const target = room.table.players.find((item) => item.id === playerId);
+    if (!target) return reply({ ok: false, error: "Pemain tidak ditemukan." });
+    const targetSocket = io.sockets.sockets.get(target.socketId);
+    leaveMedia(room, target);
+    room.readyIds.delete(target.id);
+    room.capsaVotes.delete(target.id);
+    room.table.players = room.table.players.filter((item) => item.id !== target.id);
+    if (targetSocket?.data.roomCode === room.code) {
+      targetSocket.leave(roomChannel(room));
+      targetSocket.data.roomCode = null;
+      targetSocket.data.siteId = null;
+      targetSocket.data.playerId = null;
+      targetSocket.emit("room:kicked", { message: "Kamu dikeluarkan oleh host." });
+    }
+    emitRoom(room);
+    reply({ ok: true });
+  });
+
   socket.on("room:leave", (_payload, reply = () => {}) => {
     const { room, player } = session(socket);
     if (!room || !player) return reply({ ok: false, error: "Sesi tidak ditemukan." });

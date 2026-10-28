@@ -58,4 +58,12 @@ test("production chess backend keeps late joins social and read-only", async (co
   const nextGame = await reset;
   assert.equal(nextGame.status, "playing");
   assert.equal(nextGame.players, 3);
+
+  const rejected = await new Promise((resolve) => clients[3].emit("room:kick", { playerId: nextGame.hostId }, resolve));
+  assert.equal(rejected.ok, false);
+  const kicked = waitFor(clients[3], "room:kicked");
+  const updated = waitFor(clients[1], "roomUpdate", (room) => !room.members.some((member) => member.id === fourth.playerId));
+  assert.equal((await new Promise((resolve) => clients[1].emit("room:kick", { playerId: fourth.playerId }, resolve))).ok, true);
+  assert.match((await kicked).message, /host/i);
+  assert.equal((await updated).players, 2);
 });

@@ -197,6 +197,31 @@ io.on("connection", (socket) => {
     emitRoom(room);
   });
 
+  socket.on("room:kick", ({ playerId } = {}, reply = () => {}) => {
+    const room = rooms.get(socket.data.roomCode);
+    const host = room && findPlayer(room, socket);
+    if (!room || !host) return reply({ ok: false, error: "Sesi tidak ditemukan." });
+    if (room.players[0]?.id !== host.id) return reply({ ok: false, error: "Hanya host yang dapat mengeluarkan pemain." });
+    if (playerId === host.id) return reply({ ok: false, error: "Host tidak dapat mengeluarkan diri sendiri." });
+    const target = room.players.find((player) => player.id === playerId);
+    if (!target) return reply({ ok: false, error: "Pemain tidak ditemukan." });
+    const targetSocket = io.sockets.sockets.get(target.socketId);
+    clearTimeout(target.cleanupTimer);
+    leaveVoice(room, target);
+    room.players = room.players.filter((player) => player.id !== target.id);
+    room.activeIds.delete(target.id);
+    room.finishOrder = room.finishOrder.filter((id) => id !== target.id);
+    if (targetSocket?.data.roomCode === room.code) {
+      targetSocket.leave(room.code); targetSocket.data.roomCode = null;
+      targetSocket.emit("room:kicked", { message: "Kamu dikeluarkan oleh host." });
+    }
+    if (room.status === "playing" && room.finishOrder.length) completeWithFinalRacer(room);
+    if (room.status !== "finished" && room.turn === target.id) room.turn = nextRacer(room, target.id)?.id || room.players.find((player) => player.connected && room.activeIds.has(player.id))?.id || null;
+    if (room.status === "playing" && room.players.filter((player) => room.activeIds.has(player.id)).length < 2) room.status = "finished";
+    if (room.winner === target.id) room.winner = room.finishOrder[0] || null;
+    emitRoom(room); reply({ ok: true });
+  });
+
   socket.on("room:leave", (_payload, reply = () => {}) => {
     const room = rooms.get(socket.data.roomCode);
     const player = room && findPlayer(room, socket);

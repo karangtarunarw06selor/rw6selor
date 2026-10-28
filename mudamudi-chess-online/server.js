@@ -6,6 +6,7 @@ const express = require("express");
 const http = require("http");
 
 const path = require("path");
+const crypto = require("crypto");
 
 const { Server } = require("socket.io");
 
@@ -641,6 +642,10 @@ function getRoomData(roomCode) {
 
         players: room.players.length,
 
+        members: room.players.map(({ id, color }) => ({ id, color })),
+
+        hostId: room.players[0]?.id || null,
+
         status: room.status,
 
         capturedPieces: room.capturedPieces || { white: [], black: [] },
@@ -804,7 +809,9 @@ io.on("connection", (socket) => {
 
                 ...getRoomData(roomCode),
 
-                color: existingPlayer.color
+                color: existingPlayer.color,
+
+                playerId: existingPlayer.id
 
             });
 
@@ -825,6 +832,8 @@ io.on("connection", (socket) => {
         const color = room.status === "playing" || room.status === "finished" ? "spectator" : !activeColors.has("white") ? "white" : !activeColors.has("black") ? "black" : "spectator";
 
         room.players.push({
+
+            id: crypto.randomUUID(),
 
             socketId: socket.id,
 
@@ -848,7 +857,9 @@ io.on("connection", (socket) => {
 
             ...getRoomData(roomCode),
 
-            color
+            color,
+
+            playerId: room.players.at(-1).id
 
         });
 
@@ -861,6 +872,26 @@ io.on("connection", (socket) => {
 
         }
 
+    });
+
+    socket.on("room:kick", ({ playerId } = {}, reply = () => {}) => {
+        const roomCode = socket.data.roomCode;
+        const room = rooms[roomCode];
+        const host = room?.players[0];
+        if (!room || host?.socketId !== socket.id) return reply({ ok: false, error: "Hanya host yang dapat mengeluarkan pemain." });
+        if (playerId === host.id) return reply({ ok: false, error: "Host tidak dapat mengeluarkan diri sendiri." });
+        const targetIndex = room.players.findIndex((player) => player.id === playerId);
+        if (targetIndex === -1) return reply({ ok: false, error: "Pemain tidak ditemukan." });
+        const [target] = room.players.splice(targetIndex, 1);
+        const targetSocket = io.sockets.sockets.get(target.socketId);
+        if (targetSocket?.data.roomCode === roomCode) {
+            targetSocket.leave(roomCode); targetSocket.data.roomCode = null; targetSocket.data.color = null;
+            targetSocket.emit("room:kicked", { message: "Kamu dikeluarkan oleh host." });
+        }
+        if (room.status !== "finished" && target.color !== "spectator") {
+            room.status = "finished"; room.winner = target.color === "white" ? "black" : "white"; room.endReason = "Pemain dikeluarkan host.";
+        }
+        io.to(roomCode).emit("roomUpdate", getRoomData(roomCode)); emitLobby(room.siteId); reply({ ok: true });
     });
 
     socket.on("room:chat", ({ text } = {}) => {

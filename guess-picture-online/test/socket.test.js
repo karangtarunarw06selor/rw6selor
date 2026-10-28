@@ -305,6 +305,17 @@ test("reconnect token restores the same seat and rejects impostors", async (cont
   assert.equal(restored.ok, true); assert.equal(restored.playerId, joined.playerId);
 });
 
+test("host kicks another player while guests and self-kick are rejected", async (context) => {
+  const { host, guest, created, joined } = await setup(context);
+  assert.equal((await emit(guest, "room:kick", { playerId: created.playerId })).ok, false);
+  assert.equal((await emit(host, "room:kick", { playerId: created.playerId })).ok, false);
+  const kicked = waitFor(guest, "room:kicked", () => true);
+  const updated = waitFor(host, "room:state", (room) => !room.players.some((player) => player.id === joined.playerId));
+  assert.equal((await emit(host, "room:kick", { playerId: joined.playerId })).ok, true);
+  assert.match((await kicked).message, /host/i);
+  assert.equal((await updated).players.length, 1);
+});
+
 test("explicit leave removes the seat and returns the socket to lobby state", async (context) => {
   const { host, guest, created, joined } = await setup(context);
   const hostUpdate = waitFor(host, "room:state", (room) => room.players.length === 1);

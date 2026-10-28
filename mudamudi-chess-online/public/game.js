@@ -13,6 +13,8 @@ let roomCode = null;
 
 let playerColor = null;
 
+let playerId = null;
+
 let board = [];
 
 let currentTurn = "white";
@@ -231,6 +233,8 @@ socket.on("joinedRoom", (data) => {
 
     playerColor = data.color;
 
+    playerId = data.playerId;
+
     if (playerColor === "spectator") document.getElementById("status").textContent = "Mode penonton · kamu bisa menonton dan memakai chat room";
 
     board = data.board;
@@ -258,6 +262,24 @@ socket.on("joinedRoom", (data) => {
 socket.on("roomUpdate", (data) => {
 
     updateStatus(data);
+
+});
+
+document.getElementById("playerInfo")?.addEventListener("click", (event) => {
+
+    const targetId = event.target.dataset.kickPlayer;
+
+    if (!targetId || !confirm("Keluarkan pemain ini dari room?")) return;
+
+    socket.emit("room:kick", { playerId: targetId }, (reply) => { if (!reply?.ok) showToast(reply?.error || "Gagal mengeluarkan pemain.", "warning", "Kick gagal"); });
+
+});
+
+socket.on("room:kicked", ({ message } = {}) => {
+
+    sessionStorage.setItem("chess:kicked", message || "Kamu dikeluarkan oleh host.");
+
+    window.location.href = "/chess/lobby.html";
 
 });
 
@@ -407,7 +429,9 @@ function updateStatus(data) {
 
     `;
 
-    playerInfo.innerHTML = "";
+    const isHost = data?.hostId === playerId;
+
+    playerInfo.innerHTML = isHost ? (data.members || []).filter((member) => member.id !== playerId).map((member) => `<button class="kick-player" type="button" data-kick-player="${member.id}">Kick ${member.color === "spectator" ? "Penonton" : member.color === "white" ? "Putih" : "Hitam"}</button>`).join("") : "";
 
 }
 

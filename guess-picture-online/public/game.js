@@ -38,9 +38,10 @@
   const renderPlayers = () => {
     const room = state.room; if (!room) return;
     const tiles = [...document.querySelectorAll(".video-tile")];
-    const canTransfer = room.status === "waiting" && room.hostId === state.playerId;
+    const isHost = room.hostId === state.playerId;
+    const canTransfer = room.status === "waiting" && isHost;
     const camera = (player, drawing = false) => `<div class="player-camera ${drawing ? "drawer" : ""}">${player.media?.video ? "" : '<span class="camera-off">Kamera off</span>'}${player.connected ? '<span class="online-dot" title="Online"></span>' : ""}<span class="camera-player"><b>${escapeHtml(player.name)}${player.id === state.playerId ? " · Kamu" : ""}</b><strong>${player.score}</strong></span></div>`;
-    $("#lobby-players").innerHTML = room.players.map((player) => `<article class="player-card ${player.connected ? "" : "offline"}" data-player="${player.id}">${camera(player)}${canTransfer && player.id !== state.playerId && player.connected ? `<button class="transfer-host" type="button" data-transfer-host="${player.id}">Jadikan Host</button>` : ""}</article>`).join("");
+    $("#lobby-players").innerHTML = room.players.map((player) => `<article class="player-card ${player.connected ? "" : "offline"}" data-player="${player.id}">${camera(player)}${canTransfer && player.id !== state.playerId && player.connected ? `<button class="transfer-host" type="button" data-transfer-host="${player.id}">Jadikan Host</button>` : ""}${isHost && player.id !== state.playerId ? `<button class="kick-player" type="button" data-kick-player="${player.id}">Kick</button>` : ""}</article>`).join("");
     $("#scoreboard").innerHTML = [...room.players].sort((a, b) => b.score - a.score).map((player) => `<div class="score-row" data-player="${player.id}">${camera(player, player.id === room.drawerId)}</div>`).join("");
     tiles.forEach((tile) => { const slot = document.querySelector(`${room.status === "waiting" ? "#lobby-players" : "#scoreboard"} [data-player="${CSS.escape(tile.dataset.peer)}"] .player-camera`); (slot || $("#video-dock")).append(tile); });
   };
@@ -133,18 +134,16 @@
     if (!state.room) return location.assign("/");
     $("#leave-dialog").showModal();
   });
+  const returnToWelcome = (message = "") => {
+    sessionStorage.removeItem(sessionKey);
+    clearTimeout(state.answerTimer); state.playerId = null; state.room = null; state.secret = null; state.lastStatus = null; state.correctShown = null; state.standingsShown = null;
+    document.body.classList.remove("game-active");
+    $("#leave-dialog").close(); if ($("#correct-dialog").open) $("#correct-dialog").close(); if ($("#standings-dialog").open) $("#standings-dialog").close();
+    $("#lobby").hidden = true; $("#game").hidden = true; $("#welcome").hidden = false;
+    window.GuessMedia?.leave(); if (message) toast(message);
+  };
   $("#cancel-leave").addEventListener("click", () => $("#leave-dialog").close());
-  $("#confirm-leave").addEventListener("click", () => {
-    const finish = () => {
-      sessionStorage.removeItem(sessionKey);
-      clearTimeout(state.answerTimer); state.playerId = null; state.room = null; state.secret = null; state.lastStatus = null; state.correctShown = null; state.standingsShown = null;
-      document.body.classList.remove("game-active");
-      $("#leave-dialog").close(); if ($("#correct-dialog").open) $("#correct-dialog").close(); if ($("#standings-dialog").open) $("#standings-dialog").close();
-      $("#lobby").hidden = true; $("#game").hidden = true; $("#welcome").hidden = false;
-      window.GuessMedia?.leave();
-    };
-    socket.emit("room:leave", {}, (reply) => reply?.ok ? finish() : toast(reply?.error || "Gagal keluar room."));
-  });
+  $("#confirm-leave").addEventListener("click", () => socket.emit("room:leave", {}, (reply) => reply?.ok ? returnToWelcome() : toast(reply?.error || "Gagal keluar room.")));
   $("#round-options").addEventListener("click", (event) => { const rounds = Number(event.target.dataset.rounds); if (![2, 3, 5].includes(rounds)) return; state.selectedRounds = rounds; $("#round-options").querySelectorAll("[data-rounds]").forEach((button) => button.classList.toggle("active", Number(button.dataset.rounds) === rounds)); $("#start-game").textContent = `Mulai ${rounds} Putaran`; });
   $("#start-game").addEventListener("click", () => socket.emit("game:start", { roundsPerPlayer: state.selectedRounds }, (reply) => { if (!reply?.ok) toast(reply.error); }));
 
@@ -155,7 +154,12 @@
     state.resultDialogRound = null; socket.emit("round:result-ack", { round });
   });
   $("#return-lobby").addEventListener("click", () => socket.emit("game:return-lobby", {}, (reply) => { if (!reply?.ok) toast(reply?.error || "Gagal kembali ke lobby."); }));
-  $("#lobby-players").addEventListener("click", (event) => { const targetId = event.target.dataset.transferHost; if (!targetId) return; socket.emit("room:transfer-host", { targetId }, (reply) => { if (!reply?.ok) toast(reply?.error || "Gagal memindahkan host."); }); });
+  $("#lobby-players").addEventListener("click", (event) => {
+    const transferId = event.target.dataset.transferHost;
+    if (transferId) return socket.emit("room:transfer-host", { targetId: transferId }, (reply) => { if (!reply?.ok) toast(reply?.error || "Gagal memindahkan host."); });
+    const kickId = event.target.dataset.kickPlayer;
+    if (kickId && confirm("Keluarkan pemain ini dari room?")) socket.emit("room:kick", { playerId: kickId }, (reply) => { if (!reply?.ok) toast(reply?.error || "Gagal mengeluarkan pemain."); });
+  });
   $("#next-clue").addEventListener("click", () => socket.emit("clue:unlock", {}, (reply) => { if (!reply?.ok) toast(reply.error); else { state.activeClue = state.room.clueCount; } }));
   $("#clear-clue").addEventListener("click", () => socket.emit("clue:clear", { clueIndex: state.activeClue }));
   $("#hide-secret").addEventListener("click", () => { $("#secret-panel").hidden = true; });
@@ -169,6 +173,7 @@
   const endDraw = () => { if (!state.drawing) return; state.drawing = false; if (state.points.length >= 2) socket.emit("clue:stroke", { clueIndex: state.activeClue, points: state.points.slice(0, 100), color: $("#draw-color").value, size: Number($("#draw-size").value) }); state.points = []; };
   canvas.addEventListener("pointerdown", startDraw); canvas.addEventListener("pointermove", moveDraw); window.addEventListener("pointerup", endDraw);
   socket.on("room:state", (room) => { state.room = room; if (state.lastStatus === "playing" && room.status !== "playing") state.secret = null; if (room.status === "waiting" && state.lastStatus === "finished") { state.standingsShown = null; if ($("#standings-dialog").open) $("#standings-dialog").close(); } state.lastStatus = room.status; render(); });
+  socket.on("room:kicked", ({ message } = {}) => returnToWelcome(message || "Kamu dikeluarkan oleh host."));
   socket.on("room:message", (message) => { if (!state.room || state.room.messages.some((item) => item.id === message.id)) return; state.room.messages.push(message); if (state.room.messages.length > 60) state.room.messages.shift(); renderRoomMessages(); });
   socket.on("round:secret", showSecret);
   socket.on("clue:stroke", (stroke) => { if (!state.room) return; state.room.strokes[stroke.clueIndex].push(stroke); if (stroke.clueIndex === state.activeClue) redraw(); });

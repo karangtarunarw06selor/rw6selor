@@ -296,6 +296,11 @@ async function sendHeartbeat() {
           return;
         }
 
+        if (!result.me) {
+          sessionStorage.setItem("billiard_kicked", "Kamu dikeluarkan oleh host.");
+          window.location.href = "index.html";
+          return;
+        }
         roomData = result;
 
         renderRoom();
@@ -334,6 +339,8 @@ async function sendHeartbeat() {
         roomData.players ||
         roomData.room_players ||
         [];
+      const canKick = Number(roomData.me?.is_host || 0) === 1;
+      const myId = Number(roomData.me?.player_id || 0);
 
       if (!players.length) {
         playerList.innerHTML = "Belum ada player.";
@@ -359,6 +366,7 @@ async function sendHeartbeat() {
               <div class="playerBadge ${ready ? 'ready' : ''}">
                 ${ready ? 'Ready' : 'Waiting'}
               </div>
+              ${canKick && Number(player.player_id) !== myId ? `<button type="button" onclick="kickPlayer(${Number(player.player_id)})">Kick</button>` : ''}
             </div>
           `;
         }).join("");
@@ -395,6 +403,18 @@ const isHost =
       } else {
         setStatus("Tekan Ready lalu tunggu host memulai game.");
       }
+    }
+
+    async function kickPlayer(targetPlayerId) {
+      if (!confirm("Keluarkan pemain ini dari room?")) return;
+      const response = await fetch("api/kick_player.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ room_code: roomCode, player_key: playerKey, target_player_id: targetPlayerId })
+      });
+      const result = await response.json();
+      if (!result.success) return alert(result.message || "Gagal mengeluarkan pemain.");
+      await loadRoom();
     }
 
     async function setReady() {
