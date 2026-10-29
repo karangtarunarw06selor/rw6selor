@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#e60012">
   <title>UNO Online</title>
   <link rel="icon" href="assets/res/logo.png?v=2">
-  <link rel="stylesheet" href="game.css?v=2">
+  <link rel="stylesheet" href="game.css?v=3">
 </head>
 <body class="lobby-screen">
   <audio id="song" loop preload="none">
@@ -55,10 +55,17 @@
         </div>
         <button id="leave" class="source-button compact danger" type="button">KELUAR</button>
       </div>
-      <div id="notice" class="notice"></div>
-      <div id="players" class="players"></div>
+      <div class="room-layout">
+        <div class="game-column">
+          <div id="notice" class="notice"></div>
+          <div class="media-controls" aria-label="Kontrol media">
+            <button id="mic-toggle" class="media-button" type="button" aria-pressed="false">🎙 Mikrofon OFF</button>
+            <button id="camera-toggle" class="media-button" type="button" aria-pressed="false">📷 Kamera OFF</button>
+            <span>Tidak direkam</span>
+          </div>
+          <div id="players" class="players"></div>
 
-      <div id="table" class="table" hidden>
+          <div id="table" class="table" hidden>
         <div class="floor">
           <button id="draw" class="stack-card" type="button">
             <img src="assets/res/logo.png?v=2" alt="Ambil kartu">
@@ -83,10 +90,21 @@
         <small id="handhint">Geser untuk melihat semua kartu</small>
         <div id="hand" class="hand"></div>
         <button id="pass" class="source-button compact" type="button" hidden>PASS</button>
-      </div>
+          </div>
 
-      <button id="start" class="source-button room-primary" type="button" hidden>MULAI PERMAINAN</button>
-      <button id="rematch" class="source-button room-primary" type="button" hidden>MAIN LAGI</button>
+          <button id="start" class="source-button room-primary" type="button" hidden>MULAI PERMAINAN</button>
+          <button id="rematch" class="source-button room-primary" type="button" hidden>MAIN LAGI</button>
+        </div>
+
+        <aside class="room-chat" aria-label="Chat room">
+          <header><strong>CHAT ROOM</strong><small>Hanya pemain di room ini</small></header>
+          <div id="chat-messages" class="chat-messages" aria-live="polite"></div>
+          <form id="chat-form" class="chat-form">
+            <input id="chat-input" maxlength="300" autocomplete="off" placeholder="Tulis pesan..." aria-label="Pesan chat">
+            <button type="submit" aria-label="Kirim pesan">KIRIM</button>
+          </form>
+        </aside>
+      </div>
     </section>
 
     <footer>
@@ -96,7 +114,9 @@
   </main>
 
   <div id="toast" role="alert"></div>
+  <div id="remote-media" hidden></div>
   <script src="/uno/socket.io/socket.io.js"></script>
-  <script src="game.js?v=2"></script>
+  <script src="game.js?v=3"></script>
+  <script src="media.js?v=1"></script>
 </body>
 </html>

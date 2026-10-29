@@ -1,24 +1,279 @@
 "use strict";
-const express=require("express"),http=require("http"),path=require("path"),crypto=require("crypto");
-const {Server}=require("socket.io");const {UnoGame}=require("./uno-engine");
-function createService(){
- const app=express(),server=http.createServer(app),io=new Server(server,{path:"/uno/socket.io",cors:{origin:false},maxHttpBufferSize:16384});const rooms=new Map();
- app.use("/uno",express.static(path.join(__dirname,"public")));app.get("/health",(_q,r)=>r.json({ok:true,service:"uno-online",rooms:rooms.size}));app.get("/uno/health",(_q,r)=>r.json({ok:true,service:"uno-online",rooms:rooms.size}));app.get("/",(_q,r)=>r.redirect("/uno/"));
- const site=v=>String(v).toUpperCase()==="KT"?"KT":"MMS",code=v=>String(v||"").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,6),name=v=>String(v||"").trim().replace(/\s+/g," ").slice(0,20),key=(s,c)=>`${s}:${c}`,channel=r=>`uno:${r.siteId}:${r.code}`;
- function state(r){for(const p of r.players){if(p.connected&&p.socketId)io.to(p.socketId).emit("room:state",{...r.game.viewFor(p.id),roomCode:r.code,siteId:r.siteId,hostId:r.hostId,myId:p.id,spectator:p.spectator,players:r.players.map(x=>{const g=r.game.players.find(y=>y.id===x.id);return{id:x.id,name:x.name,connected:x.connected,spectator:x.spectator,cardCount:g?.hand.length||0,playing:Boolean(g?.playing)}})});}}
- function bind(socket,r,p){if(p.socketId&&p.socketId!==socket.id)io.sockets.sockets.get(p.socketId)?.disconnect(true);p.socketId=socket.id;p.connected=true;socket.data={roomKey:key(r.siteId,r.code),playerId:p.id};socket.join(channel(r));}
- const ack=(cb,fn)=>{try{cb?.({ok:true,...fn()});}catch(e){cb?.({ok:false,error:e.message});}};
- io.on("connection",socket=>{
-  const ensureFree=()=>{if(socket.data.roomKey)throw Error("Sudah berada di ruang.");};
-  socket.on("room:create",(d={},cb)=>ack(cb,()=>{ensureFree();const s=site(d.siteId);let c;do{c=crypto.randomBytes(3).toString("hex").toUpperCase();}while(rooms.has(key(s,c)));const p={id:crypto.randomUUID(),name:name(d.name)||"Pemain",token:crypto.randomBytes(24).toString("hex"),connected:true,spectator:false};const game=new UnoGame();game.addPlayer(p);const r={siteId:s,code:c,players:[p],hostId:p.id,game};rooms.set(key(s,c),r);bind(socket,r,p);state(r);return{roomCode:c,playerId:p.id,reconnectToken:p.token,siteId:s};}));
-  socket.on("room:join",(d={},cb)=>ack(cb,()=>{ensureFree();const s=site(d.siteId),r=rooms.get(key(s,code(d.roomCode)));if(!r)throw Error("Ruang tidak ditemukan.");if(r.players.length>=8)throw Error("Ruang penuh.");const spectator=r.game.phase!=="waiting";const p={id:crypto.randomUUID(),name:name(d.name)||"Pemain",token:crypto.randomBytes(24).toString("hex"),connected:true,spectator};r.players.push(p);if(!spectator)r.game.addPlayer(p);bind(socket,r,p);state(r);return{roomCode:r.code,playerId:p.id,reconnectToken:p.token,siteId:s,spectator};}));
-  socket.on("room:reconnect",(d={},cb)=>ack(cb,()=>{const s=site(d.siteId),r=rooms.get(key(s,code(d.roomCode)));const p=r?.players.find(x=>x.id===d.playerId);if(!p||p.token!==d.reconnectToken)throw Error("Sesi tidak valid.");bind(socket,r,p);state(r);return{roomCode:r.code,playerId:p.id,reconnectToken:p.token,siteId:s,spectator:p.spectator};}));
-  const session=()=>{const r=rooms.get(socket.data.roomKey),p=r?.players.find(x=>x.id===socket.data.playerId&&x.socketId===socket.id);if(!r||!p)throw Error("Sesi tidak valid.");return{r,p};};
-  socket.on("game:start",(d={},cb)=>ack(cb,()=>{const{r,p}=session();if(r.hostId!==p.id)throw Error("Hanya host.");r.game.start();state(r);return{};}));
-  socket.on("game:action",(d={},cb)=>ack(cb,()=>{const{r,p}=session();if(p.spectator)throw Error("Penonton tidak dapat bermain.");const out=r.game.act(p.id,d.actionId,()=>{if(d.type==="draw")return r.game.draw(p.id);if(d.type==="pass")return r.game.pass(p.id);if(d.type==="play")return r.game.play(p.id,d.cardId,{color:d.color,uno:Boolean(d.uno)});throw Error("Aksi tidak valid.");});state(r);return out;}));
-  socket.on("game:rematch",(d={},cb)=>ack(cb,()=>{const{r,p}=session();if(r.hostId!==p.id)throw Error("Hanya host.");if(r.game.phase!=="finished")throw Error("Permainan belum selesai.");const seated=r.players.filter(x=>x.connected);if(seated.length<2)throw Error("Minimal 2 pemain terhubung.");r.game=new UnoGame();for(const x of seated){x.spectator=false;r.game.addPlayer(x);}for(const x of r.players.filter(x=>!x.connected))x.spectator=true;r.game.start();state(r);return{};}));
-  socket.on("room:leave",(_d,cb)=>ack(cb,()=>{const{r,p}=session();const gp=r.game.players.find(x=>x.id===p.id);if(gp&&r.game.phase==="playing"){const wasCurrent=r.game.current().id===p.id;gp.playing=false;const active=r.game.players.filter(x=>x.playing);if(active.length===1)r.game.finishPlayer(active[0]);else if(wasCurrent&&active.length>1)r.game.turnIndex=r.game.nextIndex(r.game.turnIndex);}r.players=r.players.filter(x=>x!==p);socket.leave(channel(r));socket.data={};if(!r.players.length)rooms.delete(key(r.siteId,r.code));else{if(r.hostId===p.id)r.hostId=r.players[0].id;state(r);}return{};}));
-  socket.on("disconnect",()=>{const r=rooms.get(socket.data.roomKey),p=r?.players.find(x=>x.id===socket.data.playerId&&x.socketId===socket.id);if(p){p.connected=false;state(r);}});
- });return{app,server,io,rooms};
+
+const crypto = require("crypto");
+const express = require("express");
+const http = require("http");
+const path = require("path");
+const { Server } = require("socket.io");
+const { UnoGame } = require("./uno-engine");
+
+const CHAT_LIMIT = 80;
+const CHAT_LENGTH = 300;
+const SIGNAL_LIMIT = 20_000;
+
+function createService() {
+  const app = express();
+  const server = http.createServer(app);
+  const io = new Server(server, { path: "/uno/socket.io", cors: { origin: false }, maxHttpBufferSize: SIGNAL_LIMIT });
+  const rooms = new Map();
+
+  app.use("/uno", express.static(path.join(__dirname, "public")));
+  app.get("/health", (_request, response) => response.json({ ok: true, service: "uno-online", rooms: rooms.size }));
+  app.get("/uno/health", (_request, response) => response.json({ ok: true, service: "uno-online", rooms: rooms.size }));
+  app.get("/", (_request, response) => response.redirect("/uno/"));
+
+  const site = (value) => String(value).toUpperCase() === "KT" ? "KT" : "MMS";
+  const code = (value) => String(value || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+  const name = (value) => String(value || "").trim().replace(/\s+/g, " ").slice(0, 20);
+  const message = (value) => String(value || "").trim().replace(/\s+/g, " ").slice(0, CHAT_LENGTH);
+  const key = (siteId, roomCode) => `${siteId}:${roomCode}`;
+  const channel = (room) => `uno:${room.siteId}:${room.code}`;
+  const mediaView = (player) => ({ voice: Boolean(player.media?.voice), video: Boolean(player.media?.video) });
+
+  function safeSignal(signal) {
+    if (!signal || typeof signal !== "object") return null;
+    if (JSON.stringify(signal).length > SIGNAL_LIMIT) return null;
+    if (signal.description && ["offer", "answer"].includes(signal.description.type) && typeof signal.description.sdp === "string" && signal.description.sdp.length <= 16_000) {
+      return { description: { type: signal.description.type, sdp: signal.description.sdp } };
+    }
+    if (signal.candidate && typeof signal.candidate.candidate === "string" && signal.candidate.candidate.length <= 4096) {
+      return { candidate: {
+        candidate: signal.candidate.candidate,
+        sdpMid: typeof signal.candidate.sdpMid === "string" ? signal.candidate.sdpMid.slice(0, 64) : null,
+        sdpMLineIndex: Number.isInteger(signal.candidate.sdpMLineIndex) ? signal.candidate.sdpMLineIndex : null,
+      } };
+    }
+    return null;
+  }
+
+  function state(room) {
+    for (const player of room.players) {
+      if (!player.connected || !player.socketId) continue;
+      io.to(player.socketId).emit("room:state", {
+        ...room.game.viewFor(player.id),
+        roomCode: room.code,
+        siteId: room.siteId,
+        hostId: room.hostId,
+        myId: player.id,
+        spectator: player.spectator,
+        chatHistory: room.chat,
+        players: room.players.map((item) => {
+          const gamePlayer = room.game.players.find((candidate) => candidate.id === item.id);
+          return {
+            id: item.id,
+            name: item.name,
+            connected: item.connected,
+            spectator: item.spectator,
+            cardCount: gamePlayer?.hand.length || 0,
+            playing: Boolean(gamePlayer?.playing),
+            media: mediaView(item),
+          };
+        }),
+      });
+    }
+  }
+
+  function bind(socket, room, player) {
+    if (player.socketId && player.socketId !== socket.id) io.sockets.sockets.get(player.socketId)?.disconnect(true);
+    player.socketId = socket.id;
+    player.connected = true;
+    player.mediaWatching = false;
+    player.media = { voice: false, video: false };
+    socket.data = { roomKey: key(room.siteId, room.code), playerId: player.id };
+    socket.join(channel(room));
+  }
+
+  function leaveMedia(room, player) {
+    if (!player) return;
+    const wasPresent = player.mediaWatching || player.media?.voice || player.media?.video;
+    player.mediaWatching = false;
+    player.media = { voice: false, video: false };
+    if (room && wasPresent) socketRoom(room).emit("media:peer-left", { playerId: player.id });
+  }
+
+  function socketRoom(room) {
+    return io.to(channel(room));
+  }
+
+  const ack = (callback, task) => {
+    try { callback?.({ ok: true, ...task() }); }
+    catch (error) { callback?.({ ok: false, error: error.message }); }
+  };
+
+  io.on("connection", (socket) => {
+    const ensureFree = () => { if (socket.data.roomKey) throw Error("Sudah berada di ruang."); };
+    const session = () => {
+      const room = rooms.get(socket.data.roomKey);
+      const player = room?.players.find((item) => item.id === socket.data.playerId && item.socketId === socket.id);
+      if (!room || !player) throw Error("Sesi tidak valid.");
+      return { room, player };
+    };
+
+    socket.on("room:create", (data = {}, callback) => ack(callback, () => {
+      ensureFree();
+      const siteId = site(data.siteId);
+      let roomCode;
+      do { roomCode = crypto.randomBytes(3).toString("hex").toUpperCase(); }
+      while (rooms.has(key(siteId, roomCode)));
+      const player = { id: crypto.randomUUID(), name: name(data.name) || "Pemain", token: crypto.randomBytes(24).toString("hex"), connected: true, spectator: false, media: { voice: false, video: false } };
+      const game = new UnoGame();
+      game.addPlayer(player);
+      const room = { siteId, code: roomCode, players: [player], hostId: player.id, game, chat: [] };
+      rooms.set(key(siteId, roomCode), room);
+      bind(socket, room, player);
+      state(room);
+      return { roomCode, playerId: player.id, reconnectToken: player.token, siteId };
+    }));
+
+    socket.on("room:join", (data = {}, callback) => ack(callback, () => {
+      ensureFree();
+      const siteId = site(data.siteId);
+      const room = rooms.get(key(siteId, code(data.roomCode)));
+      if (!room) throw Error("Ruang tidak ditemukan.");
+      if (room.players.length >= 8) throw Error("Ruang penuh.");
+      const spectator = room.game.phase !== "waiting";
+      const player = { id: crypto.randomUUID(), name: name(data.name) || "Pemain", token: crypto.randomBytes(24).toString("hex"), connected: true, spectator, media: { voice: false, video: false } };
+      room.players.push(player);
+      if (!spectator) room.game.addPlayer(player);
+      bind(socket, room, player);
+      state(room);
+      return { roomCode: room.code, playerId: player.id, reconnectToken: player.token, siteId, spectator };
+    }));
+
+    socket.on("room:reconnect", (data = {}, callback) => ack(callback, () => {
+      const siteId = site(data.siteId);
+      const room = rooms.get(key(siteId, code(data.roomCode)));
+      const player = room?.players.find((item) => item.id === data.playerId);
+      if (!player || player.token !== data.reconnectToken) throw Error("Sesi tidak valid.");
+      bind(socket, room, player);
+      state(room);
+      return { roomCode: room.code, playerId: player.id, reconnectToken: player.token, siteId, spectator: player.spectator };
+    }));
+
+    socket.on("chat:send", (data = {}, callback) => ack(callback, () => {
+      const { room, player } = session();
+      const text = message(data.text);
+      if (!text) throw Error("Pesan kosong.");
+      const now = Date.now();
+      if (now - (player.lastChatAt || 0) < 500) throw Error("Terlalu cepat mengirim pesan.");
+      player.lastChatAt = now;
+      const item = { id: crypto.randomUUID(), playerId: player.id, name: player.name, text, sentAt: now };
+      room.chat.push(item);
+      if (room.chat.length > CHAT_LIMIT) room.chat.splice(0, room.chat.length - CHAT_LIMIT);
+      socketRoom(room).emit("chat:message", item);
+      return { message: item };
+    }));
+
+    socket.on("media:config", (_data, callback) => ack(callback, () => {
+      session();
+      return { iceServers: [{ urls: "stun:stun.cloudflare.com:3478" }, { urls: "stun:stun.l.google.com:19302" }] };
+    }));
+
+    socket.on("media:watch", (_data, callback) => ack(callback, () => {
+      const { room, player } = session();
+      player.mediaWatching = true;
+      const peers = room.players.filter((item) => item.id !== player.id && item.connected && (item.mediaWatching || item.media?.voice || item.media?.video)).map((item) => ({ id: item.id, name: item.name, media: mediaView(item) }));
+      return { peers };
+    }));
+
+    socket.on("media:update", (data = {}, callback) => ack(callback, () => {
+      const { room, player } = session();
+      player.mediaWatching = true;
+      player.media = { voice: Boolean(data.voice), video: Boolean(data.video) };
+      socket.to(channel(room)).emit("media:peer", { playerId: player.id, name: player.name, ...player.media });
+      state(room);
+      return { peers: room.players.filter((item) => item.id !== player.id && item.connected && (item.mediaWatching || item.media?.voice || item.media?.video)).map((item) => ({ id: item.id, name: item.name, media: mediaView(item) })) };
+    }));
+
+    socket.on("media:signal", (data = {}, callback) => ack(callback, () => {
+      const { room, player } = session();
+      const target = room.players.find((item) => item.id === data.targetId && item.connected && item.socketId && (item.mediaWatching || item.media?.voice || item.media?.video));
+      const signal = safeSignal(data.signal);
+      if (!(player.mediaWatching || player.media?.voice || player.media?.video) || !target || !signal) throw Error("Peer media tidak valid.");
+      io.to(target.socketId).emit("media:signal", { playerId: player.id, name: player.name, signal });
+      return {};
+    }));
+
+    socket.on("media:leave", (_data, callback) => ack(callback, () => {
+      const { room, player } = session();
+      leaveMedia(room, player);
+      state(room);
+      return {};
+    }));
+
+    socket.on("game:start", (_data = {}, callback) => ack(callback, () => {
+      const { room, player } = session();
+      if (room.hostId !== player.id) throw Error("Hanya host.");
+      room.game.start();
+      state(room);
+      return {};
+    }));
+
+    socket.on("game:action", (data = {}, callback) => ack(callback, () => {
+      const { room, player } = session();
+      if (player.spectator) throw Error("Penonton tidak dapat bermain.");
+      const output = room.game.act(player.id, data.actionId, () => {
+        if (data.type === "draw") return room.game.draw(player.id);
+        if (data.type === "pass") return room.game.pass(player.id);
+        if (data.type === "play") return room.game.play(player.id, data.cardId, { color: data.color, uno: Boolean(data.uno) });
+        throw Error("Aksi tidak valid.");
+      });
+      state(room);
+      return output;
+    }));
+
+    socket.on("game:rematch", (_data = {}, callback) => ack(callback, () => {
+      const { room, player } = session();
+      if (room.hostId !== player.id) throw Error("Hanya host.");
+      if (room.game.phase !== "finished") throw Error("Permainan belum selesai.");
+      const seated = room.players.filter((item) => item.connected);
+      if (seated.length < 2) throw Error("Minimal 2 pemain terhubung.");
+      room.game = new UnoGame();
+      for (const item of seated) { item.spectator = false; room.game.addPlayer(item); }
+      for (const item of room.players.filter((item) => !item.connected)) item.spectator = true;
+      room.game.start();
+      state(room);
+      return {};
+    }));
+
+    socket.on("room:leave", (_data, callback) => ack(callback, () => {
+      const { room, player } = session();
+      leaveMedia(room, player);
+      const gamePlayer = room.game.players.find((item) => item.id === player.id);
+      if (gamePlayer && room.game.phase === "playing") {
+        const wasCurrent = room.game.current().id === player.id;
+        gamePlayer.playing = false;
+        const active = room.game.players.filter((item) => item.playing);
+        if (active.length === 1) room.game.finishPlayer(active[0]);
+        else if (wasCurrent && active.length > 1) room.game.turnIndex = room.game.nextIndex(room.game.turnIndex);
+      }
+      room.players = room.players.filter((item) => item !== player);
+      socket.leave(channel(room));
+      socket.data = {};
+      if (!room.players.length) rooms.delete(key(room.siteId, room.code));
+      else {
+        if (room.hostId === player.id) room.hostId = room.players[0].id;
+        state(room);
+      }
+      return {};
+    }));
+
+    socket.on("disconnect", () => {
+      const room = rooms.get(socket.data.roomKey);
+      const player = room?.players.find((item) => item.id === socket.data.playerId && item.socketId === socket.id);
+      if (!player) return;
+      leaveMedia(room, player);
+      player.connected = false;
+      state(room);
+    });
+  });
+
+  return { app, server, io, rooms };
 }
-if(require.main===module){const{server}=createService();server.listen(Number(process.env.PORT)||3053,"127.0.0.1",()=>console.log("UNO online listening"));}module.exports={createService};
+
+if (require.main === module) {
+  const { server } = createService();
+  server.listen(Number(process.env.PORT) || 3053, "127.0.0.1", () => console.log("UNO online listening"));
+}
+
+module.exports = { createService };

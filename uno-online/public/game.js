@@ -11,6 +11,8 @@ const socket = io({ path: "/uno/socket.io" });
 let session = JSON.parse(sessionStorage.getItem("unoSession") || "null");
 let reconnecting = false;
 let pendingWild = null;
+let currentState = null;
+const chatIds = new Set();
 
 function toast(message) {
   $("toast").textContent = message;
@@ -18,10 +20,10 @@ function toast(message) {
   setTimeout(() => { $("toast").style.display = "none"; }, 2500);
 }
 
-function showRoom() {
+function showRoom(roomCode = session?.roomCode) {
   $("lobby").hidden = true;
   $("room").hidden = false;
-  $("roomcode").textContent = session.roomCode;
+  if (roomCode) $("roomcode").textContent = roomCode;
 }
 
 function request(event, data = {}) {
@@ -73,10 +75,34 @@ $("draw").addEventListener("click", () => action("draw"));
 $("pass").addEventListener("click", () => action("pass"));
 $("leave").addEventListener("click", async () => {
   if (!confirm("Keluar dari ruang? Sesi tidak bisa dipulihkan.")) return;
+  await window.UnoMedia?.leave();
   await request("room:leave");
   sessionStorage.removeItem("unoSession");
   location.href = `/uno/?siteId=${siteId}`;
 });
+
+function appendChat(item) {
+  if (!item?.id || chatIds.has(item.id)) return;
+  chatIds.add(item.id);
+  const message = document.createElement("p");
+  const author = document.createElement("b");
+  const text = document.createElement("span");
+  author.textContent = `${item.name}:`;
+  text.textContent = item.text;
+  message.append(author, text);
+  $("chat-messages").append(message);
+  $("chat-messages").scrollTop = $("chat-messages").scrollHeight;
+}
+
+$("chat-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const text = $("chat-input").value.trim();
+  if (!text) return;
+  const response = await send("chat:send", { text });
+  if (response) $("chat-input").value = "";
+});
+
+socket.on("chat:message", appendChat);
 
 const cardClass = (card) => card.color || "wild";
 const actionAssets = {
@@ -132,18 +158,32 @@ function isLegal(card, state) {
 }
 
 socket.on("room:state", (state) => {
+  currentState = state;
   showRoom();
   document.body.classList.toggle("game-screen", state.phase !== "waiting");
   document.body.classList.toggle("lobby-screen", state.phase === "waiting");
   const myTurn = state.phase === "playing" && !state.spectator && state.turnPlayerId === state.myId;
   const activePlayers = state.players.filter((player) => !player.spectator);
 
+  const mediaTiles = new Map([...$("players").querySelectorAll(".player-media")].map((node) => [node.dataset.playerId, node]));
   $("players").replaceChildren(...state.players.map((player) => {
     const node = document.createElement("div");
     node.className = `player${state.turnPlayerId === player.id ? " active" : ""}`;
-    node.textContent = `${player.name}${player.id === state.hostId ? " • HOST" : ""}${player.spectator ? " • PENONTON" : ""} — ${player.cardCount} kartu`;
+    node.dataset.playerId = player.id;
+    const media = mediaTiles.get(player.id) || document.createElement("div");
+    media.className = "player-media";
+    media.dataset.playerId = player.id;
+    const label = document.createElement("div");
+    label.className = "player-label";
+    label.textContent = `${player.name}${player.id === state.hostId ? " • HOST" : ""}${player.spectator ? " • PENONTON" : ""} — ${player.cardCount} kartu`;
+    const status = document.createElement("small");
+    status.className = "media-status";
+    status.textContent = `${player.media?.voice ? "🎙" : "🔇"} ${player.media?.video ? "📷" : "Kamera off"}${player.connected ? "" : " • Terputus"}`;
+    node.append(media, label, status);
     return node;
   }));
+  (state.chatHistory || []).forEach(appendChat);
+  window.UnoMedia?.syncPlayers(state.players, state.myId);
 
   $("notice").textContent = state.spectator
     ? "Anda masuk saat match berjalan. Anda ikut pada rematch berikutnya."
@@ -193,3 +233,5 @@ document.querySelectorAll("#colors button").forEach((button) => button.addEventL
   $("colors").hidden = true;
   pendingWild = null;
 }));
+
+window.UnoGame = { socket, request, toast, getState: () => currentState };
