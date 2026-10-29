@@ -342,6 +342,10 @@
   $("#capsaPass").addEventListener("click", () => roomAction("game:action", { type: "pass", actionId: actionId() }));
   $("#samgongReveal").addEventListener("click", () => roomAction("game:action", { type: "reveal", actionId: actionId() }));
   elements.continueHand.addEventListener("click", () => roomAction("game:continue", { ready: !state.room.continueReadyIds.includes(state.playerId) }));
+  document.addEventListener("click", (event) => {
+    const guide = $(".hand-guide");
+    if (guide.open && !guide.contains(event.target)) guide.open = false;
+  });
   $("#capsaPlay").addEventListener("click", async () => {
     const selected = [...state.selectedCards].sort((a, b) => a - b);
     const response = await roomAction("game:action", { type: "play", cardIndexes: selected, actionId: actionId() });
