@@ -19,13 +19,24 @@
   const confirm = document.querySelector("#consentConfirm");
 
   function emitSignal(targetId, signal) { request("media:signal", { targetId, signal }); }
+  function videoSlot(id) {
+    const active = document.querySelector("#game:not(.hidden)") ? "#game" : "#roomLobby";
+    return document.querySelector(`${active} [data-video-slot="${CSS.escape(id)}"]`);
+  }
   function attachVideo(id, stream, muted = false) {
-    const slot = document.querySelector(`[data-video-slot="${CSS.escape(id)}"]`);
+    const slot = videoSlot(id);
     if (!slot || !stream?.getVideoTracks().length) return;
-    let video = slot.querySelector("video");
+    let video = document.querySelector(`video[data-camera-player="${CSS.escape(id)}"]`);
     if (!video) { video = document.createElement("video"); video.autoplay = true; video.playsInline = true; slot.prepend(video); }
-    video.muted = muted;
-    video.srcObject = stream;
+    else if (video.parentElement !== slot) slot.prepend(video);
+    video.dataset.cameraPlayer = id;
+    video.classList.toggle("local-camera", muted);
+    video.muted = true;
+    const play = () => video.play().catch(() => { /* retry after the next user gesture */ });
+    if (video.srcObject !== stream) {
+      video.srcObject = stream;
+      video.addEventListener("loadedmetadata", play, { once: true });
+    } else play();
   }
   function attachAudio(id, stream) {
     let audio = document.querySelector(`#remoteMedia audio[data-peer="${CSS.escape(id)}"]`);
@@ -206,7 +217,7 @@
   function syncSeats(players, ownId) {
     playerId = ownId;
     players.forEach((player) => {
-      const slot = document.querySelector(`[data-video-slot="${CSS.escape(player.id)}"]`);
+      const slot = videoSlot(player.id);
       if (!player.media?.video) slot?.querySelector("video")?.remove();
       else if (player.id === playerId && localStream) attachVideo(player.id, localStream, true);
       else if (remoteStreams.has(player.id)) attachVideo(player.id, remoteStreams.get(player.id));
