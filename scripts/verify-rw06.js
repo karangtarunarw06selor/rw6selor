@@ -19,6 +19,14 @@ const requiredFiles = [
   'admin-karangtaruna/admin.html',
   'admin-karangtaruna/auth-guard.js',
   'admin-karangtaruna/common/api/members_save.php',
+  'uno-online/package.json',
+  'uno-online/server.js',
+  'uno-online/uno-engine.js',
+  'uno-online/public/index.html',
+  'uno-online/public/game.css',
+  'uno-online/public/game.js',
+  'uno-online/test/engine.test.js',
+  'uno-online/test/server.test.js',
 ];
 
 for (const file of requiredFiles) {
@@ -33,9 +41,17 @@ if (!rootIndex.includes('RW06 Selor') || rootIndex.includes('BPH MMS 05')) {
 }
 
 const publicIndex = fs.readFileSync(path.join(root, 'karangtarunaselor06/index.html'), 'utf8');
+const mmsIndex = fs.readFileSync(path.join(root, 'mudamudi/public_html/index.html'), 'utf8');
 const hasPublicBranding = publicIndex.includes('RW06 SELOR') || publicIndex.includes('Muda Mudi') || publicIndex.includes('MUDA MUDI');
 if (!hasPublicBranding || publicIndex.includes('auth-guard.js')) {
   throw new Error('public site index is not public site clean');
+}
+if (!publicIndex.includes('/uno/?siteId=KT') || !mmsIndex.includes('/uno/?siteId=MMS')) {
+  throw new Error('UNO tenant menu links missing');
+}
+const unoServer = fs.readFileSync(path.join(root, 'uno-online/server.js'), 'utf8');
+if (!unoServer.includes('/uno/socket.io') || !unoServer.includes('app.use("/uno"')) {
+  throw new Error('UNO paths are not configured');
 }
 
 const adminIndex = fs.readFileSync(path.join(root, 'admin-karangtaruna/index.html'), 'utf8');
