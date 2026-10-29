@@ -62,6 +62,21 @@
         <div><strong data-game-brand>GAME KARTU MMS 05</strong><small>ROOM <span id="gameRoomCode">------</span></small></div>
         <div id="gameMediaMount"></div>
       </header>
+      <details class="hand-guide">
+        <summary>Info Kombinasi</summary>
+        <div class="hand-guide-list">
+          <article><b>1. Royal Flush</b><div class="guide-cards"><i class="red">10♥</i><i class="red">J♥</i><i class="red">Q♥</i><i class="red">K♥</i><i class="red">A♥</i></div></article>
+          <article><b>2. Straight Flush</b><div class="guide-cards"><i>5♣</i><i>6♣</i><i>7♣</i><i>8♣</i><i>9♣</i></div></article>
+          <article><b>3. Four of a Kind</b><div class="guide-cards"><i class="red">9♥</i><i>9♣</i><i class="red">9♦</i><i>9♠</i><i>A♠</i></div></article>
+          <article><b>4. Full House</b><div class="guide-cards"><i class="red">K♥</i><i>K♣</i><i>K♠</i><i class="red">7♦</i><i>7♣</i></div></article>
+          <article><b>5. Flush</b><div class="guide-cards"><i class="red">2♥</i><i class="red">6♥</i><i class="red">9♥</i><i class="red">J♥</i><i class="red">A♥</i></div></article>
+          <article><b>6. Straight</b><div class="guide-cards"><i class="red">5♥</i><i>6♣</i><i class="red">7♦</i><i>8♠</i><i class="red">9♥</i></div></article>
+          <article><b>7. Three of a Kind</b><div class="guide-cards"><i class="red">Q♥</i><i>Q♣</i><i>Q♠</i><i class="red">7♦</i><i>2♣</i></div></article>
+          <article><b>8. Two Pair</b><div class="guide-cards"><i class="red">A♥</i><i>A♣</i><i class="red">7♦</i><i>7♠</i><i>K♠</i></div></article>
+          <article><b>9. One Pair</b><div class="guide-cards"><i class="red">2♥</i><i class="red">7♦</i><i class="red">A♥</i><i>A♣</i><i>K♠</i></div></article>
+          <article><b>10. High Card</b><div class="guide-cards"><i class="red">2♥</i><i>6♣</i><i class="red">9♦</i><i>J♠</i><i>A♣</i></div></article>
+        </div>
+      </details>
 
       <div id="tableArea" class="table-area">
         <div class="felt">
@@ -103,7 +118,7 @@
       </footer>
     </section>
   </main>
-  <details class="hand-guide"><summary>Urutan Kombinasi</summary><ol><li>Royal Flush</li><li>Straight Flush</li><li>Four of a Kind</li><li>Full House</li><li>Flush</li><li>Straight</li><li>Three of a Kind</li><li>Two Pair</li><li>One Pair</li><li>High Card</li></ol></details>
+
 
   <dialog id="mediaConsent">
     <form method="dialog">
@@ -122,7 +137,7 @@
   <div id="remoteMedia" aria-hidden="true"></div>
   <script src="/poker/socket.io/socket.io.js"></script>
   <script src="media.js?v=4"></script>
-  <script src="game.js?v=26"></script>
+  <script src="game.js?v=27"></script>
 <script src="/billiard/game-presence.js?v=20261028-6" data-site="AUTO" data-game="poker" data-active-target="#game"></script>
 </body>
 </html>
