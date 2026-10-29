@@ -1,1 +1,102 @@
-<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>UNO Online</title><link rel="stylesheet" href="game.css"></head><body><main><header><a id="back" href="/">‹ Portal</a><div><h1>UNO ONLINE</h1><small id="brand">MUDA MUDI SELOR</small></div><b id="online" aria-label="Server online">● ONLINE</b></header><section id="lobby" class="panel"><h2>Main bareng, tanpa curang</h2><p>Kartu dan giliran diatur server. Buat ruang atau masuk dengan kode teman.</p><label>Nama<input id="name" maxlength="20" autocomplete="nickname"></label><div class="actions"><button id="create">Buat Ruang</button><button id="openJoin" class="secondary">Gabung</button></div><div id="joinbox" hidden><label>Kode ruang<input id="code" maxlength="6" autocapitalize="characters"></label><button id="join">Masuk Ruang</button></div></section><section id="room" hidden><div class="roombar"><b>Ruang <span id="roomcode"></span></b><button id="leave" class="danger">Keluar</button></div><div id="notice"></div><div id="players" class="players"></div><div id="table" class="table" hidden><div class="pile"><button id="draw" class="deck">UNO<br><small>AMBIL</small></button><div id="discard" class="card"></div></div><div id="turn"></div><ol id="standings" class="standings" hidden></ol><div id="colors" hidden><b>Pilih warna</b><button data-color="red"></button><button data-color="yellow"></button><button data-color="green"></button><button data-color="blue"></button></div><label class="uno"><input id="uno" type="checkbox"> Teriak UNO!</label><small id="handhint">Geser untuk melihat semua kartu</small><div id="hand" class="hand"></div><button id="pass" hidden>Lewati giliran</button></div><button id="start" hidden>Mulai Permainan</button><button id="rematch" hidden>Main Lagi</button></section><div id="toast" role="alert"></div></main><script src="/uno/socket.io/socket.io.js"></script><script src="game.js"></script></body></html>
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#e60012">
+  <title>UNO Online</title>
+  <link rel="icon" href="assets/res/logo.png?v=2">
+  <link rel="stylesheet" href="game.css?v=2">
+</head>
+<body class="lobby-screen">
+  <audio id="song" loop preload="none">
+    <source src="assets/res/jazz.mp3" type="audio/mpeg">
+  </audio>
+
+  <div class="source-actions">
+    <button id="sound" class="round-action" type="button" aria-label="Nyalakan musik">
+      <img src="assets/res/sound.png" alt="">
+    </button>
+    <a class="round-action portal-action" href="/" aria-label="Kembali ke portal">‹</a>
+  </div>
+
+  <main>
+    <header class="game-header">
+      <img class="uno-logo" src="assets/res/uno_logo.png?v=2" alt="UNO Online">
+      <div class="brand-line">
+        <strong id="brand">MUDA MUDI SELOR</strong>
+        <span id="online" aria-label="Server online">● ONLINE</span>
+      </div>
+    </header>
+
+    <section id="lobby" class="welcome-card">
+      <h1>UNO ONLINE</h1>
+      <p>Main bersama teman dengan tampilan asli <span lang="en">UNO Online</span>.</p>
+      <label>Nama pemain
+        <input id="name" maxlength="20" autocomplete="nickname" placeholder="Masukkan nama">
+      </label>
+      <div class="welcome-actions">
+        <button id="create" class="source-button" type="button">BUAT ROOM</button>
+        <button id="openJoin" class="source-button" type="button">GABUNG ROOM</button>
+      </div>
+      <div id="joinbox" class="join-box" hidden>
+        <label>Kode room
+          <input id="code" maxlength="6" autocapitalize="characters" placeholder="ABC123">
+        </label>
+        <button id="join" class="source-button" type="button">MASUK</button>
+      </div>
+    </section>
+
+    <section id="room" class="room-screen" hidden>
+      <div class="room-toolbar">
+        <div>
+          <small>ROOM</small>
+          <strong id="roomcode"></strong>
+        </div>
+        <button id="leave" class="source-button compact danger" type="button">KELUAR</button>
+      </div>
+      <div id="notice" class="notice"></div>
+      <div id="players" class="players"></div>
+
+      <div id="table" class="table" hidden>
+        <div class="floor">
+          <button id="draw" class="stack-card" type="button">
+            <img src="assets/res/logo.png?v=2" alt="Ambil kartu">
+            <span>STACK</span>
+          </button>
+          <div id="discard" class="uno-card discard-card" aria-label="Kartu meja"></div>
+        </div>
+        <div id="turn" class="turn-status"></div>
+        <ol id="standings" class="standings" hidden></ol>
+
+        <div id="colors" class="color-picker" hidden>
+          <b>Pilih warna</b>
+          <div>
+            <button data-color="red" aria-label="Merah"></button>
+            <button data-color="green" aria-label="Hijau"></button>
+            <button data-color="blue" aria-label="Biru"></button>
+            <button data-color="yellow" aria-label="Kuning"></button>
+          </div>
+        </div>
+
+        <label class="uno-call"><input id="uno" type="checkbox"> UNO!</label>
+        <small id="handhint">Geser untuk melihat semua kartu</small>
+        <div id="hand" class="hand"></div>
+        <button id="pass" class="source-button compact" type="button" hidden>PASS</button>
+      </div>
+
+      <button id="start" class="source-button room-primary" type="button" hidden>MULAI PERMAINAN</button>
+      <button id="rematch" class="source-button room-primary" type="button" hidden>MAIN LAGI</button>
+    </section>
+
+    <footer>
+      <span>UNO Online v0.3.0 visual edition</span>
+      <span>Original design by Ahmed Debbech &amp; Ons Kechrid</span>
+    </footer>
+  </main>
+
+  <div id="toast" role="alert"></div>
+  <script src="/uno/socket.io/socket.io.js"></script>
+  <script src="game.js?v=2"></script>
+</body>
+</html>

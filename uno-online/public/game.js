@@ -78,8 +78,50 @@ $("leave").addEventListener("click", async () => {
   location.href = `/uno/?siteId=${siteId}`;
 });
 
-const cardText = (card) => ({ skip: "⊘", reverse: "↺", draw2: "+2", wild: "WILD", wild4: "+4" }[card.value] || card.value);
 const cardClass = (card) => card.color || "wild";
+const actionAssets = {
+  skip: "assets/res/block.png?v=2",
+  reverse: "assets/res/inverse.png?v=2",
+  draw2: "assets/res/two_cards.png?v=2",
+  wild4: "assets/res/four_cards.png?v=2",
+};
+
+function renderCard(node, card) {
+  node.className = `uno-card ${cardClass(card)}`;
+  node.setAttribute("aria-label", ({ skip: "Skip", reverse: "Reverse", draw2: "Ambil dua", wild: "Wild", wild4: "Ambil empat" }[card.value] || card.value));
+  if (card.value === "wild") {
+    const wheel = document.createElement("span");
+    wheel.className = "wild-wheel";
+    node.replaceChildren(wheel);
+    return;
+  }
+  if (actionAssets[card.value]) {
+    const icon = document.createElement("img");
+    icon.className = "action-icon";
+    icon.src = actionAssets[card.value];
+    icon.alt = "";
+    node.replaceChildren(icon);
+    return;
+  }
+  node.textContent = card.value;
+}
+
+const song = $("song");
+$("sound").addEventListener("click", async () => {
+  if (song.paused) {
+    try {
+      await song.play();
+      $("sound").classList.add("playing");
+      $("sound").setAttribute("aria-label", "Matikan musik");
+    } catch {
+      toast("Browser memblokir musik. Coba tekan lagi.");
+    }
+  } else {
+    song.pause();
+    $("sound").classList.remove("playing");
+    $("sound").setAttribute("aria-label", "Nyalakan musik");
+  }
+});
 
 function isLegal(card, state) {
   if (!card.color) {
@@ -91,6 +133,8 @@ function isLegal(card, state) {
 
 socket.on("room:state", (state) => {
   showRoom();
+  document.body.classList.toggle("game-screen", state.phase !== "waiting");
+  document.body.classList.toggle("lobby-screen", state.phase === "waiting");
   const myTurn = state.phase === "playing" && !state.spectator && state.turnPlayerId === state.myId;
   const activePlayers = state.players.filter((player) => !player.spectator);
 
@@ -120,10 +164,10 @@ socket.on("room:state", (state) => {
   }));
 
   if (state.topCard) {
-    $("discard").className = `card ${cardClass(state.topCard)}`;
-    $("discard").textContent = cardText(state.topCard);
+    renderCard($("discard"), state.topCard);
+    $("discard").classList.add("discard-card");
   }
-  $("draw").innerHTML = `UNO<br><small>AMBIL · ${state.stockCount}</small>`;
+  $("draw").querySelector("span").textContent = `STACK · ${state.stockCount}`;
   $("draw").disabled = !myTurn || state.canPass;
   $("pass").hidden = !state.canPass;
   $("pass").disabled = !myTurn;
@@ -131,8 +175,8 @@ socket.on("room:state", (state) => {
 
   $("hand").replaceChildren(...state.myHand.map((card) => {
     const button = document.createElement("button");
-    button.className = `card ${cardClass(card)}${card.id === state.drawnCardId ? " drawn" : ""}`;
-    button.textContent = cardText(card);
+    renderCard(button, card);
+    if (card.id === state.drawnCardId) button.classList.add("drawn");
     button.disabled = !myTurn || (state.canPass && card.id !== state.drawnCardId) || !isLegal(card, state);
     button.addEventListener("click", () => {
       if (!card.color) {
