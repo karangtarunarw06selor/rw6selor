@@ -104,6 +104,15 @@ $("chat-form").addEventListener("submit", async (event) => {
 
 socket.on("chat:message", appendChat);
 
+fetch("/uno/health").then((response) => response.json()).then((health) => {
+  if (health.features?.includes("chat")) return;
+  $("chat-input").disabled = true;
+  $("chat-form").querySelector("button").disabled = true;
+  $("chat-input").placeholder = "Chat aktif setelah backend diperbarui";
+  $("mic-toggle").disabled = true;
+  $("camera-toggle").disabled = true;
+}).catch(() => {});
+
 const cardClass = (card) => card.color || "wild";
 const actionAssets = {
   skip: "assets/res/block.png?v=2",

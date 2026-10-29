@@ -18,8 +18,9 @@ function createService() {
   const rooms = new Map();
 
   app.use("/uno", express.static(path.join(__dirname, "public")));
-  app.get("/health", (_request, response) => response.json({ ok: true, service: "uno-online", rooms: rooms.size }));
-  app.get("/uno/health", (_request, response) => response.json({ ok: true, service: "uno-online", rooms: rooms.size }));
+  const health = (_request, response) => response.json({ ok: true, service: "uno-online", rooms: rooms.size, features: ["chat", "media"] });
+  app.get("/health", health);
+  app.get("/uno/health", health);
   app.get("/", (_request, response) => response.redirect("/uno/"));
 
   const site = (value) => String(value).toUpperCase() === "KT" ? "KT" : "MMS";
