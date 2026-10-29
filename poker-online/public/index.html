@@ -91,6 +91,10 @@
         <div id="samgongActions" class="samgong-actions hidden">
           <button id="samgongReveal" class="primary">Buka Kartu</button>
         </div>
+        <div id="showdownActions" class="showdown-actions hidden">
+          <button id="continueHand" class="primary">Siap Hand Berikutnya</button>
+          <small id="continueStatus">Menunggu konfirmasi pemain.</small>
+        </div>
         <div id="raisePanel" class="raise-panel hidden">
           <input id="raiseAmount" type="range" min="20" max="1000" step="10" value="40">
           <output id="raiseOutput">40</output>
@@ -99,6 +103,7 @@
       </footer>
     </section>
   </main>
+  <details class="hand-guide"><summary>Urutan Kombinasi</summary><ol><li>Royal Flush</li><li>Straight Flush</li><li>Four of a Kind</li><li>Full House</li><li>Flush</li><li>Straight</li><li>Three of a Kind</li><li>Two Pair</li><li>One Pair</li><li>High Card</li></ol></details>
 
   <dialog id="mediaConsent">
     <form method="dialog">
@@ -117,7 +122,7 @@
   <div id="remoteMedia" aria-hidden="true"></div>
   <script src="/poker/socket.io/socket.io.js"></script>
   <script src="media.js?v=4"></script>
-  <script src="game.js?v=25"></script>
+  <script src="game.js?v=26"></script>
 <script src="/billiard/game-presence.js?v=20261028-6" data-site="AUTO" data-game="poker" data-active-target="#game"></script>
 </body>
 </html>

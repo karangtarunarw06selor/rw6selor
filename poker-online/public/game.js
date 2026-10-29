@@ -15,7 +15,7 @@
   const elements = {
     lobby: $("#lobby"), roomLobby: $("#roomLobby"), game: $("#game"), roomPlayers: $("#roomPlayers"), roomNotice: $("#roomNotice"), gameCode: $("#gameRoomCode"), mediaControls: $("#mediaControls"), gameMediaMount: $("#gameMediaMount"), name: $("#playerName"), code: $("#roomCode"), error: $("#lobbyError"),
     copy: $("#copyCode"), seats: $("#seats"), board: $("#board"), pot: $("#pot"), phase: $("#phase"), handDock: $("#handDock"), notice: $("#notice"), finalStandings: $("#finalStandings"),
-    start: $("#startGame"), modePicker: $("#modePicker"), readyPanel: $("#readyPanel"), readyToggle: $("#readyToggle"), readyStatus: $("#readyStatus"), capsaVote: $("#capsaVote"), voteStatus: $("#voteStatus"), actions: $("#actions"), cangkulanActions: $("#cangkulanActions"), capsaActions: $("#capsaActions"), samgongActions: $("#samgongActions"), checkCall: $("#checkCall"), raisePanel: $("#raisePanel"),
+    start: $("#startGame"), modePicker: $("#modePicker"), readyPanel: $("#readyPanel"), readyToggle: $("#readyToggle"), readyStatus: $("#readyStatus"), capsaVote: $("#capsaVote"), voteStatus: $("#voteStatus"), actions: $("#actions"), cangkulanActions: $("#cangkulanActions"), capsaActions: $("#capsaActions"), samgongActions: $("#samgongActions"), showdownActions: $("#showdownActions"), continueHand: $("#continueHand"), continueStatus: $("#continueStatus"), checkCall: $("#checkCall"), raisePanel: $("#raisePanel"),
     raiseAmount: $("#raiseAmount"), raiseOutput: $("#raiseOutput"),
   };
   const state = { room: null, playerId: null, token: null, busy: false, selectedCards: new Set() };
@@ -72,7 +72,7 @@
     return `Pemenang: ${winners}`;
   }
   function standingsFor(room) {
-    if (room.phase !== "finished") return [];
+    if (room.phase !== "finished" || (room.mode === "holdem" && !room.matchFinished)) return [];
     if (room.lastResult?.rankings) return room.lastResult.rankings.map((entry) => ({ ...entry, detail: entry.rank === room.lastResult.rankings.length ? "Kalah" : `Juara ${entry.rank}` }));
     if (room.mode === "holdem") return [...room.players].sort((a, b) => b.stack - a.stack).map((player) => ({ ...player, detail: `${player.stack} chip` }));
     if (room.mode === "samgong") return [...room.players].sort((a, b) => b.score - a.score).map((player) => ({ ...player, detail: `${player.score >= 0 ? "+" : ""}${player.score} poin` }));
@@ -95,6 +95,8 @@
     const cards = player.hole || player.hand || [];
     const seatCards = ["cangkulan", "capsa-banting", "samgong"].includes(state.room.mode) ? [] : cards;
     const hole = seatCards.length ? `<div class="hole">${seatCards.map((card) => `<span>${cardHtml(card)}</span>`).join("")}</div>` : "";
+    const showdown = state.room.lastResult?.showdown?.find((entry) => entry.id === player.id);
+    const combination = showdown ? `<i class="combination-badge">${escapeHtml(showdown.combination)}</i>` : "";
     const showStack = ["cangkulan", "capsa-banting", "samgong"].includes(state.room.mode) && player.id !== state.playerId && player.cardCount > 0 && state.room.phase !== "finished";
     const stack = showStack ? `<div class="opponent-stack" aria-label="${player.cardCount} kartu tersisa">${Array.from({ length: Math.min(player.cardCount, 5) }, () => '<span class="playing-card back">?</span>').join("")}</div>` : "";
     return `<article class="${classes.join(" ")}" data-player-id="${player.id}" style="--seat:${index}">
@@ -102,12 +104,12 @@
         <span class="avatar" data-video-slot="${player.id}"><span>${initials}</span><i class="voice-dot"></i></span>
         <b class="seat-name">${escapeHtml(player.name)}${player.folded ? " · FOLD" : player.allIn ? " · ALL-IN" : ""}</b>
         <span class="seat-stack">${state.room.mode === "holdem" ? `♢ ${player.stack}` : state.room.mode === "samgong" ? `${player.cardCount ?? cards.length} KARTU · SKOR ${player.score >= 0 ? "+" : ""}${player.score}` : `${player.cardCount ?? cards.length} KARTU`}</span>
-        ${["waiting", "finished"].includes(state.room.phase) && state.room.mode ? `<i class="ready-badge ${player.id === state.room.hostId || player.ready ? "is-ready" : ""}">${player.id === state.room.hostId ? "MASTER" : player.ready ? "READY" : "REHAT"}</i>` : player.playingRound === false ? '<i class="ready-badge">PENONTON · IKUT RONDE BERIKUTNYA</i>' : ""}
+        ${state.room.mode === "holdem" && state.room.phase === "finished" && !state.room.matchFinished ? `<i class="ready-badge ${state.room.continueReadyIds.includes(player.id) ? "is-ready" : ""}">${player.stack <= 0 ? "CHIP HABIS" : state.room.continueReadyIds.includes(player.id) ? "SIAP" : "MEMERIKSA KARTU"}</i>` : ["waiting", "finished"].includes(state.room.phase) && state.room.mode ? `<i class="ready-badge ${player.id === state.room.hostId || player.ready ? "is-ready" : ""}">${player.id === state.room.hostId ? "MASTER" : player.ready ? "READY" : "REHAT"}</i>` : player.playingRound === false ? '<i class="ready-badge">PENONTON · IKUT RONDE BERIKUTNYA</i>' : ""}
         ${state.room.mode === "holdem" && player.id === state.room.dealerId ? '<i class="dealer" title="Dealer button — kartu dibagikan sistem">BUTTON</i>' : ""}
         ${state.room.mode === "cangkulan" && player.id === state.room.bandarId ? '<i class="dealer">BANDAR</i>' : ""}
         ${state.room.mode === "samgong" && player.id === state.room.bandarId ? '<i class="dealer">BANDAR</i>' : ""}
         ${state.room.mode === "cangkulan" && player.rank ? `<i class="rank-badge">${player.rank === state.room.players.length ? "KALAH" : `#${player.rank}`}</i>` : ""}
-        ${player.bet ? `<span class="seat-bet">BET ${player.bet}</span>` : ""}
+        ${combination}${player.bet ? `<span class="seat-bet">BET ${player.bet}</span>` : ""}
       </div>
     </article>`;
   }
@@ -147,7 +149,7 @@
   function render() {
     const room = state.room;
     if (!room) return;
-    const waiting = ["waiting", "finished"].includes(room.phase);
+    const waiting = room.phase === "waiting" || (room.phase === "finished" && (room.mode !== "holdem" || room.matchFinished));
     elements.lobby.classList.add("hidden");
     elements.roomLobby.classList.toggle("hidden", !waiting);
     elements.game.classList.toggle("hidden", waiting);
@@ -178,7 +180,11 @@
         return `<li><span>${(player?.hand || []).map(cardHtml).join("")}</span><div><b>${entry.bandar ? "BANDAR" : entry.result === "win" ? "MENANG" : "KALAH"}</b><small>${escapeHtml(entry.name)} · ${entry.delta >= 0 ? "+" : ""}${entry.delta}</small></div></li>`;
       }).join("")}</ol>` : '<span class="stock-count">3 KARTU · LAWAN BANDAR</span>';
     }
-    else elements.board.innerHTML = [...(room.board || []), ...Array(Math.max(0, 5 - (room.board || []).length)).fill(undefined)].map(cardHtml).join("");
+    else {
+      const payout = room.phase === "finished" && room.lastResult?.winners?.length
+        ? `<div class="payout-chips">${room.lastResult.winners.map((winner) => `<span>+${winner.amount} → ${escapeHtml(winner.name)}</span>`).join("")}</div>` : "";
+      elements.board.innerHTML = `${[...(room.board || []), ...Array(Math.max(0, 5 - (room.board || []).length)).fill(undefined)].map(cardHtml).join("")}${payout}`;
+    }
     elements.seats.innerHTML = orderedPlayers(room).map(renderSeat).join("");
     const me = room.players.find((player) => player.id === state.playerId);
     elements.roomPlayers.innerHTML = room.players.map((player) => `<article class="room-player${player.media?.audio || player.media?.video ? " media-on" : ""}" data-player-id="${player.id}"><span class="room-avatar" data-video-slot="${player.id}">${escapeHtml(player.name.slice(0, 2).toUpperCase())}<i class="voice-dot"></i></span><b>${escapeHtml(player.name)}</b><span>${player.connected === false ? "KELUAR" : player.id === room.hostId ? "HOST" : player.ready ? "READY" : "MENUNGGU"}</span>${state.playerId === room.hostId && player.id !== state.playerId ? `<button class="kick-player" type="button" data-kick-player="${player.id}">KICK</button>` : ""}</article>`).join("");
@@ -217,6 +223,15 @@
     elements.capsaActions.classList.toggle("hidden", !capsaTurn);
     const samgongTurn = activeViewer && room.mode === "samgong" && room.phase === "playing" && room.turnId === state.playerId;
     elements.samgongActions.classList.toggle("hidden", !samgongTurn);
+    const reviewingShowdown = room.mode === "holdem" && room.phase === "finished" && !room.matchFinished;
+    const continueEligible = reviewingShowdown && me?.stack > 0 && me?.playingRound !== false;
+    elements.showdownActions.classList.toggle("hidden", !reviewingShowdown);
+    elements.continueHand.classList.toggle("hidden", !continueEligible);
+    const continueReady = room.continueReadyIds.includes(state.playerId);
+    elements.continueHand.textContent = continueReady ? "Batalkan Siap" : "Siap Hand Berikutnya";
+    elements.continueHand.classList.toggle("primary", !continueReady);
+    const funded = room.players.filter((player) => player.connected && player.playingRound !== false && player.stack > 0);
+    elements.continueStatus.textContent = `${room.continueReadyIds.length}/${funded.length} pemain siap · kartu tetap terbuka sampai semua siap`;
     $("#minumanPlay").disabled = state.selectedCards.size !== 1;
     $("#minumanPlay").textContent = state.selectedCards.size ? "Buang kartu ✓" : "Pilih lalu buang";
     $("#capsaPlay").disabled = state.selectedCards.size < 1;
@@ -326,6 +341,7 @@
   });
   $("#capsaPass").addEventListener("click", () => roomAction("game:action", { type: "pass", actionId: actionId() }));
   $("#samgongReveal").addEventListener("click", () => roomAction("game:action", { type: "reveal", actionId: actionId() }));
+  elements.continueHand.addEventListener("click", () => roomAction("game:continue", { ready: !state.room.continueReadyIds.includes(state.playerId) }));
   $("#capsaPlay").addEventListener("click", async () => {
     const selected = [...state.selectedCards].sort((a, b) => a - b);
     const response = await roomAction("game:action", { type: "play", cardIndexes: selected, actionId: actionId() });

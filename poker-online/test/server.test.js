@@ -167,6 +167,35 @@ test("reconnect token restores the same player seat and replaces the old socket"
   assert.equal(denied.ok, false);
 });
 
+test("holdem stays at the table until every funded player confirms the next hand", async () => {
+  const host = await connect();
+  const guest = await connect();
+  const created = await emit(host, "room:create", { name: "Host", siteId: "MMS" });
+  const joined = await emit(guest, "room:join", { name: "Guest", code: created.room.code, siteId: "MMS" });
+  await emit(host, "room:mode", { mode: "holdem" });
+  await emit(guest, "room:ready", { ready: true });
+  await emit(host, "game:start");
+  let room = (await emit(host, "room:get")).room;
+  const sockets = new Map([[created.playerId, host], [joined.playerId, guest]]);
+  let actionNumber = 0;
+  while (room.phase !== "finished") {
+    const player = room.players.find((entry) => entry.id === room.turnId);
+    const type = room.currentBet > player.bet ? "call" : "check";
+    assert.equal((await emit(sockets.get(room.turnId), "game:action", { type, actionId: `showdown-${actionNumber++}` })).ok, true);
+    room = (await emit(host, "room:get")).room;
+  }
+  assert.equal(room.matchFinished, false);
+  assert.equal(room.lastResult.showdown.length, 2);
+  assert.equal((await emit(host, "game:continue", { ready: true })).ok, true);
+  room = (await emit(host, "room:get")).room;
+  assert.equal(room.phase, "finished");
+  assert.deepEqual(room.continueReadyIds, [created.playerId]);
+  assert.equal((await emit(guest, "game:continue", { ready: true })).ok, true);
+  room = (await emit(host, "room:get")).room;
+  assert.equal(room.phase, "preflop");
+  assert.equal(room.handNumber, 2);
+});
+
 test("host starts with ready players while resting players remain connected as spectators", async () => {
   const host = await connect();
   const ready = await connect();

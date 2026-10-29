@@ -100,6 +100,22 @@ test("heads-up button acts first preflop and big blind acts first postflop", () 
   assert.equal(table.currentPlayer().id, "b");
 });
 
+test("showdown exposes every contender hand and combination", () => {
+  const table = new PokerTable({ code: "SHOW", siteId: "MMS" });
+  table.addPlayer({ id: "a", name: "A" });
+  table.addPlayer({ id: "b", name: "B" });
+  table.startHand(() => 0.5);
+  table.act("a", { type: "call" });
+  table.act("b", { type: "check" });
+  for (let street = 0; street < 3; street += 1) {
+    table.act(table.currentPlayer().id, { type: "check" });
+    table.act(table.currentPlayer().id, { type: "check" });
+  }
+  assert.equal(table.lastResult.reason, "showdown");
+  assert.equal(table.lastResult.showdown.length, 2);
+  assert.equal(table.lastResult.showdown.every((entry) => entry.cards.length === 2 && entry.combination), true);
+});
+
 test("preflop enforces turn and valid call amount", () => {
   const table = new PokerTable({ code: "ABC123", siteId: "MMS", smallBlind: 10, bigBlind: 20 });
   table.addPlayer({ id: "a", name: "A" });

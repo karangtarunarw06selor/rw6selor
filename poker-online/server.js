@@ -41,6 +41,9 @@ function publicView(room, viewerId) {
   view.voteResult = room.capsaVoteResult || null;
   view.myVote = room.capsaVotes?.get(viewerId) || null;
   view.readyIds = [...room.readyIds];
+  view.continueReadyIds = [...room.continueReadyIds];
+  view.matchFinished = room.mode === "holdem" && room.table.phase === "finished"
+    && room.table.players.filter((player) => player.connected && player.stack > 0).length <= 1;
   view.players = view.players.map((player) => {
     const source = room.table.players.find((item) => item.id === player.id);
     return { ...player, media: mediaView(source), ready: room.readyIds.has(player.id) };
@@ -80,6 +83,7 @@ function selectMode(room, mode) {
   room.capsaVotes = new Map();
   room.capsaVoteResult = null;
   room.readyIds.clear();
+  room.continueReadyIds.clear();
 }
 
 function resolveCapsaVote(room) {
@@ -209,7 +213,7 @@ io.on("connection", (socket) => {
     const player = table.addPlayer({ id: crypto.randomUUID(), name: playerName });
     player.token = crypto.randomBytes(24).toString("base64url");
     player.media = { audio: false, video: false };
-    const room = { code, siteId, mode: null, table, hostId: player.id, readyIds: new Set(), roomChat: [], capsaVotes: new Map(), capsaVoteResult: null, emptyTimer: null, turnTimer: null, turnDeadline: null };
+    const room = { code, siteId, mode: null, table, hostId: player.id, readyIds: new Set(), continueReadyIds: new Set(), roomChat: [], capsaVotes: new Map(), capsaVoteResult: null, emptyTimer: null, turnTimer: null, turnDeadline: null };
     rooms.set(code, room);
     attach(socket, room, player);
     publishLobbyMessage(siteId, playerName, `${playerName} membuat room ${code}`, code);
@@ -373,6 +377,23 @@ io.on("connection", (socket) => {
       reply({ ok: true });
       emitRoom(room);
     } catch (error) { reply({ ok: false, error: error.message }); }
+  });
+
+  socket.on("game:continue", ({ ready = true } = {}, reply = () => {}) => {
+    const { room, player } = session(socket);
+    if (!room || !player) return reply({ ok: false, error: "Sesi tidak ditemukan." });
+    if (room.mode !== "holdem" || room.table.phase !== "finished") return reply({ ok: false, error: "Hand belum selesai." });
+    if (player.stack <= 0 || player.playingRound === false) return reply({ ok: false, error: "Pemain tanpa chip hanya dapat menonton." });
+    if (ready) room.continueReadyIds.add(player.id);
+    else room.continueReadyIds.delete(player.id);
+    const eligible = room.table.players.filter((item) => item.connected && item.playingRound !== false && item.stack > 0);
+    if (eligible.length >= 2 && eligible.every((item) => room.continueReadyIds.has(item.id))) {
+      room.continueReadyIds.clear();
+      room.table.startHand();
+      scheduleTurn(room);
+    }
+    reply({ ok: true });
+    emitRoom(room);
   });
 
   socket.on("room:kick", ({ playerId } = {}, reply = () => {}) => {

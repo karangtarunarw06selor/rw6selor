@@ -269,12 +269,19 @@ class PokerTable {
     this.pot = 0;
     this.phase = "finished";
     this.turnIndex = -1;
+    const showdown = contenders.map((player) => ({
+      id: player.id,
+      name: player.name,
+      cards: player.hole,
+      combination: evaluateSeven([...player.hole, ...this.board]).name,
+    }));
     this.lastResult = {
       reason: "showdown",
       winners: [...payouts].map(([id, amount]) => {
         const player = this.players.find((item) => item.id === id);
         return { id, name: player.name, amount, hand: evaluateSeven([...player.hole, ...this.board]).name };
       }),
+      showdown,
     };
     return this.lastResult;
   }
